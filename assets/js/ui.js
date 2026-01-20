@@ -173,7 +173,11 @@ function drawFingerboard(path, input) {
 
     // Vymazat canvas
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#f8fafc';
+    
+    // Pozadí canvasu - použít CSS proměnnou nebo fallback podle dark mode
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const canvasBg = rootStyles.getPropertyValue('--color-canvas-bg').trim() || (isDarkMode ? '#1e293b' : '#f8fafc');
+    ctx.fillStyle = canvasBg;
     ctx.fillRect(0, 0, width, height);
 
     // Nastavení pro kreslení
