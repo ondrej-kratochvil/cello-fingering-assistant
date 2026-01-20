@@ -17,12 +17,18 @@
                     <img src="../../assets/img/logo.svg" alt="Cello Fingering Assistant Logo" class="w-12 h-12">
                     <h1 class="text-3xl font-black tracking-tight italic">Testy prstokladu</h1>
                 </a>
-                <nav class="hidden md:flex items-center gap-6">
-                    <a href="../../index.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
-                    <a href="test.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Testy</a>
-                    <a href="../docs/main.md" class="text-indigo-200 hover:text-white font-medium transition-colors">Dokumentace</a>
-                </nav>
-                <button id="mobileMenuToggle" class="md:hidden text-indigo-200 hover:text-white transition-colors" aria-label="Otevřít menu">
+                <div class="flex items-center gap-4">
+                    <button id="darkModeToggle" class="text-indigo-200 hover:text-white transition-colors touch-target" aria-label="Přepnout Dark Mode">
+                        <svg id="darkModeIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <nav class="hidden md:flex items-center gap-6">
+                        <a href="../../index.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
+                        <a href="test.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Testy</a>
+                        <a href="../docs/main.md" class="text-indigo-200 hover:text-white font-medium transition-colors">Dokumentace</a>
+                    </nav>
+                    <button id="mobileMenuToggle" class="md:hidden text-indigo-200 hover:text-white transition-colors touch-target" aria-label="Otevřít menu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -204,6 +210,41 @@
         // Spustit testy automaticky při načtení
         window.addEventListener('DOMContentLoaded', () => {
             runAllTests();
+        });
+    </script>
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileMenuToggle')?.addEventListener('click', () => {
+            const menu = document.getElementById('mobileMenu');
+            menu?.classList.toggle('hidden');
+        });
+
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        
+        // Zkontrolovat uloženou preferenci nebo systémovou
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedMode = localStorage.getItem('darkMode');
+        const isDark = savedMode === 'true' || (savedMode === null && prefersDark);
+        
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+        }
+        
+        darkModeToggle?.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkNow = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkNow.toString());
+            
+            // Změnit ikonu
+            if (darkModeIcon) {
+                if (isDarkNow) {
+                    darkModeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+                } else {
+                    darkModeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+                }
+            }
         });
     </script>
 </body>
