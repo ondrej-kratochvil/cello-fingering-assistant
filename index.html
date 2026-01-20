@@ -3,8 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí algoritmu založeného na metodice.">
-    <title>Cello Fingering Assistant</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>Cello Fingering Assistant - Nástroj pro optimální prstoklad violoncella</title>
+    <meta name="description" content="Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí pokročilého algoritmu. Zadejte sekvenci tónů a získejte doporučený prstoklad s vizualizací hmatníku.">
+    <meta name="keywords" content="violoncello, cello, prstoklad, fingering, hmatník, hudební nástroj, violoncellová technika">
+    <meta name="author" content="Sensio.cz s.r.o.">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Cello Fingering Assistant - Nástroj pro optimální prstoklad violoncella">
+    <meta property="og:description" content="Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí pokročilého algoritmu.">
+    <meta property="og:locale" content="cs_CZ">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Cello Fingering Assistant">
+    <meta name="twitter:description" content="Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí pokročilého algoritmu.">
+    
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="stylesheet" href="assets/css/main.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -45,6 +62,54 @@
                 Pro zadané tóny doporučí vhodný prstoklad
             </p>
         </header>
+
+        <!-- Homepage Content -->
+        <main class="p-8 bg-white">
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">O aplikaci</h2>
+                <p class="text-slate-700 mb-4 leading-relaxed">
+                    <strong>Cello Fingering Assistant</strong> je klientská webová aplikace pro návrh optimálního prstokladu pro violoncello. 
+                    Aplikace využívá pokročilý algoritmus založený na dynamickém programování, který analyzuje sekvenci tónů 
+                    a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu, minimalizaci posunů a efektivní využití hmatníku.
+                </p>
+                <p class="text-slate-700 leading-relaxed">
+                    Algoritmus upřednostňuje zůstat v jedné poloze, minimalizuje počet posunů mezi polohami a preferuje nižší polohy. 
+                    Výsledek zobrazuje jak textově (s barevným rozlišením strun), tak vizuálně na interaktivním hmatníku.
+                </p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Hlavní funkce</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <h3 class="text-lg font-bold text-indigo-900 mb-2">🎯 Inteligentní algoritmus</h3>
+                        <p class="text-slate-700 text-sm">
+                            Pokročilý algoritmus založený na metodice, který optimalizuje prstoklad s ohledem na polohovou stabilitu, 
+                            minimalizaci posunů a preferenci nižších poloh.
+                        </p>
+                    </div>
+                    <div class="p-6 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <h3 class="text-lg font-bold text-emerald-900 mb-2">🎨 Vizuální hmatník</h3>
+                        <p class="text-slate-700 text-sm">
+                            Interaktivní vizualizace hmatníku na Canvas, která zobrazuje doporučený prstoklad s barevným rozlišením strun 
+                            a propojením pohybu ruky.
+                        </p>
+                    </div>
+                    <div class="p-6 bg-amber-50 rounded-xl border border-amber-100">
+                        <h3 class="text-lg font-bold text-amber-900 mb-2">📊 Textový výstup</h3>
+                        <p class="text-slate-700 text-sm">
+                            Přehledný textový výstup s římskými číslicemi poloh, čísly prstů barevně podle strun a označením širokých poloh.
+                        </p>
+                    </div>
+                    <div class="p-6 bg-purple-50 rounded-xl border border-purple-100">
+                        <h3 class="text-lg font-bold text-purple-900 mb-2">🌓 Dark Mode</h3>
+                        <p class="text-slate-700 text-sm">
+                            Podpora světlého a tmavého režimu s automatickou detekcí systémové preference a možností manuálního přepínání.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </main>
 
         <div class="p-8 border-b border-slate-100 bg-slate-50">
             <label class="block text-sm font-bold text-slate-700 mb-2 tracking-wider">

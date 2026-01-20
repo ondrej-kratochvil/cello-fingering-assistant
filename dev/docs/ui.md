@@ -84,6 +84,30 @@ Design systém podporuje automatické přepínání podle `prefers-color-scheme`
 - `.word-break`: Zalamování dlouhých textů
 - `.touch-target`: Minimální velikost 44x44px pro dotykové prvky
 
+## SEO a Meta tagy
+
+Aplikace obsahuje kompletní SEO meta tagy v `<head>`:
+- **Title**: "Cello Fingering Assistant - Nástroj pro optimální prstoklad violoncella"
+- **Description**: Detailní popis účelu aplikace
+- **Keywords**: violoncello, cello, prstoklad, fingering, hmatník
+- **Open Graph**: Tagy pro sdílení na sociálních sítích
+- **Twitter Card**: Metadata pro Twitter
+- **Lang**: `lang="cs"` správně nastaveno
+
+## Obsah Homepage
+
+Homepage obsahuje dvě hlavní sekce před vstupním formulářem:
+
+### Sekce "O aplikaci"
+Stručný popis účelu aplikace, algoritmu a jeho priorit (polohová stabilita, minimalizace posunů, preferencia nižších poloh).
+
+### Sekce "Hlavní funkce"
+Grid se 4 kartami funkcí:
+1. **Inteligentní algoritmus** - popis optimalizačního algoritmu
+2. **Vizuální hmatník** - Canvas vizualizace
+3. **Textový výstup** - Barevný textový prstoklad
+4. **Dark Mode** - Podpora světlého/tmavého režimu
+
 ## Hlavní stránka – `index.html`
 
 Stránka `index.html` je hlavním vstupním bodem aplikace **Cello Fingering Assistant**.
