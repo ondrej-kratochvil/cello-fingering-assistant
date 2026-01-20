@@ -1,6 +1,10 @@
 // --- UI FUNCTIONS ---
 import { solve, model } from './fingering.js';
 
+// Uložit poslední výsledek pro překreslení canvasu při změně dark mode
+let lastResult = null;
+let lastInput = null;
+
 function runSolver() {
     const inputVal = document.getElementById('melodyInput').value.trim();
     if (!inputVal) return;
@@ -133,6 +137,10 @@ function runSolver() {
 
         display.appendChild(container);
 
+        // Uložit výsledek pro pozdější překreslení
+        lastResult = result;
+        lastInput = input;
+
         // Vykreslit vizualizaci hmatníku na Canvas
         drawFingerboard(result, input);
     }
@@ -154,6 +162,8 @@ function drawFingerboard(path, input) {
     }
 
     // Barvy pro struny (z CSS proměnných)
+    // Číst z body, protože dark-mode třída je na body
+    const bodyStyles = getComputedStyle(document.body);
     const rootStyles = getComputedStyle(document.documentElement);
     const stringColors = {
         'C': rootStyles.getPropertyValue('--cello-string-c').trim(),
@@ -175,8 +185,12 @@ function drawFingerboard(path, input) {
     ctx.clearRect(0, 0, width, height);
     
     // Pozadí canvasu - použít CSS proměnnou nebo fallback podle dark mode
+    // Číst z body, protože dark-mode třída je na body
     const isDarkMode = document.body.classList.contains('dark-mode');
-    const canvasBg = rootStyles.getPropertyValue('--color-canvas-bg').trim() || (isDarkMode ? '#1e293b' : '#f8fafc');
+    const canvasBgFromBody = bodyStyles.getPropertyValue('--color-canvas-bg').trim();
+    const canvasBgFromRoot = rootStyles.getPropertyValue('--color-canvas-bg').trim();
+    const canvasBgVar = canvasBgFromBody || canvasBgFromRoot;
+    const canvasBg = canvasBgVar || (isDarkMode ? '#1e293b' : '#f8fafc');
     ctx.fillStyle = canvasBg;
     ctx.fillRect(0, 0, width, height);
 
@@ -186,7 +200,9 @@ function drawFingerboard(path, input) {
     const fretSpacing = fretAreaWidth / 13; // 12 pozic + 1 pro konec
 
     // Vykreslit horizontální struny
-    ctx.strokeStyle = rootStyles.getPropertyValue('--color-canvas-string').trim() || '#cbd5e1';
+    // Číst z body, protože dark-mode třída je na body
+    const canvasStringColor = bodyStyles.getPropertyValue('--color-canvas-string').trim() || rootStyles.getPropertyValue('--color-canvas-string').trim() || '#cbd5e1';
+    ctx.strokeStyle = canvasStringColor;
     ctx.lineWidth = 2;
     strings.forEach(str => {
         ctx.beginPath();
@@ -202,10 +218,14 @@ function drawFingerboard(path, input) {
     });
 
     // Vykreslit vertikální značky pro pozice 1-12
-    ctx.strokeStyle = rootStyles.getPropertyValue('--color-canvas-fret').trim() || '#94a3b8';
+    // Číst z body, protože dark-mode třída je na body
+    const canvasFretColor = bodyStyles.getPropertyValue('--color-canvas-fret').trim() || rootStyles.getPropertyValue('--color-canvas-fret').trim() || '#94a3b8';
+    const canvasTextColor = bodyStyles.getPropertyValue('--color-canvas-text').trim() || rootStyles.getPropertyValue('--color-canvas-text').trim() || '#64748b';
+    const canvasStrokeColor = bodyStyles.getPropertyValue('--color-canvas-stroke').trim() || rootStyles.getPropertyValue('--color-canvas-stroke').trim() || '#fff';
+    ctx.strokeStyle = canvasFretColor;
     ctx.lineWidth = 1;
     ctx.font = '10px sans-serif';
-    ctx.fillStyle = rootStyles.getPropertyValue('--color-canvas-text').trim() || '#64748b';
+    ctx.fillStyle = canvasTextColor;
     ctx.textAlign = 'center';
     
     for (let pos = 1; pos <= 12; pos++) {
@@ -235,18 +255,19 @@ function drawFingerboard(path, input) {
             ctx.fill();
             
             // Bílý okraj
-            ctx.strokeStyle = rootStyles.getPropertyValue('--color-canvas-stroke').trim() || '#fff';
+            // canvasStrokeColor je už definována výše
+            ctx.strokeStyle = canvasStrokeColor;
             ctx.lineWidth = 2;
             ctx.stroke();
             
             // Číslo prstu (0)
-            ctx.fillStyle = rootStyles.getPropertyValue('--color-canvas-stroke').trim() || '#fff';
+            ctx.fillStyle = canvasStrokeColor;
             ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('0', openStringX, y + 4);
             
             // Tón pod bodem
-            ctx.fillStyle = rootStyles.getPropertyValue('--color-canvas-text').trim() || '#64748b';
+            ctx.fillStyle = canvasTextColor;
             ctx.font = '10px sans-serif';
             ctx.fillText(tone, openStringX, y + 25);
         }
@@ -266,7 +287,7 @@ function drawFingerboard(path, input) {
 
     // Propojit body čarou
     if (points.length > 1) {
-        ctx.strokeStyle = rootStyles.getPropertyValue('--color-canvas-text').trim() || '#64748b';
+        ctx.strokeStyle = canvasTextColor;
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -283,7 +304,8 @@ function drawFingerboard(path, input) {
         if (step.p === 0) return; // Prázdné struny už jsou vykreslené
         
         // Barva podle struny, nebo jantarová pro širokou polohu
-        const wideColor = rootStyles.getPropertyValue('--color-wide-extended').trim() || '#f59e0b';
+        // Číst z body, protože dark-mode třída je na body
+        const wideColor = bodyStyles.getPropertyValue('--color-wide-extended').trim() || rootStyles.getPropertyValue('--color-wide-extended').trim() || '#f59e0b';
         const baseColor = step.ext === 1 ? wideColor : stringColors[step.s];
         
         // Bod
@@ -293,19 +315,19 @@ function drawFingerboard(path, input) {
         ctx.fill();
         
         // Bílý okraj
-        ctx.strokeStyle = rootStyles.getPropertyValue('--color-canvas-stroke').trim() || '#fff';
+        ctx.strokeStyle = canvasStrokeColor;
         ctx.lineWidth = 2;
         ctx.stroke();
         
         // Číslo prstu
-        ctx.fillStyle = rootStyles.getPropertyValue('--color-canvas-stroke').trim() || '#fff';
+        ctx.fillStyle = canvasStrokeColor;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
         const fingerText = step.f === 0 ? '0' : step.f.toString();
         ctx.fillText(fingerText, x, y + 5);
         
         // Tón pod bodem
-        ctx.fillStyle = rootStyles.getPropertyValue('--color-canvas-text').trim() || '#64748b';
+        ctx.fillStyle = canvasTextColor;
         ctx.font = '11px sans-serif';
         ctx.fillText(tone, x, y + 30);
     });
@@ -318,6 +340,16 @@ function toggleJson() {
 // Export funkcí na window objekt pro použití v onclick atributech
 window.runSolver = runSolver;
 window.toggleJson = toggleJson;
+window.drawFingerboard = drawFingerboard;
+// Exportovat proměnné pro přístup z index.html
+Object.defineProperty(window, 'lastResult', {
+    get: () => lastResult,
+    set: (val) => { lastResult = val; }
+});
+Object.defineProperty(window, 'lastInput', {
+    get: () => lastInput,
+    set: (val) => { lastInput = val; }
+});
 
 // Inicializace při načtení stránky
 window.addEventListener('DOMContentLoaded', () => {
