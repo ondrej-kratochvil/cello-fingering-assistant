@@ -291,6 +291,23 @@ body.dark-mode .text-purple-900 {
     color: #e9d5ff !important;
 }
 
+/* Input pole v dark mode */
+body.dark-mode input[type="text"],
+body.dark-mode input[type="text"]:focus {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border-secondary) !important;
+}
+
+body.dark-mode input[type="text"]::placeholder {
+    color: var(--color-text-tertiary) !important;
+}
+
+/* Canvas v dark mode */
+body.dark-mode canvas {
+    background-color: var(--color-canvas-bg) !important;
+}
+
 /* --- SEMANTICKÉ TŘÍDY --- */
 
 /* Typografie */
