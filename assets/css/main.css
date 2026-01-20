@@ -291,6 +291,38 @@ body.dark-mode .text-purple-900 {
     color: #e9d5ff !important;
 }
 
+/* Zelené barvy pro testy v dark mode (kontrastní) */
+body.dark-mode.text-green-800,
+body.dark-mode .text-green-800 {
+    color: #86efac !important; /* světle zelená místo tmavě zelené */
+}
+
+body.dark-mode.text-green-700,
+body.dark-mode .text-green-700 {
+    color: #6ee7b7 !important;
+}
+
+body.dark-mode.text-green-600,
+body.dark-mode .text-green-600 {
+    color: #34d399 !important;
+}
+
+/* Červené barvy pro selhané testy v dark mode (kontrastní) */
+body.dark-mode.text-red-800,
+body.dark-mode .text-red-800 {
+    color: #fca5a5 !important; /* světle červená místo tmavě červené */
+}
+
+body.dark-mode.text-red-700,
+body.dark-mode .text-red-700 {
+    color: #f87171 !important;
+}
+
+body.dark-mode.text-red-600,
+body.dark-mode .text-red-600 {
+    color: #ef4444 !important;
+}
+
 /* Input pole v dark mode */
 body.dark-mode input[type="text"],
 body.dark-mode input[type="text"]:focus {
