@@ -59,9 +59,9 @@
 
     /* Canvas barvy */
     --color-canvas-bg: #f8fafc;
-    --color-canvas-string: #cbd5e1;
-    --color-canvas-fret: #94a3b8;
-    --color-canvas-text: #64748b;
+    --color-canvas-string: #e2e8f0; /* Světlejší pro světlé téma */
+    --color-canvas-fret: #cbd5e1; /* Světlejší pro světlé téma */
+    --color-canvas-text: #475569; /* Tmavší pro světlé téma */
     --color-canvas-stroke: #ffffff;
 
     /* Spacing (8px base unit) */
@@ -150,9 +150,9 @@
 
         /* Canvas barvy */
         --color-canvas-bg: #1e293b;
-        --color-canvas-string: #475569;
-        --color-canvas-fret: #64748b;
-        --color-canvas-text: #cbd5e1;
+        --color-canvas-string: #334155; /* Tmavší pro tmavé téma */
+        --color-canvas-fret: #475569; /* Tmavší pro tmavé téma */
+        --color-canvas-text: #e2e8f0; /* Světlejší pro tmavé téma */
     }
 }
 
@@ -183,6 +183,7 @@
     --color-warning-bg: #78350f;
 
     /* Fingering specifické barvy */
+    --cello-string-c: #a3e635;
     --color-narrow-bg: #1e3a8a;
     --color-narrow-border: #3b82f6;
     --color-wide-bg: #78350f;

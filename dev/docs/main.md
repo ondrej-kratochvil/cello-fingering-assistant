@@ -14,10 +14,11 @@ Tento projekt je klientská (HTML/JS) aplikace pro návrh violoncellového prsto
 ## Stručný přehled projektu
 
 - `index.html` – hlavní stránka aplikace **Cello Fingering Assistant**, input sekvence tónů, vizualizace prstokladu a hmatníku (Canvas).
-- `js/fingering.js` – model hmatníku a hlavní algoritmus `solve(sequence)`.
-- `js/ui.js` – napojení UI na algoritmus, vykreslení prstokladu a vizualizace hmatníku.
-- `js/tests.js` – sada testů nad algoritmem a pomocný test runner.
-- `test.html` – samostatná stránka pro běh a vizuální zobrazení testů v prohlížeči.
+- `assets/js/fingering.js` – model hmatníku a hlavní algoritmus `solve(sequence)`.
+- `assets/js/ui.js` – napojení UI na algoritmus, vykreslení prstokladu a vizualizace hmatníku.
+- `assets/js/tests.js` – sada testů nad algoritmem a pomocný test runner.
+- `dev/tests/test.html` – samostatná stránka pro běh a vizuální zobrazení testů v prohlížeči.
+- `assets/css/main.css` – centralizovaný design systém s CSS proměnnými a Light/Dark mode podporou.
 
 Projekt aktuálně nemá backend (PHP) ani databázi – jedná se o čistý front‑end prototyp / nástroj.
 

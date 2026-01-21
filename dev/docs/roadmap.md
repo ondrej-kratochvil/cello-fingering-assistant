@@ -143,6 +143,9 @@
 9. ✅ Light/Dark mode (hotovo v Fázi 2)
 10. ✅ Responzivita testy (utility třídy, word-break, touch-target)
 11. ✅ Obsah homepage (sekce O aplikaci a Hlavní funkce)
+12. ✅ Menu úpravy (přesun "O aplikaci" do menu, odstranění "Dokumentace", oprava mobilního menu)
+13. ✅ Canvas vylepšení (správné pozice tónů, různé tloušťky strun, barvy podle tématu)
+14. ✅ Skrývání celého `<main>` místo jen sekcí
 
 ## 📝 Poznámky
 

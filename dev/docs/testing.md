@@ -69,3 +69,4 @@ Stránka `test.html`:
 Podle projektových pravidel jsou návrhy manuálních testů v souboru [`manual_tests.md`](./manual_tests.md).
 
 
+

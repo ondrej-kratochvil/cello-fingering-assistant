@@ -48,9 +48,9 @@ Aplikace používá centralizovaný design systém založený na CSS proměnnýc
 
 #### Canvas barvy
 - `--color-canvas-bg`: #f8fafc (light) / #1e293b (dark)
-- `--color-canvas-string`: #cbd5e1 (light) / #475569 (dark)
-- `--color-canvas-fret`: #94a3b8
-- `--color-canvas-text`: #64748b (light) / #cbd5e1 (dark)
+- `--color-canvas-string`: #e2e8f0 (light, světlejší) / #334155 (dark, tmavší)
+- `--color-canvas-fret`: #cbd5e1 (light, světlejší) / #475569 (dark, tmavší)
+- `--color-canvas-text`: #475569 (light, tmavší) / #e2e8f0 (dark, světlejší)
 - `--color-canvas-stroke`: #ffffff
 
 #### Spacing (8px base unit)
@@ -96,7 +96,7 @@ Aplikace obsahuje kompletní SEO meta tagy v `<head>`:
 
 ## Obsah Homepage
 
-Homepage obsahuje dvě hlavní sekce před vstupním formulářem:
+Homepage obsahuje dvě hlavní sekce před vstupním formulářem, které jsou skrývatelné:
 
 ### Sekce "O aplikaci"
 Stručný popis účelu aplikace, algoritmu a jeho priorit (polohová stabilita, minimalizace posunů, preferencia nižších poloh).
@@ -108,6 +108,13 @@ Grid se 4 kartami funkcí:
 3. **Textový výstup** - Barevný textový prstoklad
 4. **Dark Mode** - Podpora světlého/tmavého režimu
 
+**Skrývání sekcí:**
+- Obě sekce jsou obaleny v `<main>` elementu
+- Kliknutím na "O aplikaci" v menu se přepíná viditelnost celého `<main>` elementu
+- Stav (skryté/zobrazené) se ukládá do `localStorage` pod klíčem `aboutCollapsed`
+- Při spuštění solveru (kliknutí na "Navrhnout prstoklad" nebo Enter) se sekce automaticky skryjí, aby ušetřily místo
+- Skrývání celého `<main>` místo jen sekcí odstraňuje bílé místo z padding `p-8`
+
 ## Hlavní stránka – `index.html`
 
 Stránka `index.html` je hlavním vstupním bodem aplikace **Cello Fingering Assistant**.
@@ -115,12 +122,15 @@ Stránka `index.html` je hlavním vstupním bodem aplikace **Cello Fingering Ass
 ### Hlavní prvky
 
 - **Header s logem a menu**
-  - SVG logo (`assets/img/logo.svg`) v levém horním rohu, odkazující na homepage
-  - Sémantické `<nav>` menu s maximálně 7 položkami:
+  - SVG logo (`assets/img/logo.svg`) v levém horním rohu, odkazující na `index.html` (relativní cesta)
+  - Sémantické `<nav>` menu s položkami:
     - Home (index.html)
     - Testy (dev/tests/test.html)
-    - Dokumentace (dev/docs/main.md)
+    - O aplikaci (přepíná viditelnost sekce "O aplikaci" a "Hlavní funkce")
+  - Dark Mode toggle tlačítko (ikonka měsíce/slunce)
   - Hamburger menu pro mobilní zobrazení (pravý horní roh)
+    - Menu se zobrazuje pod hamburgerem (`top-28`, 7rem)
+    - Položky menu mají větší mezery (`gap-5`) a padding (`py-1`) pro lepší klikatelnost na mobilu
   - Nadpis: „Cello Fingering Assistant"
   - Podtitul: „Pro zadané tóny doporučí vhodný prstoklad"
 
@@ -186,19 +196,24 @@ Pracuje s `<canvas id="fretboardCanvas">` o šířce 1000 px a výšce 400 px.
 
 - Vykreslí 4 horizontální struny:
   - pořadí shora dolů: A, D, G, C,
-  - každá struna má vlastní barvu z CSS proměnné.
+  - každá struna má vlastní barvu z CSS proměnné,
+  - **různé tloušťky strun**: C (4px), G (3px), D (2.5px), A (2px),
+  - barva čar: světlejší pro světlé téma (`#e2e8f0`), tmavší pro tmavé téma (`#334155`).
 
 - Vykreslí vertikální značky pro pozice 1–12:
-  - jemné vertikální linky,
-  - nahoře se zobrazí číslo polohy římsky (I–XII…).
+  - jemné vertikální linky (barva podle tématu),
+  - nahoře se zobrazí číslo polohy římsky (I–XII…) - tmavší/světlejší podle tématu.
 
 - Vykreslí prázdné struny (pozice 0):
-  - vlevo před „nultým pražcem“,
+  - vlevo před „nultým pražcem",
   - jako barevný kruh s číslem 0 a textem tónu pod ním.
 
 - Vypočítá souřadnice všech bodů:
-  - osa X: poloha (0 = vlevo, 1–12 škálováno do šířky canvasu),
-  - osa Y: struna (A–C).
+  - **osa X**: vypočítává se podle vzdálenosti od prázdné struny (`targetS`), ne podle polohy:
+    - Pro úzkou polohu: `targetS = p + (f - 1)`
+    - Pro širokou polohu: `targetS = p + offset` (offset je 2, 3 nebo 4 pro prsty 2, 3, 4)
+    - Pozice na canvasu: `x = leftMargin + (targetS * fretSpacing)`
+  - **osa Y**: struna (A–C).
 
 - Propojí body čárkovanou čárou:
   - viditelná trajektorie pohybu ruky a přeskoky strun.
@@ -207,8 +222,8 @@ Pracuje s `<canvas id="fretboardCanvas">` o šířce 1000 px a výšce 400 px.
   - kruh:
     - barva podle struny,
     - nebo jantarová (`#f59e0b`) pro širokou polohu (`ext === 1`),
-  - uvnitř číslo prstu,
-  - pod bodem název tónu (převzatý z původního vstupu).
+  - uvnitř číslo prstu (tučné),
+  - pod bodem název tónu (tučné, tmavší/světlejší podle tématu) - převzatý z původního vstupu.
 
 ### Funkce `toggleJson()`
 
@@ -218,6 +233,9 @@ Jednoduché přepínání `hidden` třídy na `#jsonContainer`.
 
 - Naplní `#jsonDisplay` JSON reprezentací `model`.
 - Pokud je v URL parametr `sequence`, nastaví ho do `#melodyInput`.
-- Automaticky spustí `runSolver()` pro výchozí či zadanou sekvenci.
+- Automaticky spustí `runSolver(true)` pro výchozí či zadanou sekvenci (bez automatického skrývání sekcí).
+- Inicializuje skrývání/zobrazení sekce "O aplikaci" podle `localStorage.getItem('aboutCollapsed')`.
+- Přidá event listenery na odkazy "O aplikaci" v menu (desktop i mobilní).
+- Přidá event listener na Enter klávesu v input poli pro spuštění solveru.
 
 

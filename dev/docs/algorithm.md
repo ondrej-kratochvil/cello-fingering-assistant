@@ -110,3 +110,4 @@ Pro ladění se používají `console.log` výpisy v `solve`, které ukazují:
 - finální vybranou cestu včetně penalizací.
 
 
+

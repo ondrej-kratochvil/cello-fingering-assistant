@@ -29,9 +29,9 @@
 <body class="bg-slate-100 p-4 md:p-8 font-sans text-slate-900">
 
     <div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-slate-200">
-        <header class="bg-indigo-950 p-8 text-white">
+        <header class="bg-indigo-950 p-8 text-white relative">
             <div class="flex items-center justify-between mb-4">
-                <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <img src="assets/img/logo.svg" alt="Cello Fingering Assistant Logo" class="w-12 h-12">
                     <h1 class="text-3xl font-black tracking-tight italic">Cello Fingering Assistant</h1>
                 </a>
@@ -42,21 +42,21 @@
                         </svg>
                     </button>
                     <nav class="hidden md:flex items-center gap-6">
-                        <a href="/" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
+                        <a href="index.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
                         <a href="dev/tests/test.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Testy</a>
-                        <a href="dev/docs/main.md" class="text-indigo-200 hover:text-white font-medium transition-colors">Dokumentace</a>
+                        <a href="#" id="menuAboutLink" class="text-indigo-200 hover:text-white font-medium transition-colors">O aplikaci</a>
                     </nav>
-                    <button id="mobileMenuToggle" class="md:hidden text-indigo-200 hover:text-white transition-colors touch-target" aria-label="Otevřít menu">
+                    <button id="mobileMenuToggle" class="md:hidden text-indigo-200 hover:text-white transition-colors touch-target relative z-50" aria-label="Otevřít menu">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
                 </div>
             </div>
-            <nav id="mobileMenu" class="md:hidden hidden flex flex-col gap-3 mt-4">
-                <a href="/" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
-                <a href="dev/tests/test.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Testy</a>
-                <a href="dev/docs/main.md" class="text-indigo-200 hover:text-white font-medium transition-colors">Dokumentace</a>
+            <nav id="mobileMenu" class="md:hidden hidden absolute right-8 top-28 bg-indigo-900 border border-indigo-700 rounded-2xl shadow-xl px-4 py-4 flex flex-col gap-5 z-40">
+                <a href="index.html" class="text-indigo-50 hover:text-white font-medium transition-colors py-1">Home</a>
+                <a href="dev/tests/test.html" class="text-indigo-50 hover:text-white font-medium transition-colors py-1">Testy</a>
+                <a href="#" id="mobileMenuAboutLink" class="text-indigo-50 hover:text-white font-medium transition-colors py-1">O aplikaci</a>
             </nav>
             <p class="text-indigo-300 font-medium mt-2 text-xs tracking-widest">
                 Pro zadané tóny doporučí vhodný prstoklad
@@ -65,20 +65,27 @@
 
         <!-- Homepage Content -->
         <main class="p-8 bg-white">
-            <section class="mb-8">
-                <h2 class="text-2xl font-bold text-slate-800 mb-4">O aplikaci</h2>
-                <p class="text-slate-700 mb-4 leading-relaxed">
-                    <strong>Cello Fingering Assistant</strong> je klientská webová aplikace pro návrh optimálního prstokladu pro violoncello. 
-                    Aplikace využívá pokročilý algoritmus založený na dynamickém programování, který analyzuje sekvenci tónů 
-                    a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu, minimalizaci posunů a efektivní využití hmatníku.
-                </p>
-                <p class="text-slate-700 leading-relaxed">
-                    Algoritmus upřednostňuje zůstat v jedné poloze, minimalizuje počet posunů mezi polohami a preferuje nižší polohy. 
-                    Výsledek zobrazuje jak textově (s barevným rozlišením strun), tak vizuálně na interaktivním hmatníku.
-                </p>
+            <!-- Hlavička sekce O aplikaci - skrývatelná s obsahem -->
+            <div id="aboutHeader" class="mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">O aplikaci</h2>
+            </div>
+            
+            <!-- Obsah sekce O aplikaci - skrývatelný -->
+            <section id="aboutSection" class="mb-8">
+                <div id="aboutContent" class="space-y-4">
+                    <p class="text-slate-700 leading-relaxed">
+                        <strong>Cello Fingering Assistant</strong> je klientská webová aplikace pro návrh optimálního prstokladu pro violoncello. 
+                        Aplikace využívá pokročilý algoritmus založený na dynamickém programování, který analyzuje sekvenci tónů 
+                        a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu, minimalizaci posunů a efektivní využití hmatníku.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed">
+                        Algoritmus upřednostňuje zůstat v jedné poloze, minimalizuje počet posunů mezi polohami a preferuje nižší polohy. 
+                        Výsledek zobrazuje jak textově (s barevným rozlišením strun), tak vizuálně na interaktivním hmatníku.
+                    </p>
+                </div>
             </section>
 
-            <section class="mb-8">
+            <section id="featuresSection" class="mb-8">
                 <h2 class="text-2xl font-bold text-slate-800 mb-4">Hlavní funkce</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="p-6 bg-indigo-50 rounded-xl border border-indigo-100">
@@ -118,8 +125,8 @@
             <div class="flex flex-col md:flex-row gap-4">
                 <input type="text" id="melodyInput"
                        class="flex-1 p-4 text-xl border-2 border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all font-mono shadow-inner"
-                       value="e f# g#">
-                <button onclick="runSolver()"
+                       value="C D E F G A H c d e f g a h c1 d1 e1 f1 g1">
+                <button
                         class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95">
                     Navrhnout prstoklad
                 </button>

@@ -11,7 +11,7 @@
 </head>
 <body class="bg-slate-100 p-4 md:p-8 font-sans text-slate-900">
     <div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-slate-200">
-        <header class="bg-indigo-950 p-8 text-white">
+        <header class="bg-indigo-950 p-8 text-white relative">
             <div class="flex items-center justify-between mb-4">
                 <a href="../../index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <img src="../../assets/img/logo.svg" alt="Cello Fingering Assistant Logo" class="w-12 h-12">
@@ -26,19 +26,17 @@
                     <nav class="hidden md:flex items-center gap-6">
                         <a href="../../index.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
                         <a href="test.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Testy</a>
-                        <a href="../docs/main.md" class="text-indigo-200 hover:text-white font-medium transition-colors">Dokumentace</a>
                     </nav>
-                    <button id="mobileMenuToggle" class="md:hidden text-indigo-200 hover:text-white transition-colors touch-target" aria-label="Otevřít menu">
+                    <button id="mobileMenuToggle" class="md:hidden text-indigo-200 hover:text-white transition-colors touch-target relative z-50" aria-label="Otevřít menu">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
                 </div>
             </div>
-            <nav id="mobileMenu" class="md:hidden hidden flex flex-col gap-3 mt-4">
-                <a href="../../index.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Home</a>
-                <a href="test.html" class="text-indigo-200 hover:text-white font-medium transition-colors">Testy</a>
-                <a href="../docs/main.md" class="text-indigo-200 hover:text-white font-medium transition-colors">Dokumentace</a>
+            <nav id="mobileMenu" class="md:hidden hidden absolute right-8 top-28 bg-indigo-900 border border-indigo-700 rounded-2xl shadow-xl px-4 py-4 flex flex-col gap-5 z-40">
+                <a href="../../index.html" class="text-indigo-50 hover:text-white font-medium transition-colors py-1">Home</a>
+                <a href="test.html" class="text-indigo-50 hover:text-white font-medium transition-colors py-1">Testy</a>
             </nav>
             <p class="text-indigo-300 font-medium mt-2 uppercase text-xs tracking-widest">
                 Ověření správnosti algoritmu
@@ -67,12 +65,6 @@
     <script type="module">
         import { solve, model } from '../../assets/js/fingering.js';
         import { compareFingering, formatFingering, testSuites } from '../../assets/js/tests.js';
-
-        // Mobile menu toggle
-        document.getElementById('mobileMenuToggle')?.addEventListener('click', () => {
-            const menu = document.getElementById('mobileMenu');
-            menu?.classList.toggle('hidden');
-        });
 
         // Přizpůsobení test runneru pro prohlížeč
         function runAllTests() {
@@ -157,7 +149,7 @@
 
             // Aktualizovat souhrn nahoře
             if (summaryTop) {
-                summaryTop.className = `p-4 rounded-2xl border-2 flex items-center justify-between ${
+                summaryTop.className = `p-4 rounded-2xl border-2 flex items-center justify-between mb-6 ${
                     failed === 0 ? 'test-pass' : 'test-fail'
                 }`;
                 summaryTop.innerHTML = `
@@ -192,9 +184,15 @@
     </script>
     <script>
         // Mobile menu toggle
-        document.getElementById('mobileMenuToggle')?.addEventListener('click', () => {
-            const menu = document.getElementById('mobileMenu');
-            menu?.classList.toggle('hidden');
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (mobileMenuToggle && mobileMenu) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
         });
 
         // Dark mode toggle

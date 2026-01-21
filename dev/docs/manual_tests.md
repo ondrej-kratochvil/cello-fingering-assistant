@@ -47,3 +47,4 @@ Tyto testy jsou určené pro lidského testera. Ověřují aspekty, které se h�
    - výkon při opakovaném volání solveru (zda UI nepůsobí „těžkopádně“).
 
 
+

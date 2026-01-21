@@ -70,3 +70,4 @@ Dodatečně:
 - Implementovány jsou i **druhé průchody** nad vítěznou cestou (např. úprava osamocených tónů v poloze, korekce kolem 4. prstu v široké poloze) – viz detail v `dev/docs/algorithm.md`.
 
 
+
