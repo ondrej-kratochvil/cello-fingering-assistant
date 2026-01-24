@@ -27,7 +27,7 @@ const pitchDefs = [
     { n: "h", strings: [{s:"A", v:2}, {s:"D", v:9}] }, { n: "c1", strings: [{s:"A", v:3}, {s:"D", v:10}] },
     { n: "c1#", s: "A", v: 4 }, { n: "d1", strings: [{s:"A", v:5}, {s:"D", v:12}] }, { n: "d1#", s: "A", v: 6 },
     { n: "e1", s: "A", v: 7 }, { n: "f1", s: "A", v: 8 }, { n: "f1#", s: "A", v: 9 }, { n: "g1", s: "A", v: 10 },
-    { n: "g1#", s: "A", v: 11 }, { n: "h1", s: "A", v: 12 }
+    { n: "g1#", s: "A", v: 11 }, { n: "h1", s: "A", v: 14 }
 ];
 
 // Vytvoření modelu prstokladů

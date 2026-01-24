@@ -76,8 +76,8 @@ function compareFingering(actual, expected) {
 // Mapování béček na enharmonické křížky pro solve (model používá pouze křížky)
 const flatToSharpMap = {
     Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
-    cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', hb: 'a#', bb: 'a#',
-    cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
+    cb: 'H', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', hb: 'a#', bb: 'a#',
+    cb1: 'h', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
 };
 // Křížky na přirozené (E# = F, H# = c)
 const sharpToNaturalMap = {
