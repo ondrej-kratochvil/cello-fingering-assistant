@@ -4,16 +4,28 @@ Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí algoritm
 
 ## Struktura projektu
 
-- `index.html` - Hlavní aplikace s UI
-- `test.html` - Testovací stránka pro ověření správnosti algoritmu
-- `js/fingering.js` - Hlavní logika algoritmu prstokladu
-- `js/ui.js` - UI funkce pro interakci s uživatelem
-- `js/tests.js` - Testovací sady a framework
+- `index.php` – Hlavní aplikace s UI (vstup tónů, výstup prstokladu, vizualizace hmatníku). PHP includuje topbar/footer.
+- `dev/tests/test.php` – Testovací stránka pro ověření správnosti algoritmu (PHP includuje topbar/footer)
+- `assets/js/fingering.js` – Hlavní logika algoritmu prstokladu
+- `assets/js/ui.js` – UI, vykreslení notové osnovy (VexFlow), textového výstupu a hmatníku (Canvas)
+- `assets/js/i18n.js` – Vlastní i18n modul: `t(key)`, načítání JSON z `assets/i18n/`, jazyk a H/B v `localStorage`
+- `assets/i18n/cs.json`, `assets/i18n/en.json` – Překlady UI, O aplikaci, Hlavní funkce, testů; snadné přidání dalších jazyků
+- `assets/js/navigation.js` – Navigace, dark mode, callback pro překreslení při změně tématu
+- `assets/js/tests.js` – Testovací sady a framework
+- `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (notová osnova, i18n)
+- `assets/css/main.css` – Design systém, styly pro notovou osnovu a světlé/tmavé téma
 
 ## Spuštění
 
-1. Otevřete `index.html` v prohlížeči pro použití aplikace
-2. Otevřete `test.html` v prohlížeči pro spuštění testů
+1. Otevřete `index.php` v prohlížeči pro použití aplikace (vyžaduje **PHP**, např. WAMP / Apache+PHP)
+2. Otevřete `dev/tests/test.php` v prohlížeči pro spuštění testů
+
+**Poznámky:**
+- **Multijazyčnost**: čeština (výchozí) a angličtina; jazyk a **označení tónu H/B** (H/Hes vs. B/Bb) v Nastavení, ukládání do `localStorage`
+- **Enharmonické záměny** (e# → f, H# → c, Hb → A#, B → H, Bb → Hb …) pro solver; zobrazení dle volby H/B
+- Tóny lze zadávat i v **alternativním formátu** (např. `c#1` místo `c1#`, `d1b` místo `db1`)
+- **Notová osnova** (VexFlow) zobrazuje posuvky před notou; tóny v osnově, textu a hmatníku podle volby H/B
+- **Vizualizace hmatníku** má černé pozadí (ve světlém i tmavém režimu) s proporčními rozestupy mezi polohami
 
 ## Testy
 
@@ -43,7 +55,9 @@ Algoritmus v7 upřednostňuje:
 ## Vývoj
 
 Při úpravách algoritmu:
-1. Upravte kód v `js/fingering.js`
-2. Spusťte testy v `test.html`
+1. Upravte kód v `assets/js/fingering.js`
+2. Spusťte testy v `dev/tests/test.php`
 3. Ověřte, že všechny testy procházejí
-4. Pokud algoritmus vrací jiný (ale stále správný) výsledek, upravte očekávané hodnoty v `js/tests.js`
+4. Pokud algoritmus vrací jiný (ale stále správný) výsledek, upravte očekávané hodnoty v `assets/js/tests.js`
+
+Dokumentace je v `dev/docs/` (architektura, algoritmus, UI, testování, roadmapa).

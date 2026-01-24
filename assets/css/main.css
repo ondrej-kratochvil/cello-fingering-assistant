@@ -63,6 +63,8 @@
     --color-canvas-fret: #cbd5e1; /* Světlejší pro světlé téma */
     --color-canvas-text: #475569; /* Tmavší pro světlé téma */
     --color-canvas-stroke: #ffffff;
+    --color-staff-ink: #0f172a; /* klíč, noty, polohy, tóny ve světlém režimu */
+    --color-staff-bg: #ffffff; /* pozadí notové osnovy ve světlém režimu */
 
     /* Spacing (8px base unit) */
     --spacing-xs: 0.25rem;   /* 4px */
@@ -116,45 +118,9 @@
 }
 
 /* --- DARK MODE --- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        /* Background barvy */
-        --color-bg-primary: #0f172a;
-        --color-bg-secondary: #1e293b;
-        --color-bg-tertiary: #334155;
-        --color-bg-header: #0f172a;
-        --color-bg-canvas: #1e293b;
-
-        /* Text barvy */
-        --color-text-primary: #f1f5f9;
-        --color-text-secondary: #cbd5e1;
-        --color-text-tertiary: #94a3b8;
-        --color-text-inverse: #0f172a;
-        --color-text-header: #ffffff;
-
-        /* Border barvy */
-        --color-border-primary: #334155;
-        --color-border-secondary: #475569;
-        --color-border-tertiary: #64748b;
-
-        /* Status barvy (tmavší varianty) */
-        --color-success-bg: #064e3b;
-        --color-error-bg: #7f1d1d;
-        --color-warning-bg: #78350f;
-
-        /* Fingering specifické barvy */
-        --color-narrow-bg: #1e3a8a;
-        --color-narrow-border: #3b82f6;
-        --color-wide-bg: #78350f;
-        --color-wide-border: #f59e0b;
-
-        /* Canvas barvy */
-        --color-canvas-bg: #1e293b;
-        --color-canvas-string: #334155; /* Tmavší pro tmavé téma */
-        --color-canvas-fret: #475569; /* Tmavší pro tmavé téma */
-        --color-canvas-text: #e2e8f0; /* Světlejší pro tmavé téma */
-    }
-}
+/* Tmavé téma pouze při manuálním přepnutí (.dark-mode na body).
+   Nepoužíváme @media (prefers-color-scheme: dark), aby vynucené světlé téma
+   (localStorage) přebilo systémové nastavení i na stránce Testy. */
 
 /* Manuální přepnutí Dark Mode */
 .dark-mode {
@@ -194,13 +160,19 @@
     --color-canvas-string: #475569;
     --color-canvas-fret: #64748b;
     --color-canvas-text: #cbd5e1;
+    /* Hmatník: stejně černý jako ve světlém */
+    --color-fingerboard: #0d0d0d;
+    --color-fingerboard-string: #505050;
+    --color-fingerboard-fret: #404040;
+    --color-fingerboard-text: #b0b0b0;
+    --color-fingerboard-stroke: #e0e0e0;
+
+    /* Notová osnova: klíč, noty, polohy, tóny bílé; pozadí tmavé v dark mode */
+    --color-staff-ink: #ffffff;
+    --color-staff-bg: #1e293b;
 }
 
 /* Přepis Tailwind tříd pro Dark Mode - specifičtější selektory */
-body.dark-mode,
-body.dark-mode * {
-    /* Background barvy */
-}
 
 body.dark-mode.bg-slate-100,
 body.dark-mode .bg-slate-100 {
@@ -341,6 +313,19 @@ body.dark-mode canvas {
     background-color: var(--color-canvas-bg) !important;
 }
 
+/* VexFlow notová osnova: pozadí a barvy dle tématu (body.dark-mode) */
+.staff-output {
+    background-color: var(--color-staff-bg) !important;
+}
+
+/* Dark mode: klíč, linky osnovy, noty (path/line/rect) bílé */
+body.dark-mode [id^="vexflow-staff-"] svg path,
+body.dark-mode [id^="vexflow-staff-"] svg line,
+body.dark-mode [id^="vexflow-staff-"] svg rect {
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
 /* --- SEMANTICKÉ TŘÍDY --- */
 
 /* Typografie */
@@ -406,12 +391,79 @@ body.dark-mode canvas {
     min-height: 2.75rem; /* 44px */
 }
 
+/* Jednotné menu (main-nav): desktop inline, mobil rozbalovací */
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+@media (max-width: 767px) {
+    .main-nav {
+        display: none;
+        position: absolute;
+        right: 2rem;
+        top: 7rem;
+        flex-direction: column;
+        align-items: stretch;
+        background: #312e81;
+        border: 1px solid #4338ca;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        padding: 1rem;
+        z-index: 40;
+        gap: 1.25rem;
+    }
+    .main-nav .nav-link {
+        padding: 0.25rem 0;
+    }
+    body.nav-open .main-nav {
+        display: flex;
+    }
+}
+@media (min-width: 768px) {
+    .main-nav {
+        flex: 0 0 auto;
+    }
+}
+
 /* Responzivní utility */
 @media (max-width: 375px) {
     /* iPhone SE a menší */
     :root {
         --font-size-base: 0.9375rem; /* 15px */
         --spacing-md: 0.875rem;      /* 14px */
+    }
+}
+
+/* Horizontální scrollování pro výsledky na menších displejích */
+@media (max-width: 768px) {
+    /* Zajistit, že scrollování je viditelné a intuitivní */
+    .overflow-x-auto {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-secondary) var(--color-bg-secondary);
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: var(--color-bg-secondary);
+        border-radius: 4px;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: var(--color-border-secondary);
+        border-radius: 4px;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: var(--color-border-tertiary);
+    }
+    
+    #fretboardCanvas {
+        min-width: 1000px;
+        background-color: var(--color-fingerboard) !important;
     }
 }
 

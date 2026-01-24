@@ -23,10 +23,11 @@ const pitchDefs = [
     { n: "c#", s: "G", v: 6 }, { n: "d", strings: [{s:"D", v:0}, {s:"G", v:7}] }, { n: "d#", s: "G", v: 8 },
     { n: "e", strings: [{s:"D", v:2}, {s:"G", v:9}] }, { n: "f", strings: [{s:"D", v:3}, {s:"G", v:10}] },
     { n: "f#", strings: [{s:"D", v:4}, {s:"G", v:11}] }, { n: "g", strings: [{s:"D", v:5}, {s:"G", v:12}] },
-    { n: "g#", s: "D", v: 6 }, { n: "a", strings: [{s:"A", v:0}, {s:"D", v:7}] }, { n: "a#", s: "D", v: 8 },
+    { n: "g#", s: "D", v: 6 }, { n: "a", strings: [{s:"A", v:0}, {s:"D", v:7}] }, { n: "a#", strings: [{s:"A", v:1}, {s:"D", v:8}] },
     { n: "h", strings: [{s:"A", v:2}, {s:"D", v:9}] }, { n: "c1", strings: [{s:"A", v:3}, {s:"D", v:10}] },
     { n: "c1#", s: "A", v: 4 }, { n: "d1", strings: [{s:"A", v:5}, {s:"D", v:12}] }, { n: "d1#", s: "A", v: 6 },
-    { n: "e1", s: "A", v: 7 }, { n: "f1", s: "A", v: 8 }, { n: "f1#", s: "A", v: 9 }, { n: "g1", s: "A", v: 10 }
+    { n: "e1", s: "A", v: 7 }, { n: "f1", s: "A", v: 8 }, { n: "f1#", s: "A", v: 9 }, { n: "g1", s: "A", v: 10 },
+    { n: "g1#", s: "A", v: 11 }, { n: "h1", s: "A", v: 12 }
 ];
 
 // Vytvoření modelu prstokladů
@@ -61,7 +62,7 @@ function solve(sequence) {
     for (let i = 1; i < sequence.length; i++) {
         const note = sequence[i];
         const options = model[note];
-        if (!options) continue;
+        if (!options) return null;
 
         console.log(`\n--- Vrstva ${i}: ${note} (${options.length} možností) ---`);
         layers[i] = [];

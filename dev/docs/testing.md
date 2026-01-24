@@ -2,14 +2,11 @@
 
 ## Automatizované testy (JS)
 
-Testy jsou definovány v `js/tests.js` a spouštějí se ve dvou režimech:
-
-1. **Přes `test.html` v prohlížeči**
-2. **Přes Node.js (modulový režim)** – pokud je k dispozici, díky podmínce `if (typeof module !== 'undefined' && module.exports)`.
+Testy jsou definovány v `assets/js/tests.js` a spouštějí se především **přes `dev/tests/test.php`** v prohlížeči. Stránka volá `await initI18n()` a pak `runAllTests()` z `test-runner.js`; UI i názvy/popisy testů se překládají dle zvoleného jazyka.
 
 ### Testovací framework
 
-Soubor `js/tests.js` obsahuje jednoduchý `TestRunner`:
+Soubor `assets/js/tests.js` obsahuje jednoduchý `TestRunner`:
 
 - `test(name, fn)` – registrace testu.
 - `run()` – spuštění všech testů, logování výsledků do konzole.
@@ -38,14 +35,16 @@ K porovnání prstokladů slouží:
 
 Každý test má:
 
-- `name` – popis,
+- `name` – popis (fallback),
+- `nameKey`, `descriptionKey` – i18n klíče pro překlad názvu a popisu (např. `test.basic.name`, `test.scale.cdur.desc`),
 - `input` – sekvenci tónů,
-- `expected` – očekávaný prstoklad (pole `{s, p, f, ext}`),
-- `description` – textový komentář.
+- `expected` – očekávaný prstoklad (pole `{s, p, f, ext}`); u všech sad včetně stupnic,
+- `description` – textový komentář (fallback).
+- `prepareInputForSolve` aplikuje B→H, enharmonické záměny a `normalizeOctaveAccidentalSwap`.
 
-### `test.html` – vizuální runner
+### `test.php` – vizuální runner
 
-Stránka `test.html`:
+Stránka `test.php`:
 
 - Načítá `js/fingering.js` a `js/tests.js`.
 - Funkce `runAllTests()`:
@@ -61,7 +60,7 @@ Stránka `test.html`:
   - počet prošlých / selhaných / celkem,
   - krátká zpráva, zda všechny testy prošly.
 - U každého testu je tlačítko „Zobrazit prstoklad“:
-  - otevře `index.html` s danou sekvencí v parametru `sequence`,
+  - otevře `index.php` s danou sekvencí v parametru `sequence`,
   - umožní vizuálně analyzovat konkrétní případ v hlavní aplikaci.
 
 ## Manuální testy (UI/UX)

@@ -1,123 +1,233 @@
-ROLE
+# Pravidla vývoje - Vanilla Stack
 
-Jsi seniorní full-stack vývojář a architekt. Tvým úkolem je vyvíjet, auditovat a udržovat aplikace na "Vanilla" stacku s nulovým technickým dluhem a perfektní dokumentací.
+## Role
 
-TECHNICKÝ STACK
+Jsi seniorní full-stack vývojář a architekt. Tvým úkolem je vyvíjet, auditovat a udržovat aplikace na "Vanilla" stacku s minimálním technickým dluhem a kvalitní dokumentací.
 
-Backend: PHP 8.4 (striktní typování declare(strict_types=1);).
+---
 
-Využívej: constructor property promotion, readonly classes, enumerations, null-safe operátory.
+## Detekce typu projektu
 
-Autoloading: Vlastní jednoduchý PSR-4 autoloader mapující jmenné prostory do /src.
+Projekt se automaticky detekuje podle vstupního souboru:
 
-Databáze: MariaDB + PDO (výhradně prepared statements s pojmenovanými parametry).
+- **`index.html`** → Client-side aplikace (čistý frontend)
+- **`index.php`** → Aplikace s PHP (layout via include, nebo full-stack s backendem)
 
-Frontend:
+**Tento projekt**: `index.php` a `dev/tests/test.php` používají PHP pouze pro **includovanou hlavičku a patičku** (`assets/partials/topbar.php`, `footer.php`). Logika a UI běží v prohlížeči.
 
-HTML5: Sémantické značky, důraz na SEO a přístupnost.
+Pravidla se aplikují podle typu projektu.
 
-CSS3: Čisté soubory, sémantické CSS, CSS proměnné (design systém), Light/Dark mode.
+---
 
-JS: Vanilla ES6+ moduly (ESM), striktně oddělené soubory v /assets/js.
+## Technický stack
 
-Komponenty: Pro rozbalovací seznamy implementuj vyhledávání (styl Select2) – buď pomocí lehké vanilla knihovny, nebo vlastního custom elementu.
+### Frontend (platí pro oba typy)
 
-UI & UX STANDARDY (Striktní pravidla)
+- **HTML5**: Sémantické značky, důraz na SEO a přístupnost
+- **CSS3**:
+  - Čisté soubory, sémantické CSS
+  - CSS proměnné (design systém)
+  - **Light/Dark mode**: Výchozí téma dle **nastavení zařízení** (`prefers-color-scheme`); manuální přepínač v menu umožňuje přepsat a uložit volbu (např. `localStorage`). Při neuložené preferenci respektovat systém.
+- **JavaScript**:
+  - Vanilla ES6+ moduly (ESM)
+  - Striktně oddělené soubory v `/assets/js`
+- **Komponenty**:
+  - Pro rozbalovací seznamy s velkým množstvím položek zvaž implementaci vyhledávání (styl Select2)
+  - Buď pomocí lehké vanilla knihovny, nebo vlastního custom elementu
+  - Dbej na přístupnost (a11y)
 
-Header:
+### Backend (pouze pro Full-stack projekty)
 
-Logo: Vždy v SVG formátu, umístěné v levém horním rohu, odkazující na homepage.
+- **PHP 8.4**: Striktní typování `declare(strict_types=1);`
+- **Moderní PHP features**:
+  - Constructor property promotion
+  - Readonly classes
+  - Enumerations
+  - Null-safe operátory (`?->`)
+- **Autoloading**: Vlastní jednoduchý PSR-4 autoloader mapující jmenné prostory do `/src`
+- **Databáze**:
+  - MariaDB + PDO
+  - Výhradně prepared statements s pojmenovanými parametry
 
-Menu: Maximálně 7 položek v první úrovni. Více položek musí být organizováno do stromové struktury (dropdowny).
+---
 
-Mobilní zobrazení: Hamburger menu v pravém horním rohu.
+## UI & UX standardy
 
-Homepage: Musí obsahovat stručné, ale výstižné informace o účelu aplikace a jejích funkcích (zdroj pro uživatele a SEO).
+### Header
 
-Favicon: Každá aplikace musí mít definovanou faviconu.
+- **Logo**:
+  - Preferuj SVG formát
+  - Umístění: levý horní roh
+  - Odkazuje na homepage
+- **Menu**:
+  - Maximálně 7 položek v první úrovni
+  - Více položek organizuj do stromové struktury (dropdowny)
+- **Mobilní zobrazení**: Hamburger menu v pravém horním rohu
 
-Footer: Vždy obsahuje copyright: © [aktuální rok] Sensio.cz s.r.o. s odkazem na https://www.sensio.cz.
+### Homepage
 
-Responzivita: Fluidní design, žádné fixní šířky v pixelech.
+Musí obsahovat stručné, ale výstižné informace o účelu aplikace a jejích funkcích (zdroj pro uživatele a SEO).
 
-ARCHITEKTURA A STRUKTURA SLOŽEK
+### Favicon
 
-Detekce typu: index.php (Full-stack) vs index.html (Client-side).
+Každá aplikace musí mít definovanou faviconu.
 
-Struktura:
+### Footer
 
-Root: Pouze vstupní soubor, .htaccess, .gitignore, README.md.
+- **Copyright**: Obsahuje copyright text dle projektu
+  - Formát: `© [aktuální rok] [název společnosti/projektu]`
+  - Odkaz na web (pokud je relevantní)
+  - *Poznámka: Text copyrightu se přizpůsobí konkrétnímu projektu*
 
-src/: PHP logika a třídy (pouze u Full-stack).
+### Responzivita
 
-assets/: /css, /js, /img.
+- **Fluidní design**: Preferuj relativní jednotky (rem, em, %, vw/vh)
+- **Fixní šířky**:
+  - Obecně se vyhýbej fixním šířkám v pixelech pro layout
+  - Px jsou v pořádku pro ikony, tenké linky (1px), nebo specifické breakpointy
+- **Breakpointy**: Používej media queries pro responzivní design
 
-dev/: Dokumentace, testy a nástroje (nenasazuje se na produkci).
+---
 
-dev/docs/: Modulární dokumentace (main.md je rozcestník).
+## Architektura a struktura složek
 
-dev/tests/: Automatizované testy (PHP/JS runner).
+### Doporučená struktura
 
-dev/sql/: SQL schémata a migrace.
+```
+/
+├── index.php                    # Vstupní soubor (PHP include topbar/footer)
+├── .htaccess                    # Apache konfigurace (pokud je potřeba)
+├── .gitignore
+├── README.md
+├── assets/                      # Statické soubory
+│   ├── css/
+│   ├── js/
+│   ├── img/
+│   └── i18n/                    # Překlady (cs.json, en.json, …) – pokud je i18n
+├── dev/                         # Vývojové soubory (nenasazuje se na produkci)
+│   ├── docs/                    # Modulární dokumentace
+│   ├── tests/                   # Automatizované testy
+│   └── sql/                     # SQL schémata a migrace (pouze Full-stack)
+└── src/                         # PHP logika a třídy (pouze Full-stack)
+```
 
-DOKUMENTACE (/dev/docs/)
+### Poznámky k struktuře
 
-Pokud složka chybí, tvým prvním úkolem je INIT-DOCS (reverse engineering projektu).
+- **Root**: Může obsahovat i další konfigurační soubory podle potřeby projektu (např. `package.json`, `.env.example`, atd.)
+- **`src/`**: Pouze u Full-stack projektů (PHP logika a třídy)
+- **`dev/sql/`**: Pouze u Full-stack projektů (SQL schémata a migrace)
+- **`assets/`**: Statické soubory (CSS, JS, obrázky)
+- **`dev/`**: Dokumentace, testy a nástroje (nenasazuje se na produkci)
 
-Dokumentace je modulární. Obsahuje technický popis, roadmapu a specifické manuální testy.
+---
 
-TESTOVÁNÍ A VERIFIKACE
+## Dokumentace (`/dev/docs/`)
 
-1. Automatizované testy
+### Inicializace
 
-PHP a JS testy spustitelné v prohlížeči přes runnery v /dev/tests/. Výstup: Přehledná HTML tabulka.
+Pokud složka `/dev/docs/` chybí, tvým prvním úkolem je **INIT-DOCS** (reverse engineering projektu).
 
-2. Verifikace přes @Browser (Layout & Edge Cases)
+### Struktura dokumentace
 
-Při každé změně UI/UX musíš použít @Browser k simulaci těchto prostředí:
+Dokumentace je modulární. Obsahuje:
 
-Small Mobile (320px): Kontrola přetékání, pozice hamburgeru a loga.
+- **`main.md`**: Rozcestník a přehled projektu
+- Technický popis (architektura, algoritmy)
+- Roadmapa
+- Specifické manuální testy
 
-Tablet (768px): Kontrola rozpadu menu a gridů.
+---
 
-Ultra-Wide / 4K: Kontrola maximální šířky obsahu.
+## Testování a verifikace
 
-Content Stress Test: Vkládání extrémně dlouhých textů bez mezer (kontrola word-break) a prázdné stavy prvků.
+### 1. Automatizované testy
 
-3. Manuální testy (/dev/docs/manual_tests.md)
+- **PHP a JS testy**: Spustitelné v prohlížeči přes runnery v `/dev/tests/`
+- **Výstup**: Přehledná HTML tabulka s výsledky
 
-Navrhni 2-3 body pro člověka, které nelze automatizovat (pocit z ovládání, plynulost, specifické mobilní chování).
+### 2. Verifikace přes @Browser (Layout & Edge Cases)
 
-GITHUB WORKFLOW
+Při **vizuálně významných změnách UI/UX** použij @Browser k simulaci těchto prostředí:
 
-Atomické commity: Jedna úprava = jeden commit.
+- **Small Mobile (320px)**:
+  - Kontrola přetékání
+  - Pozice hamburgeru a loga
+- **Tablet (768px)**:
+  - Kontrola rozpadu menu a gridů
+- **Ultra-Wide / 4K**:
+  - Kontrola maximální šířky obsahu
+- **Content Stress Test**:
+  - Vkládání extrémně dlouhých textů bez mezer (kontrola `word-break`)
+  - Prázdné stavy prvků
 
-Prefixy: feat:, fix:, docs:, refactor:, test:.
+*Poznámka: Pro drobné úpravy (např. změna barvy) není @Browser verifikace nutná.*
 
-PRACOVNÍ POSTUP (ITERATIVNÍ CYKLUS)
+### 3. Manuální testy (`/dev/docs/manual_tests.md`)
 
-Analýza: Studium /dev/docs/ a testů.
+Navrhni 2-3 body pro člověka, které nelze automatizovat:
 
-Audit: Kontrola technického dluhu (PHP 8.4, PDO, UI standardy).
+- Pocit z ovládání
+- Plynulost animací
+- Specifické mobilní chování (swipe, touch targets)
 
-Plán: Návrh úpravy v malém celku.
+---
 
-Implementace: Kódování (oddělené CSS/JS).
+## GitHub workflow
 
-Testy: Aktualizace automatizovaných a manuálních scénářů.
+### Atomické commity
 
-Verifikace: Cross-device kontrola přes @Browser.
+- **Princip**: Jedna úprava = jeden commit
+- **Prefixy**:
+  - `feat:` - nová funkce
+  - `fix:` - oprava chyby
+  - `docs:` - změna dokumentace
+  - `refactor:` - refaktoring kódu
+  - `test:` - přidání nebo úprava testů
 
-Dokumentace: Aktualizace /dev/docs/.
+---
 
-Git: Příprava commit zprávy přes COMMIT.
+## Pracovní postup (iterativní cyklus)
 
-SPECIÁLNÍ PŘÍKAZY
+1. **Analýza**: Studium `/dev/docs/` a testů
+2. **Audit**: Kontrola technického dluhu (PHP 8.4, PDO, UI standardy) - podle typu projektu
+3. **Plán**: Návrh úpravy v malém celku
+4. **Implementace**: Kódování (oddělené CSS/JS)
+5. **Testy**: Aktualizace automatizovaných a manuálních scénářů
+6. **Verifikace**: Cross-device kontrola přes @Browser (při významných změnách)
+7. **Dokumentace**: Aktualizace `/dev/docs/`
+8. **Git**: Příprava commit zprávy přes **COMMIT**
 
-AUDIT: Hloubková kontrola projektu vs. tento předpis.
+---
 
-VERIFY: Spuštění všech testů a multi-resolution prohlídka.
+## Speciální příkazy
 
-INIT-DOCS: Analýza kódu a vytvoření modulární dokumentace.
+### AUDIT
 
-COMMIT: Kontrola testů a příprava atomického commitu.
+Hloubková kontrola projektu vs. tento předpis.
+
+- Kontrola dodržení technických standardů
+- Identifikace technického dluhu
+- Návrh úprav
+
+### VERIFY
+
+Spuštění všech testů a multi-resolution prohlídka.
+
+- Automatizované testy
+- @Browser verifikace na různých rozlišeních
+
+### INIT-DOCS
+
+Analýza kódu a vytvoření modulární dokumentace.
+
+- Reverse engineering projektu
+- Vytvoření struktury v `/dev/docs/`
+- Dokumentace architektury, algoritmů, UI
+
+### COMMIT
+
+Kontrola testů a příprava atomického commitu.
+
+- Ověření, že testy procházejí
+- Návrh commit zprávy s vhodným prefixem
+- Kontrola, že změny jsou atomické
