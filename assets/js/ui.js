@@ -387,7 +387,10 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     // Legenda barev strun
     const legend = document.createElement('div');
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
-    legend.innerHTML = '<p class="text-sm font-bold text-slate-700 mb-2">Legenda strun:</p>';
+    const legendTitle = document.createElement('p');
+    legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
+    legendTitle.textContent = t('legend.strings');
+    legend.appendChild(legendTitle);
 
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
@@ -397,7 +400,7 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
         legendItem.className = 'flex items-center gap-2';
         legendItem.innerHTML = `
             <span class="w-4 h-4 rounded" style="background-color: ${color}"></span>
-            <span class="font-bold">${string} struna</span>
+            <span class="font-bold">${t('legend.string', { s: string })}</span>
         `;
         legendItems.appendChild(legendItem);
     });
@@ -671,8 +674,8 @@ function runSolver(skipHideAbout = false) {
         input = inputVal.split(/\s+/);
         const flatToSharpMap = {
             Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
-            cb: 'H', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
-            cb1: 'h', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
+            cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
+            cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
         };
         const sharpToNaturalMap = {
             'E#': 'F', 'e#': 'f', 'e1#': 'f1', 'E1#': 'f1',
