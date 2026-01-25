@@ -488,14 +488,24 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         return;
     }
 
-    const { Renderer, Stave, StaveNote, Voice, Formatter, Annotation, Accidental } = Vex.Flow;
+    const { Renderer, Stave, StaveNote, Voice, Formatter, Annotation, Accidental, ClefNote } = Vex.Flow;
 
     // Nastavení osnovy
     const noteSpacing = 44;
     const clefOffset = 60;
     const totalWidth = clefOffset + (result.length * noteSpacing) + 20;
-    // Zvětšená výška pro noty pod osnovou a anotace (více místa nahoře i dole)
-    const totalHeight = 250;
+    // Zmenšená výška - menší odsazení shora
+    const totalHeight = 200;
+
+    // Zjistit index první noty vyšší než a1 (MIDI 69)
+    let firstHighNoteIndex = -1;
+    for (let i = 0; i < input.length; i++) {
+        const midi = getMidiNumber(input[i]);
+        if (midi > 69) {
+            firstHighNoteIndex = i;
+            break;
+        }
+    }
 
     // Vytvořit div pro VexFlow renderer
     const staffDiv = document.createElement('div');
@@ -511,8 +521,8 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     const bodyStyles = getComputedStyle(document.body);
     const staffInk = bodyStyles.getPropertyValue('--color-staff-ink').trim() || bodyStyles.getPropertyValue('--color-text-primary').trim() || '#0f172a';
 
-    // Vytvořit osnovu s basovým klíčem (posunuta dolů, aby bylo místo pro noty pod osnovou a anotace)
-    const stave = new Stave(0, 100, totalWidth);
+    // Vytvořit osnovu s basovým klíčem (menší odsazení shora)
+    const stave = new Stave(0, 50, totalWidth);
     stave.addClef('bass');
     context.setFillStyle(staffInk);
     context.setStrokeStyle(staffInk);
@@ -522,9 +532,13 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     const notes = input.map((noteName, idx) => {
         const step = result[idx];
         const vexFlowNote = noteToVexFlow(noteName);
+        const midi = getMidiNumber(noteName);
+        // Pro noty vyšší než a1 použít treble clef, jinak bass
+        const noteClef = midi > 69 ? 'treble' : 'bass';
 
+        // Použít whole note ('w') - celá nota bez nožičky
         const note = new StaveNote({
-            clef: 'bass',
+            clef: noteClef,
             keys: [vexFlowNote],
             duration: 'w' // whole note (celá nota bez nožičky)
         });
@@ -533,14 +547,6 @@ export function renderStaffOutput(container, result, input, positionChanges, str
             try { note.addModifier(new Accidental('#'), 0); } catch (e) { /* ignorovat */ }
         } else if (/^[A-Ga-g]b\/\d/.test(vexFlowNote)) {
             try { note.addModifier(new Accidental('b'), 0); } catch (e) { /* ignorovat */ }
-        }
-        // Skrýt nožičku - whole notes v VexFlow obvykle nemají nožičku
-        try {
-            if (note.setStemStyle) {
-                note.setStemStyle({ fillStyle: 'transparent', strokeStyle: 'transparent' });
-            }
-        } catch (e) {
-            // Ignorovat chyby
         }
 
         // Přidat anotace: poloha (nahoře), prst (u noty), tón (dole)
@@ -580,9 +586,31 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         return note;
     });
 
-    // Vytvořit Voice a formátovat noty
-    const voice = new Voice({ num_beats: notes.length, beat_value: 1 });
-    voice.addTickables(notes);
+    // Vytvořit Voice a přidat noty (s případnou změnou klíče)
+    let voice;
+
+    // Pokud jsou noty vyšší než a1, přidat změnu klíče před první takovou notou
+    if (firstHighNoteIndex >= 0) {
+        const tickables = [];
+        // Přidat všechny noty před první vysokou notou
+        for (let i = 0; i < firstHighNoteIndex; i++) {
+            tickables.push(notes[i]);
+        }
+        // Přidat změnu klíče na houslový - ClefNote ignoruje ticks, takže nepočítáme ji do num_beats
+        const clefNote = new ClefNote('treble');
+        tickables.push(clefNote);
+        // Přidat zbývající noty
+        for (let i = firstHighNoteIndex; i < notes.length; i++) {
+            tickables.push(notes[i]);
+        }
+        // ClefNote ignoruje ticks, takže num_beats = počet not (bez ClefNote)
+        voice = new Voice({ num_beats: notes.length, beat_value: 1 });
+        voice.addTickables(tickables);
+    } else {
+        // Žádné vysoké noty, přidat všechny noty s basovým klíčem
+        voice = new Voice({ num_beats: notes.length, beat_value: 1 });
+        voice.addTickables(notes);
+    }
 
     // Formátovat noty s pevnou šířkou
     const formatter = new Formatter();
@@ -596,7 +624,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     // Kontejner pro osnovu s horizontálním scrollováním
     const staffContainer = document.createElement('div');
-    staffContainer.className = 'overflow-x-auto -mx-8 px-8 md:mx-0 md:px-0';
+    staffContainer.className = 'overflow-x-auto md:mx-0 md:px-0';
     staffContainer.appendChild(staffDiv);
     container.appendChild(staffContainer);
 
@@ -860,13 +888,25 @@ function drawFingerboard(path, input) {
         ctx.fillText(str, stringLabelX, stringYPositions[str] + 5);
     });
 
-    ctx.strokeStyle = fingerboardFret;
-    ctx.lineWidth = 1;
     ctx.font = 'bold 10px sans-serif';
     ctx.fillStyle = fingerboardText;
     ctx.textAlign = 'center';
     for (let pos = 1; pos <= numPositions; pos++) {
         const x = posX[pos];
+        // Zesvětlit čáry pro I., IV. a VII. polohu (diatonicky)
+        // I. poloha (diatonicky) = pozice 2 (chromaticky)
+        // IV. poloha (diatonicky) = pozice 7 (chromaticky)
+        // VII. poloha (diatonicky) = pozice 12 (chromaticky)
+        const isHighlighted = pos === 2 || pos === 7 || pos === 12;
+
+        if (isHighlighted) {
+            // Zesvětlená čára pro orientační body
+            ctx.strokeStyle = '#707070'; // Světlejší než standardní #404040
+            ctx.lineWidth = 1.5;
+        } else {
+            ctx.strokeStyle = fingerboardFret;
+            ctx.lineWidth = 1;
+        }
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
@@ -1010,6 +1050,14 @@ export function initUI() {
     if (melodyInputEl) {
         melodyInputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); runSolver(); }
+        });
+    }
+
+    const clearInputButton = document.getElementById('clearInputButton');
+    if (clearInputButton && melodyInputEl) {
+        clearInputButton.addEventListener('click', () => {
+            melodyInputEl.value = '';
+            melodyInputEl.focus();
         });
     }
 

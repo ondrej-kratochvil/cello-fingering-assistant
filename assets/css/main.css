@@ -391,6 +391,27 @@ body.dark-mode [id^="vexflow-staff-"] svg rect {
     min-height: 2.75rem; /* 44px */
 }
 
+/* Hlavička - zajistit, že hamburger je vždy viditelný */
+.app-header > div {
+    min-width: 0; /* Umožnit zkrácení flex items */
+}
+.app-header h1 {
+    /* Logo (w-12 = 3rem) + gap-3 (0.75rem) + hamburger/menu (cca 12rem) = cca 16rem */
+    max-width: calc(100vw - 16rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+@media (max-width: 767px) {
+    .app-header h1 {
+        max-width: calc(100vw - 12rem);
+    }
+}
+.app-header #menuToggle {
+    flex-shrink: 0 !important;
+    min-width: 2.75rem;
+}
+
 /* Jednotné menu (main-nav): desktop inline, mobil rozbalovací */
 .main-nav {
     display: flex;
@@ -441,6 +462,8 @@ body.dark-mode [id^="vexflow-staff-"] svg rect {
     .overflow-x-auto {
         scrollbar-width: thin;
         scrollbar-color: var(--color-border-secondary) var(--color-bg-secondary);
+        /* Pozadí pro horizontální scroll na mobilu */
+        background-color: var(--color-bg-primary);
     }
     
     .overflow-x-auto::-webkit-scrollbar {
