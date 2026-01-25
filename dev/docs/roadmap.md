@@ -7,7 +7,7 @@
 #### 1.1 SVG Logo
 - **Status**: ✅ Hotovo
 - **Soubor**: `assets/img/logo.svg` (vytvořeno)
-- **Implementace**: Logo přidáno do headeru v `index.html` a `dev/tests/test.html`, odkazuje na homepage
+- **Implementace**: Logo přidáno do headeru v `index.php` a `dev/tests/test.php` (topbar partial), odkazuje na homepage
 
 #### 1.2 Favicon
 - **Status**: ✅ Hotovo
@@ -60,7 +60,7 @@
 
 #### 3.2 Přesun test.html
 - **Status**: ✅ Hotovo
-- **Soubor přesunut**: `test.html` → `dev/tests/test.html`
+- **Soubor přesunut**: `test.html` → `dev/tests/test.html` (nyní `dev/tests/test.php`)
 - **Aktualizace**: Cesty k JS souborům upraveny na relativní (`../../assets/js/`)
 
 #### 3.3 Vytvoření chybějících složek
@@ -68,32 +68,33 @@
 - **Vytvořené složky**:
   - `assets/css/` (připraveno pro budoucí CSS)
   - `assets/img/` (obsahuje logo.svg a favicon.svg)
-  - `dev/tests/` (obsahuje test.html)
+  - `dev/tests/` (obsahuje test.php)
   - `dev/sql/` (připraveno pro budoucí SQL)
 
 #### 3.4 Root soubory
-- **Status**: ⚠️ Částečně
-- **Úkoly**:
-  - Vytvořit `.htaccess` (pro Apache server)
-  - Vytvořit `.gitignore` (pokud chybí)
-  - Zkontrolovat, že v root jsou pouze: `index.html`, `.htaccess`, `.gitignore`, `README.md`
+- **Status**: ✅ Hotovo
+- **Implementace**:
+  - Vytvořen `.htaccess` (Apache konfigurace, komprese, cache, zabezpečení)
+  - Vytvořen `.gitignore` (OS soubory, editor soubory, logy, dočasné soubory)
+  - Root obsahuje: `index.php`, `.htaccess`, `.gitignore`, `README.md`, `.cursorrules`
 
 ### 4. HTML - Sémantika a přístupnost
 
 #### 4.1 Sémantické značky
-- **Status**: ⚠️ Částečně
-- **Úkoly**:
-  - Zkontrolovat použití `<header>`, `<main>`, `<footer>`, `<nav>`, `<section>`
-  - Přidat `<main>` kolem hlavního obsahu
-  - Zkontrolovat hierarchii nadpisů (`<h1>`, `<h2>`, atd.)
+- **Status**: ✅ Hotovo
+- **Implementace**:
+  - `<header>`, `<main>`, `<footer>`, `<nav>`, `<section>` správně použity v `index.php` (header/footer v partials)
+  - `<main>` v `test.php` kolem hlavního obsahu
+  - Hierarchie nadpisů: `<h1>` v headeru, `<h2>` v sekcích, `<h3>` v podsekci
 
 #### 4.2 SEO a přístupnost
-- **Status**: ⚠️ Částečně
-- **Úkoly**:
-  - Přidat `<meta name="description">` do `<head>`
-  - Přidat `alt` atributy k obrázkům (až budou)
-  - Zkontrolovat ARIA atributy pro přístupnost
-  - Přidat `lang="cs"` (už je)
+- **Status**: ✅ Hotovo
+- **Implementace**:
+  - `<meta name="description">`, `<meta name="keywords">`, `<meta name="author">` přidány
+  - Open Graph a Twitter Card meta tagy přidány
+  - `alt` atributy u všech obrázků (logo)
+  - ARIA atributy u tlačítek (`aria-label` pro dark mode toggle, mobile menu)
+  - `lang="cs"` nastaveno na `<html>`
 
 ### 5. JavaScript - ESM moduly
 
@@ -105,6 +106,9 @@
   - Přidán `import { solve, model }` v `assets/js/ui.js`
   - Změněno `<script src>` na `<script type="module">` v HTML souborech
   - Testy používají ESM importy v inline scriptu
+  - Vytvořen `assets/js/navigation.js` pro společné navigační funkce
+  - Vytvořen `assets/js/test-runner.js` pro UI test runneru
+  - Všechny inline JavaScripty přesunuty do modulů (včetně `toggleJson()`)
 
 ## 🟡 Doplňkové úkoly
 
@@ -117,8 +121,15 @@
   - Content Stress Test (dlouhé texty)
 
 ### 7. Light/Dark mode
-- **Status**: ❌ Chybí
-- **Úkol**: Implementovat přepínač Light/Dark mode pomocí CSS proměnných
+- **Status**: ✅ Hotovo
+- **Implementace**:
+  - Přepínač dark mode v headeru (ikona měsíce/slunce)
+  - Automatická detekce systémové preference (`prefers-color-scheme`)
+  - Ukládání preference do `localStorage`
+  - CSS proměnné pro light/dark mode v `main.css`
+  - Překreslení **notové osnovy i canvasu** při změně tématu (`runSolver` používá `lastResult`/`lastInput` při prázdném vstupu)
+  - Notová osnova: bílé pozadí + černé prvky (light), tmavé pozadí + bílé prvky (dark); `.staff-output`, `--color-staff-ink`, `--color-staff-bg`
+  - Implementováno v `assets/js/navigation.js` a `ui.js`
 
 ### 8. Dokumentace
 - **Status**: ✅ Hotovo
@@ -146,11 +157,23 @@
 12. ✅ Menu úpravy (přesun "O aplikaci" do menu, odstranění "Dokumentace", oprava mobilního menu)
 13. ✅ Canvas vylepšení (správné pozice tónů, různé tloušťky strun, barvy podle tématu)
 14. ✅ Skrývání celého `<main>` místo jen sekcí
+15. ✅ Notová osnova (VexFlow): basový klíč, celé noty, anotace polohy/prsty/tóny, barevné struny, horizontální scroll
+16. ✅ Sekce Nastavení: skrývatelná, Formát výstupu (Notová osnova / Textový výstup)
+17. ✅ Notová osnova bez borderu; pozadí a barvy dle tématu (`--color-staff-bg`, `--color-staff-ink`)
 
 ## 📝 Poznámky
 
 - Projekt je **client-side** aplikace (žádný PHP), takže PHP audit není relevantní
-- Používá se **Tailwind CSS** přes CDN, což je v pořádku, ale měly by se vytvořit CSS proměnné pro vlastní barvy
-- Testy jsou funkční a procházejí
+- Používá se **Tailwind CSS** přes CDN + vlastní **CSS proměnné** v `main.css` pro design systém
+- **VexFlow** (CDN, CJS 4.2.5) pro vykreslení notové osnovy (basový klíč, celé noty, anotace polohy/prsty/tóny, posuvky před notou)
+- **Nastavení**: skrývatelná sekce pod výstupem, Formát výstupu (Notová osnova / Textový výstup)
+- **Překreslení při změně tématu**: `runSolver` při prázdném vstupu překreslí z `lastResult`/`lastInput`; notová osnova i hmatník respektují světlé/tmavé téma
+- **Enharmonické záměny**: pouze pro algoritmus (flatToSharpMap, sharpToNaturalMap), VexFlow zobrazuje noty přesně jak zadané
+- **Alternativní formát**: podpora `c#1` místo `c1#` (automatická konverze)
+- **Hmatník**: černý pozadí (light i dark), proporční spacing (geometrická řada k=0.92), menší rozestup I. polohy (14% z šířky)
+- **Multijazyčnost (i18n)**: čeština (výchozí) a angličtina; `assets/js/i18n.js`, `assets/i18n/cs.json` / `en.json`; `data-i18n`, `t(key)`; jazyk a **označení H/B** (H/Hes vs. B/Bb) v Nastavení, ukládání do `localStorage`; snadné přidání dalších jazyků
+- Testy jsou funkční a procházejí (včetně 14 testů stupnic); test-runner používá i18n (`t()`, `nameKey`/`descriptionKey`)
 - Algoritmus je dobře zdokumentovaný
+- Všechny JavaScripty jsou oddělené do ESM modulů v `/assets/js/`
+- Root soubory: `index.php`, `.htaccess`, `.gitignore`, `README.md`, `.cursorrules`
 

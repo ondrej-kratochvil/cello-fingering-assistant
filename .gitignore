@@ -1,0 +1,53 @@
+# Cello Fingering Assistant - .gitignore
+
+# OS soubory
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor soubory
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Logy
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dočasné soubory
+*.tmp
+*.temp
+.cache/
+
+# Node modules (pokud by se v budoucnu přidaly)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build soubory (pokud by se v budoucnu přidaly)
+dist/
+build/
+*.min.js
+*.min.css
+
+# Environment soubory
+.env
+.env.local
+.env.*.local
+
+# Backup soubory
+*.bak
+*.backup
+*~

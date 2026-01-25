@@ -2,25 +2,33 @@
 
 ## Přehled
 
-Projekt je čistě klientská webová aplikace bez backendu. Veškerá logika běží v prohlížeči, kód je rozdělen do tří hlavních JS modulů:
+Projekt je klientská webová aplikace s **PHP** pro layout (hlavička, patička). Stránky `index.php` a `dev/tests/test.php` includují společný topbar a footer. Veškerá logika běží v prohlížeči, kód je rozdělen do několika JS modulů:
 
-- `js/fingering.js` – datový model hmatníku a algoritmus výpočtu prstokladů.
-- `js/ui.js` – prezentační a interakční logika pro `index.html`.
-- `js/tests.js` – definice testovacích sad a jednoduchý test runner.
+- `assets/js/fingering.js` – datový model hmatníku a algoritmus výpočtu prstokladů.
+- `assets/js/ui.js` – prezentační a interakční logika pro `index.php`, vykreslení notové osnovy (VexFlow), textového výstupu a Canvas hmatníku.
+- `assets/js/navigation.js` – navigace, dark mode toggle, callback pro překreslení při změně tématu.
+- `assets/js/tests.js` – definice testovacích sad (včetně 14 testů stupnic) a jednoduchý test runner, funkce `prepareInputForSolve` pro enharmonické záměny.
+- `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (zobrazuje VexFlow notovou osnovu pro každý test).
 
 ### Struktura adresářů
 
-- `index.html` – hlavní UI.
-- `test.html` – UI pro běh testů.
-- `js/`
+- `index.php` – hlavní UI (PHP, includuje topbar/footer).
+- `dev/tests/test.php` – UI pro běh testů (PHP, includuje topbar/footer).
+- `assets/js/`
   - `fingering.js` – model a algoritmus.
-  - `ui.js` – práce s DOM, kreslení Canvasu.
+  - `ui.js` – práce s DOM, VexFlow (notová osnova), kreslení Canvasu, `toDisplayNote`, `initUI`.
+  - `i18n.js` – i18n modul, načítání `assets/i18n/*.json`, jazyk a H/B.
+  - `navigation.js` – jednotné menu (menuToggle, mainNav), dark mode, vlajky jazyka.
   - `tests.js` – testy a test runner.
+  - `test-runner.js` – UI test runneru pro `dev/tests/test.php`.
+- `assets/partials/` – **topbar.php**, **footer.php** (společný layout, PHP include). `topbar.php` očekává `$base`, `$pageTitle`, `$taglineKey`, `$taglineFallback`.
+- `assets/i18n/` – překlady (cs.json, en.json).
+- `assets/css/main.css` – design systém, styly pro notovou osnovu.
 - `dev/docs/` – tato dokumentace.
 
 ## Datový model hmatníku
 
-Datový model je definován v `js/fingering.js`:
+Datový model je definován v `assets/js/fingering.js`:
 
 - `pitchDefs` – pole definic tónů:
   - `n` – název tónu (např. `e`, `g1`, `c1#`).
@@ -37,7 +45,7 @@ Tento model se používá jako vstup pro algoritmus `solve`.
 
 ## Algoritmus a vrstvy (high‑level)
 
-Funkce `solve(sequence)` v `js/fingering.js`:
+Funkce `solve(sequence)` v `assets/js/fingering.js`:
 
 - Vstup: `sequence` – pole tónů jako řetězce (`['e', 'f#', 'g#']`).
 - Vrací: nejlepší nalezený prstoklad jako pole objektů `{ s, p, f, ext }`.
