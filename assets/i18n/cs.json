@@ -91,6 +91,8 @@
   "test.CDEF.desc": "C struna, zůstává ve stejné poloze",
   "test.ahc1d1.name": "Sekvence a h c1 d1",
   "test.ahc1d1.desc": "A struna, zůstává ve stejné poloze",
+  "test.cbMapping.name": "Enharmonika cb / cb1 → h / h1",
+  "test.cbMapping.desc": "cb = h (malá oktáva), cb1 = h1 (jednopráskačková)",
   "test.gahc.name": "Sekvence g a h c",
   "test.gahc.desc": "Sekvence přes více strun",
   "test.long.name": "Dlouhá sekvence g a h c1 d1 e1 f1# g1",

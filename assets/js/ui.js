@@ -3,14 +3,17 @@ import { solve, model } from './fingering.js';
 import { t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations } from './i18n.js';
 
 /**
- * Mapování tónů na MIDI čísla (C2 = 36, C3 = 48, C4 = 60)
+ * Mapování tónů na MIDI čísla (ISO: C2=36, C3=48, C4=60)
  * Cello prázdné struny: C2=36, G2=43, D3=50, A3=57
+ * Kontra oktáva (C1–B1): MIDI 24–35. Velké Ces = kontra H = H1 = MIDI 35.
  */
 function getMidiNumber(noteName) {
     const n = normalizeOctaveAccidentalSwap(noteName);
     const noteMap = {
+        'H1': 35, 'Hb1': 34,
         'C': 36, 'C#': 37, 'D': 38, 'D#': 39, 'E': 40, 'E#': 41, 'F': 41, 'F#': 42, 'Fb': 40,
-        'G': 43, 'G#': 44, 'A': 45, 'A#': 46, 'H': 47, 'H#': 48, 'Hb': 46, 'B': 47, 'Cb': 47,
+        'G': 43, 'G#': 44, 'A': 45, 'A#': 46, 'H': 47, 'H#': 48, 'Hb': 46, 'B': 47,
+        'Cb': 35,
         'c': 48, 'c#': 49, 'd': 50, 'd#': 51, 'e': 52, 'e#': 53, 'f': 53, 'f#': 54, 'fb': 52,
         'g': 55, 'g#': 56, 'a': 57, 'a#': 58, 'h': 59, 'h#': 60, 'hb': 58, 'b': 59, 'cb': 59,
         'c1': 60, 'c1#': 61, 'd1': 62, 'd1#': 63, 'e1': 64, 'e1#': 65, 'f1': 65, 'f1#': 66, 'fb1': 64,
@@ -59,9 +62,12 @@ function getNoteYPosition(midiNumber, baseLineY, lineSpacing, staffTop) {
 
     // Přímé mapování podle MIDI čísel pro basový klíč
     const notePositions = {
+        // Kontra oktáva (H1 = B1 = MIDI 35, Hb1 = Bb1 = 34) – pod C2
+        34: baseLineY + 4 * lineSpacing,     // Bb1 (Hb1)
+        35: baseLineY + 3.75 * lineSpacing,  // B1 (H1, Cb velké)
         // Noty pod osnovou (pomocné linky) - POZOR: větší Y = níže
-        36: baseLineY + 3.5 * lineSpacing, // C2 - 2. pomocná pod osnovou
-        37: baseLineY + 3.25 * lineSpacing, // C#2
+        36: baseLineY + 3.5 * lineSpacing,   // C2 - 2. pomocná pod osnovou
+        37: baseLineY + 3.25 * lineSpacing,  // C#2
         38: baseLineY + 2.5 * lineSpacing, // D2 - pod 1. pomocnou linkou (v mezeře pod linkou)
         39: baseLineY + 2.75 * lineSpacing, // D#2
         40: baseLineY + 2.5 * lineSpacing, // E2 - 1. pomocná pod osnovou
@@ -436,15 +442,16 @@ function toDisplayNote(token) {
 
 /**
  * Převod názvu noty na VexFlow formát
- * VexFlow používá oktávy: C/1 = velká oktáva, C/3 = malá oktáva, C/4 = jednočárkovaná
- * Pro basový klíč: C/1 je na 2. pomocné lince pod osnovou, C/3 na 2. lince osnovy, C/4 na 1. pomocné lince nad osnovou
+ * Oktávy: C/1 = kontra (MIDI 24–35), C/2 = velká, C/3 = malá, C/4 = jednočárkovaná
+ * Velké Ces = kontra H = H1 → Cb/1 resp. B/1 (ISO B1, MIDI 35)
  */
 function noteToVexFlow(noteName) {
     const n = normalizeOctaveAccidentalSwap(noteName);
     const noteMap = {
+        'H1': 'B/1', 'Hb1': 'Bb/1', 'Cb': 'Cb/1',
         'C': 'C/2', 'C#': 'C#/2', 'D': 'D/2', 'D#': 'D#/2', 'E': 'E/2', 'E#': 'E#/2', 'F': 'F/2', 'F#': 'F#/2',
         'Fb': 'Fb/2', 'G': 'G/2', 'G#': 'G#/2', 'A': 'A/2', 'A#': 'A#/2', 'H': 'B/2', 'H#': 'B#/2', 'Hb': 'Bb/2', 'B': 'B/2',
-        'Cb': 'Cb/2', 'Db': 'Db/2', 'Eb': 'Eb/2', 'Gb': 'Gb/2', 'Ab': 'Ab/2',
+        'Db': 'Db/2', 'Eb': 'Eb/2', 'Gb': 'Gb/2', 'Ab': 'Ab/2',
         'c': 'C/3', 'c#': 'C#/3', 'd': 'D/3', 'd#': 'D#/3', 'e': 'E/3', 'e#': 'E#/3', 'f': 'F/3', 'f#': 'F#/3',
         'fb': 'Fb/3', 'g': 'G/3', 'g#': 'G#/3', 'a': 'A/3', 'a#': 'A#/3', 'h': 'B/3', 'h#': 'B#/3', 'hb': 'Bb/3', 'b': 'B/3',
         'cb': 'Cb/3', 'db': 'Db/3', 'eb': 'Eb/3', 'gb': 'Gb/3', 'ab': 'Ab/3', 'bb': 'Bb/3',

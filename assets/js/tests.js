@@ -75,7 +75,7 @@ function compareFingering(actual, expected) {
 
 // Mapování béček na enharmonické křížky pro solve (model používá pouze křížky)
 const flatToSharpMap = {
-    Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
+    Cb: 'H1', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
     cb: 'H', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', hb: 'a#', bb: 'a#',
     cb1: 'h', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
 };
@@ -154,6 +154,14 @@ const testSuites = [
             { s: 'C', p: 2, f: 4, ext: 0 }   // F
         ],
         description: 'C struna, zůstává ve stejné poloze'
+    },
+    {
+        name: 'Enharmonika cb / cb1 → H / h',
+        nameKey: 'test.cbMapping.name',
+        descriptionKey: 'test.cbMapping.desc',
+        input: ['cb', 'cb1'],
+        successOnly: true,
+        description: 'cb = H (velká oktáva), cb1 = h (malá oktáva)'
     },
     {
         name: 'Sekvence a h c1 d1',
@@ -319,11 +327,11 @@ const testSuites = [
         descriptionKey: 'test.scale.gesdur.desc',
         input: 'Gb Ab Hb cb db eb f gb ab hb cb1 db1 eb1 f1 gb1'.split(' '),
         expected: [
-            { s: 'C', p: 5, f: 2, ext: 0 }, { s: 'C', p: 5, f: 4, ext: 0 },
-            { s: 'G', p: 2, f: 2, ext: 0 }, { s: 'A', p: 2, f: 1, ext: 0 }, { s: 'G', p: 5, f: 2, ext: 0 }, { s: 'G', p: 5, f: 4, ext: 0 },
-            { s: 'D', p: 3, f: 1, ext: 0 }, { s: 'D', p: 3, f: 2, ext: 0 }, { s: 'D', p: 3, f: 4, ext: 0 }, { s: 'D', p: 8, f: 1, ext: 0 },
-            { s: 'A', p: 8, f: 4, ext: 1 }, { s: 'A', p: 4, f: 1, ext: 0 }, { s: 'A', p: 4, f: 3, ext: 0 },
-            { s: 'A', p: 8, f: 1, ext: 0 }, { s: 'A', p: 8, f: 2, ext: 0 }
+            { s: 'C', p: 6, f: 1, ext: 0 }, { s: 'C', p: 6, f: 2, ext: 1 }, { s: 'C', p: 6, f: 4, ext: 1 },
+            { s: 'G', p: 4, f: 1, ext: 0 }, { s: 'G', p: 4, f: 2, ext: 1 }, { s: 'G', p: 4, f: 4, ext: 1 },
+            { s: 'D', p: 3, f: 1, ext: 0 }, { s: 'D', p: 3, f: 2, ext: 0 }, { s: 'D', p: 3, f: 4, ext: 0 },
+            { s: 'A', p: 1, f: 1, ext: 0 }, { s: 'A', p: 1, f: 2, ext: 0 }, { s: 'A', p: 1, f: 4, ext: 0 },
+            { s: 'A', p: 6, f: 1, ext: 0 }, { s: 'A', p: 6, f: 2, ext: 0 }, { s: 'A', p: 6, f: 4, ext: 0 }
         ],
         description: 'Stupnice Ges dur'
     },

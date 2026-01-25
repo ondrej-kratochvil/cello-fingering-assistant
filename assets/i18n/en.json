@@ -91,6 +91,8 @@
   "test.CDEF.desc": "C string, same position",
   "test.ahc1d1.name": "Sequence a h c1 d1",
   "test.ahc1d1.desc": "A string, same position",
+  "test.cbMapping.name": "Enharmonic cb / cb1 → h / h1",
+  "test.cbMapping.desc": "cb = h (small octave), cb1 = h1 (one-line octave)",
   "test.gahc.name": "Sequence g a h c",
   "test.gahc.desc": "Sequence across strings",
   "test.long.name": "Long sequence g a h c1 d1 e1 f1# g1",

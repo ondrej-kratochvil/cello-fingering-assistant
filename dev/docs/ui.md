@@ -280,7 +280,7 @@ Převádí název noty na VexFlow formát (např. `C/2`, `c#/3`, `c1#/4`).
 
 - **Bez enharmonických záměn**: Noty se zobrazují přesně tak, jak je uživatel zadal (např. `e#` zůstane jako E#, ne F).
 - **Alternativní formát**: Podporuje přehozené pořadí posuvky a oktávy (`c#1` → `c1#`, `d1b` → `db1`) pomocí `normalizeOctaveAccidentalSwap`.
-- Mapuje všechny oktávy (velká, malá, jednočárkovaná) a posuvky (#, b) na odpovídající VexFlow klíče.
+- Mapuje oktávy: **kontra** (C/1–B/1, H1, Cb velké), **velká** (C/2–B/2), **malá** (C/3–B/3), **jednočárkovaná** (C/4–B/4) a posuvky (#, b).
 - Fallback na `C/4` pokud nota není v mapě.
 
 ### Funkce `getMidiNumber(noteName)`
@@ -289,6 +289,7 @@ Převádí název noty na MIDI číslo (pro Canvas vizualizaci).
 
 - Podporuje alternativní formát (`c#1` → `c1#`).
 - Bez enharmonických záměn (pouze přímý lookup v mapě).
+- **Kontra oktáva (ISO C1–B1, MIDI 24–35)**: Velké Ces = enharmonicky kontra H (označení **H1**, neplést s h1 jednočárkovaným). Mapování: `Cb` → MIDI 35, `H1` → 35, `Hb1` → 34. VexFlow: `Cb/1`, `B/1`, `Bb/1`. Pozice v osnově: explicitní `notePositions` pro MIDI 34, 35.
 
 ### Funkce `toggleJson()`
 

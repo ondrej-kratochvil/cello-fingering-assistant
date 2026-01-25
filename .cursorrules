@@ -184,6 +184,28 @@ Navrhni 2-3 body pro člověka, které nelze automatizovat:
   - `refactor:` - refaktoring kódu
   - `test:` - přidání nebo úprava testů
 
+### Git příkazy (PowerShell / Windows)
+
+Shel **PowerShell** nepoužívá `&&` pro řetězení. Používej **středník** `;`.
+
+**Řetězení příkazů:**
+```powershell
+cd "C:\cesta\k\projektu"; git status
+git add assets/js/ui.js; git commit -m "fix: popis"; git push
+```
+
+**Pravidla pro commit zprávy v PowerShellu:**
+- Uvnitř `-m "..."` se vyhni vnořeným uvozovkám a znakům, které láme PowerShell (např. `'` v českém textu).
+- Preferuj **krátký ASCII text** bez diakritiky, např. `fix(i18n): renderTextOutput legend uses t(legend.strings)`.
+
+**Typický workflow:**
+```powershell
+git status
+git add <soubor-nebo-.>
+git commit -m "feat: krátký popis změny"
+git push
+```
+
 ---
 
 ## Pracovní postup (iterativní cyklus)
