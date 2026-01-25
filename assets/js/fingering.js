@@ -1,33 +1,60 @@
 // --- DATA GENERATION (Consistent with Ondra's JSON logic) ---
+const MAX_POSITION = 14; // 1–14 normální (až c2# na A), 15+ = palcová poloha
+
 function generateFingering(s, targetS) {
     if (targetS === 0) return [{ s, p: 0, f: 0, ext: 0 }];
     let options = [];
     for (let f = 1; f <= 4; f++) {
         let p = targetS - (f - 1);
-        if (p >= 1 && p <= 12) options.push({ s, p, f, ext: 0 });
+        if (p >= 1 && p <= MAX_POSITION) options.push({ s, p, f, ext: 0 });
     }
     for (let f = 2; f <= 4; f++) {
         let offset = (f === 2) ? 2 : (f === 3 ? 3 : 4);
         let p = targetS - offset;
-        if (p >= 1 && p <= 12) options.push({ s, p, f, ext: 1 });
+        if (p >= 1 && p <= MAX_POSITION) options.push({ s, p, f, ext: 1 });
     }
     return options;
 }
 
 const pitchDefs = [
-    { n: "C", s: "C", v: 0 }, { n: "C#", s: "C", v: 1 }, { n: "D", s: "C", v: 2 }, { n: "D#", s: "C", v: 3 },
-    { n: "E", s: "C", v: 4 }, { n: "F", s: "C", v: 5 }, { n: "F#", s: "C", v: 6 },
-    { n: "G", strings: [{s:"G", v:0}, {s:"C", v:7}] }, { n: "G#", strings: [{s:"G", v:1}, {s:"C", v:8}] },
-    { n: "A", strings: [{s:"G", v:2}, {s:"C", v:9}] }, { n: "A#", strings: [{s:"G", v:3}, {s:"C", v:10}] },
-    { n: "H", strings: [{s:"G", v:4}, {s:"C", v:11}] }, { n: "c", strings: [{s:"G", v:5}, {s:"C", v:12}] },
-    { n: "c#", s: "G", v: 6 }, { n: "d", strings: [{s:"D", v:0}, {s:"G", v:7}] }, { n: "d#", s: "G", v: 8 },
-    { n: "e", strings: [{s:"D", v:2}, {s:"G", v:9}] }, { n: "f", strings: [{s:"D", v:3}, {s:"G", v:10}] },
-    { n: "f#", strings: [{s:"D", v:4}, {s:"G", v:11}] }, { n: "g", strings: [{s:"D", v:5}, {s:"G", v:12}] },
-    { n: "g#", s: "D", v: 6 }, { n: "a", strings: [{s:"A", v:0}, {s:"D", v:7}] }, { n: "a#", strings: [{s:"A", v:1}, {s:"D", v:8}] },
-    { n: "h", strings: [{s:"A", v:2}, {s:"D", v:9}] }, { n: "c1", strings: [{s:"A", v:3}, {s:"D", v:10}] },
-    { n: "c1#", s: "A", v: 4 }, { n: "d1", strings: [{s:"A", v:5}, {s:"D", v:12}] }, { n: "d1#", s: "A", v: 6 },
-    { n: "e1", s: "A", v: 7 }, { n: "f1", s: "A", v: 8 }, { n: "f1#", s: "A", v: 9 }, { n: "g1", s: "A", v: 10 },
-    { n: "g1#", s: "A", v: 11 }, { n: "h1", s: "A", v: 14 }
+    { n: "C", s: "C", v: 0 },
+    { n: "C#", s: "C", v: 1 },
+    { n: "D", s: "C", v: 2 },
+    { n: "D#", s: "C", v: 3 },
+    { n: "E", s: "C", v: 4 },
+    { n: "F", s: "C", v: 5 },
+    { n: "F#", s: "C", v: 6 },
+    { n: "G", strings: [{ s: "G", v: 0 }, { s: "C", v: 7 }] },
+    { n: "G#", strings: [{ s: "G", v: 1 }, { s: "C", v: 8 }] },
+    { n: "A", strings: [{ s: "G", v: 2 }, { s: "C", v: 9 }] },
+    { n: "A#", strings: [{ s: "G", v: 3 }, { s: "C", v: 10 }] },
+    { n: "H", strings: [{ s: "G", v: 4 }, { s: "C", v: 11 }] },
+    { n: "c", strings: [{ s: "G", v: 5 }, { s: "C", v: 12 }] },
+    { n: "c#", s: "G", v: 6 },
+    { n: "d", strings: [{ s: "D", v: 0 }, { s: "G", v: 7 }] },
+    { n: "d#", s: "G", v: 8 },
+    { n: "e", strings: [{ s: "D", v: 2 }, { s: "G", v: 9 }] },
+    { n: "f", strings: [{ s: "D", v: 3 }, { s: "G", v: 10 }] },
+    { n: "f#", strings: [{ s: "D", v: 4 }, { s: "G", v: 11 }] },
+    { n: "g", strings: [{ s: "D", v: 5 }, { s: "G", v: 12 }] },
+    { n: "g#", s: "D", v: 6 },
+    { n: "a", strings: [{ s: "A", v: 0 }, { s: "D", v: 7 }] },
+    { n: "a#", strings: [{ s: "A", v: 1 }, { s: "D", v: 8 }] },
+    { n: "h", strings: [{ s: "A", v: 2 }, { s: "D", v: 9 }, { s: "G", v: 16 }] },
+    { n: "c1", strings: [{ s: "A", v: 3 }, { s: "D", v: 10 }] },
+    { n: "c1#", s: "A", v: 4 },
+    { n: "d1", strings: [{ s: "A", v: 5 }, { s: "D", v: 12 }] },
+    { n: "d1#", s: "A", v: 6 },
+    { n: "e1", strings: [{ s: "A", v: 7 }, { s: "D", v: 14 }] },
+    { n: "f1", strings: [{ s: "A", v: 8 }, { s: "D", v: 15 }] },
+    { n: "f1#", strings: [{ s: "A", v: 9 }, { s: "D", v: 16 }] },
+    { n: "g1", s: "A", v: 10 },
+    { n: "g1#", s: "A", v: 11 },
+    { n: "a1", s: "A", v: 12 },
+    { n: "a1#", s: "A", v: 13 },
+    { n: "h1", s: "A", v: 14 },
+    { n: "c2", s: "A", v: 15 },
+    { n: "c2#", s: "A", v: 16 },
 ];
 
 // Vytvoření modelu prstokladů

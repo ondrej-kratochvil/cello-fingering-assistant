@@ -10,15 +10,15 @@ import { t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslation
 function getMidiNumber(noteName) {
     const n = normalizeOctaveAccidentalSwap(noteName);
     const noteMap = {
-        'H1': 35, 'Hb1': 34,
-        'C': 36, 'C#': 37, 'D': 38, 'D#': 39, 'E': 40, 'E#': 41, 'F': 41, 'F#': 42, 'Fb': 40,
-        'G': 43, 'G#': 44, 'A': 45, 'A#': 46, 'H': 47, 'H#': 48, 'Hb': 46, 'B': 47,
-        'Cb': 35,
-        'c': 48, 'c#': 49, 'd': 50, 'd#': 51, 'e': 52, 'e#': 53, 'f': 53, 'f#': 54, 'fb': 52,
-        'g': 55, 'g#': 56, 'a': 57, 'a#': 58, 'h': 59, 'h#': 60, 'hb': 58, 'b': 59, 'cb': 59,
-        'c1': 60, 'c1#': 61, 'd1': 62, 'd1#': 63, 'e1': 64, 'e1#': 65, 'f1': 65, 'f1#': 66, 'fb1': 64,
-        'g1': 67, 'g1#': 68, 'a1': 69, 'a1#': 70, 'h1': 71, 'hb1': 70, 'b1': 71, 'cb1': 71,
-        'db1': 61, 'eb1': 63, 'gb1': 66, 'ab1': 68, 'bb1': 70
+        'Hb1': 34, 'Cb': 35, 'H1': 35,
+        'C': 36, 'C#': 37, 'D': 38, 'D#': 39, 'E': 40, 'Fb': 40, 'E#': 41, 'F': 41, 'F#': 42,
+        'G': 43, 'G#': 44, 'A': 45, 'A#': 46, 'Hb': 46, 'H': 47, 'B': 47,
+        'H#': 48, 'c': 48, 'c#': 49, 'd': 50, 'd#': 51, 'e': 52, 'fb': 52, 'e#': 53, 'f': 53, 'f#': 54,
+        'g': 55, 'g#': 56, 'a': 57, 'a#': 58, 'hb': 58, 'h': 59, 'b': 59, 'cb': 59,
+        'h#': 60, 'c1': 60, 'c1#': 61, 'db1': 61, 'd1': 62, 'd1#': 63, 'eb1': 63, 'e1': 64, 'fb1': 64,
+        'e1#': 65, 'f1': 65, 'f1#': 66, 'gb1': 66, 'g1': 67, 'g1#': 68, 'ab1': 68, 'a1': 69,
+        'a1#': 70, 'hb1': 70, 'bb1': 70, 'h1': 71, 'b1': 71, 'cb1': 71,
+        'c2': 72, 'c2#': 73, 'db2': 73,
     };
     return noteMap[n] || noteMap[n.toLowerCase()] || 60;
 }
@@ -99,6 +99,12 @@ function getNoteYPosition(midiNumber, baseLineY, lineSpacing, staffTop) {
         65: staffTop - 2.25 * lineSpacing, // f1 (F4)
         66: staffTop - 2.5 * lineSpacing, // f1#4
         67: staffTop - 3 * lineSpacing, // g1 (G4) - 3. pomocná linka nad osnovou (na lince)
+        68: staffTop - 3.25 * lineSpacing, // a1 (A4)
+        69: staffTop - 3.5 * lineSpacing, // a1# (A#4)
+        70: staffTop - 3.75 * lineSpacing, // hb1 / bb1 (Bb4)
+        71: staffTop - 4 * lineSpacing, // h1 (B4)
+        72: staffTop - 4.25 * lineSpacing, // c2 (C5)
+        73: staffTop - 4.5 * lineSpacing, // c2# (C#5) / db2
     };
 
     // Pokud máme přesné mapování, použij ho
@@ -311,21 +317,22 @@ let lastInput = null;
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
 
-/** Režim označení poloh: 'diatonic' (I, II↓, …) nebo 'chromatic' (I–XII, římsky). Výchozí diatonické. */
+/** Režim označení poloh: 'diatonic' (I, II↓, …) nebo 'chromatic' (I–XIV, římsky). Výchozí diatonické. */
 let currentPositionLabelMode = 'diatonic';
 
-/** Mapování chromatické polohy (1–12) na diatonické označení (struna A, 1. prst). */
+/** Mapování chromatické polohy (1–14) na diatonické označení (struna A, 1. prst). 15+ = palcová poloha. */
 const POSITION_LABEL_MAP = {
     1: 'I↓', 2: 'I', 3: 'II↓', 4: 'II↑', 5: 'III', 6: 'III↑',
-    7: 'IV', 8: 'IV↑', 9: 'V', 10: 'VI', 11: 'VII↓', 12: 'VII'
+    7: 'IV', 8: 'IV↑', 9: 'V', 10: 'VI', 11: 'VII↓', 12: 'VII',
+    13: 'VIII', 14: 'IX'
 };
 
-/** Chromatické polohy 1–12 jako římské číslice I–XII. */
-const CHROMATIC_ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+/** Chromatické polohy 1–14 jako římské číslice I–XIV. */
+const CHROMATIC_ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
 
 /**
  * Vrátí označení polohy pro zobrazení.
- * @param {number} p - Chromatická poloha (0 = prázdná, 1–12)
+ * @param {number} p - Chromatická poloha (0 = prázdná, 1–14)
  * @param {'diatonic'|'chromatic'} mode
  * @returns {string}
  */
@@ -415,12 +422,16 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     container.appendChild(legend);
 }
 
-/** c#1 → c1#, d1b → db1 (přehození oktávy a posuvky pro alternativní zadání) */
+/** c#1 → c1#, d1b → db1, c#2 → c2#, d2b → db2 (přehození oktávy a posuvky pro alternativní zadání) */
 function normalizeOctaveAccidentalSwap(token) {
     const m1 = token.match(/^([a-g])(#)(1)$/i);
     if (m1) return m1[1] + '1' + m1[2];
     const m2 = token.match(/^([a-g])(1)(b)$/i);
     if (m2) return m2[1] + 'b' + m2[2];
+    const m3 = token.match(/^([a-g])(#)(2)$/i);
+    if (m3) return m3[1] + '2' + m3[2];
+    const m4 = token.match(/^([a-g])(2)(b)$/i);
+    if (m4) return m4[1] + 'b' + m4[2];
     return token;
 }
 
@@ -448,16 +459,17 @@ function toDisplayNote(token) {
 function noteToVexFlow(noteName) {
     const n = normalizeOctaveAccidentalSwap(noteName);
     const noteMap = {
-        'H1': 'B/1', 'Hb1': 'Bb/1', 'Cb': 'Cb/1',
-        'C': 'C/2', 'C#': 'C#/2', 'D': 'D/2', 'D#': 'D#/2', 'E': 'E/2', 'E#': 'E#/2', 'F': 'F/2', 'F#': 'F#/2',
-        'Fb': 'Fb/2', 'G': 'G/2', 'G#': 'G#/2', 'A': 'A/2', 'A#': 'A#/2', 'H': 'B/2', 'H#': 'B#/2', 'Hb': 'Bb/2', 'B': 'B/2',
-        'Db': 'Db/2', 'Eb': 'Eb/2', 'Gb': 'Gb/2', 'Ab': 'Ab/2',
-        'c': 'C/3', 'c#': 'C#/3', 'd': 'D/3', 'd#': 'D#/3', 'e': 'E/3', 'e#': 'E#/3', 'f': 'F/3', 'f#': 'F#/3',
-        'fb': 'Fb/3', 'g': 'G/3', 'g#': 'G#/3', 'a': 'A/3', 'a#': 'A#/3', 'h': 'B/3', 'h#': 'B#/3', 'hb': 'Bb/3', 'b': 'B/3',
-        'cb': 'Cb/3', 'db': 'Db/3', 'eb': 'Eb/3', 'gb': 'Gb/3', 'ab': 'Ab/3', 'bb': 'Bb/3',
-        'c1': 'C/4', 'c1#': 'C#/4', 'd1': 'D/4', 'd1#': 'D#/4', 'e1': 'E/4', 'e1#': 'E#/4', 'f1': 'F/4', 'f1#': 'F#/4',
-        'fb1': 'Fb/4', 'g1': 'G/4', 'g1#': 'G#/4', 'a1': 'A/4', 'a1#': 'A#/4', 'h1': 'B/4', 'hb1': 'Bb/4', 'b1': 'B/4',
-        'cb1': 'Cb/4', 'db1': 'Db/4', 'eb1': 'Eb/4', 'gb1': 'Gb/4', 'ab1': 'Ab/4', 'bb1': 'Bb/4'
+        'Hb1': 'Bb/1', 'Cb': 'Cb/1', 'H1': 'B/1',
+        'C': 'C/2', 'C#': 'C#/2', 'D': 'D/2', 'D#': 'D#/2', 'E': 'E/2', 'Fb': 'Fb/2', 'E#': 'E#/2', 'F': 'F/2', 'F#': 'F#/2',
+        'G': 'G/2', 'G#': 'G#/2', 'A': 'A/2', 'A#': 'A#/2', 'Hb': 'Bb/2', 'H': 'B/2', 'B': 'B/2',
+        'Db': 'Db/2', 'Eb': 'Eb/2', 'Gb': 'Gb/2', 'Ab': 'Ab/2', 'H#': 'B#/2',
+        'c': 'C/3', 'c#': 'C#/3', 'd': 'D/3', 'd#': 'D#/3', 'e': 'E/3', 'fb': 'Fb/3', 'e#': 'E#/3', 'f': 'F/3', 'f#': 'F#/3',
+        'g': 'G/3', 'g#': 'G#/3', 'a': 'A/3', 'a#': 'A#/3', 'hb': 'Bb/3', 'h': 'B/3', 'b': 'B/3',
+        'cb': 'Cb/3', 'db': 'Db/3', 'eb': 'Eb/3', 'gb': 'Gb/3', 'ab': 'Ab/3', 'bb': 'Bb/3', 'h#': 'B#/3',
+        'c1': 'C/4', 'c1#': 'C#/4', 'db1': 'Db/4', 'd1': 'D/4', 'd1#': 'D#/4', 'eb1': 'Eb/4', 'e1': 'E/4', 'fb1': 'Fb/4',
+        'e1#': 'E#/4', 'f1': 'F/4', 'f1#': 'F#/4', 'gb1': 'Gb/4', 'g1': 'G/4', 'g1#': 'G#/4', 'ab1': 'Ab/4', 'a1': 'A/4',
+        'a1#': 'A#/4', 'hb1': 'Bb/4', 'bb1': 'Bb/4', 'h1': 'B/4', 'b1': 'B/4', 'cb1': 'Cb/4',
+        'c2': 'C/5', 'c2#': 'C#/5', 'db2': 'Db/5',
     };
     return noteMap[n] || noteMap[n.toLowerCase()] || 'C/4';
 }
@@ -682,7 +694,8 @@ function runSolver(skipHideAbout = false) {
         const flatToSharpMap = {
             Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
             cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
-            cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
+            cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#',
+            cb2: 'h1', db2: 'c2#'
         };
         const sharpToNaturalMap = {
             'E#': 'F', 'e#': 'f', 'e1#': 'f1', 'E1#': 'f1',
@@ -820,14 +833,15 @@ function drawFingerboard(path, input) {
     const positionSpan = (width - rightMargin) - openStringX;
 
     const k = 0.92;
+    const numPositions = 14; // 1–14 normální + 15+ palcová
     const gap0 = Math.round(0.14 * positionSpan);
     const rest = positionSpan - gap0;
-    const geomSum = (1 - Math.pow(k, 11)) / (1 - k);
+    const geomSum = (1 - Math.pow(k, numPositions - 1)) / (1 - k);
     const gap1 = rest / geomSum;
     const posX = [openStringX];
     let acc = openStringX + gap0;
     posX.push(acc);
-    for (let i = 1; i < 12; i++) {
+    for (let i = 1; i < numPositions; i++) {
         acc += gap1 * Math.pow(k, i - 1);
         posX.push(acc);
     }
@@ -851,7 +865,7 @@ function drawFingerboard(path, input) {
     ctx.font = 'bold 10px sans-serif';
     ctx.fillStyle = fingerboardText;
     ctx.textAlign = 'center';
-    for (let pos = 1; pos <= 12; pos++) {
+    for (let pos = 1; pos <= numPositions; pos++) {
         const x = posX[pos];
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -893,7 +907,7 @@ function drawFingerboard(path, input) {
                 const offset = step.f === 2 ? 2 : (step.f === 3 ? 3 : 4);
                 targetS = step.p + offset;
             }
-            const idx2 = Math.min(targetS, posX.length - 1);
+            const idx2 = Math.min(targetS, numPositions);
             x = posX[idx2];
         }
         const y = stringYPositions[step.s];

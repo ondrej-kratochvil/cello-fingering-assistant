@@ -77,7 +77,8 @@ function compareFingering(actual, expected) {
 const flatToSharpMap = {
     Cb: 'H1', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
     cb: 'H', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', hb: 'a#', bb: 'a#',
-    cb1: 'h', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#'
+    cb1: 'h', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#',
+    cb2: 'h1', db2: 'c2#'
 };
 // Křížky na přirozené (E# = F, H# = c)
 const sharpToNaturalMap = {
@@ -94,6 +95,10 @@ function normalizeOctaveAccidentalSwap(token) {
     if (m1) return m1[1] + '1' + m1[2];
     const m2 = token.match(/^([a-g])(1)(b)$/i);
     if (m2) return m2[1] + 'b' + m2[2];
+    const m3 = token.match(/^([a-g])(#)(2)$/i);
+    if (m3) return m3[1] + '2' + m3[2];
+    const m4 = token.match(/^([a-g])(2)(b)$/i);
+    if (m4) return m4[1] + 'b' + m4[2];
     return token;
 }
 
