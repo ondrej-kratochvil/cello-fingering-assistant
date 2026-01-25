@@ -200,6 +200,8 @@ const testSuites = [
     },
     {
         name: 'C dur',
+        nameKey: 'test.scale.cdur.name',
+        descriptionKey: 'test.scale.cdur.desc',
         input: 'C D E F G A H c d e f g a h c1 d1 e1 f1 g1'.split(' '),
         expected: [
             { s: 'C', p: 0, f: 0, ext: 0 }, { s: 'C', p: 2, f: 1, ext: 0 }, { s: 'C', p: 2, f: 3, ext: 0 }, { s: 'C', p: 2, f: 4, ext: 0 },
@@ -226,6 +228,8 @@ const testSuites = [
     },
     {
         name: 'Des dur',
+        nameKey: 'test.scale.desdur.name',
+        descriptionKey: 'test.scale.desdur.desc',
         input: 'Db Eb F Gb Ab Hb c db eb f gb ab hb c1 db1 eb1 f1 gb1'.split(' '),
         expected: [
             { s: 'C', p: 1, f: 1, ext: 0 }, { s: 'C', p: 1, f: 3, ext: 0 }, { s: 'C', p: 3, f: 3, ext: 0 }, { s: 'C', p: 3, f: 4, ext: 0 },
@@ -252,6 +256,8 @@ const testSuites = [
     },
     {
         name: 'Es dur',
+        nameKey: 'test.scale.esdur.name',
+        descriptionKey: 'test.scale.esdur.desc',
         input: 'Eb F G Ab Hb c d eb f g ab hb c1 d1 eb1 f1 g1'.split(' '),
         expected: [
             { s: 'C', p: 2, f: 2, ext: 0 }, { s: 'C', p: 2, f: 4, ext: 0 },
@@ -280,6 +286,8 @@ const testSuites = [
     },
     {
         name: 'F dur',
+        nameKey: 'test.scale.fdur.name',
+        descriptionKey: 'test.scale.fdur.desc',
         input: 'F G A Hb c d e f g a hb c1 d1 e1 f1 g1'.split(' '),
         expected: [
             { s: 'C', p: 2, f: 4, ext: 0 },
@@ -307,6 +315,8 @@ const testSuites = [
     },
     {
         name: 'Ges dur',
+        nameKey: 'test.scale.gesdur.name',
+        descriptionKey: 'test.scale.gesdur.desc',
         input: 'Gb Ab Hb cb db eb f gb ab hb cb1 db1 eb1 f1 gb1'.split(' '),
         expected: [
             { s: 'C', p: 5, f: 2, ext: 0 }, { s: 'C', p: 5, f: 4, ext: 0 },
@@ -332,6 +342,8 @@ const testSuites = [
     },
     {
         name: 'As dur',
+        nameKey: 'test.scale.asdur.name',
+        descriptionKey: 'test.scale.asdur.desc',
         input: 'Ab Hb c db eb f g ab hb c1 db1 eb1 f1 g1'.split(' '),
         expected: [
             { s: 'G', p: 1, f: 1, ext: 0 }, { s: 'G', p: 1, f: 3, ext: 0 }, { s: 'G', p: 5, f: 1, ext: 0 }, { s: 'G', p: 5, f: 2, ext: 0 }, { s: 'G', p: 5, f: 4, ext: 0 },
@@ -356,6 +368,8 @@ const testSuites = [
     },
     {
         name: 'Hes dur',
+        nameKey: 'test.scale.hesdur.name',
+        descriptionKey: 'test.scale.hesdur.desc',
         input: 'Hb c d eb f g a hb c1 d1 eb1 f1 g1'.split(' '),
         expected: [
             { s: 'G', p: 2, f: 2, ext: 0 }, { s: 'G', p: 2, f: 4, ext: 0 },

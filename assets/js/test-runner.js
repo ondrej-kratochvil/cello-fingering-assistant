@@ -42,9 +42,9 @@ function getPositionChanges(result) {
 export function runAllTests() {
     const resultsDiv = document.getElementById('testResults');
     const summaryTop = document.getElementById('testSummaryTop');
-    
+
     if (!resultsDiv) return;
-    
+
     resultsDiv.innerHTML = '';
 
     const stringColors = getStringColors();
@@ -96,11 +96,11 @@ export function runAllTests() {
             expectedBlock.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4';
             expectedBlock.innerHTML = `
                 <div>
-                    <p class="font-bold text-slate-700 mb-1">Očekáváno:</p>
+                    <p class="font-bold text-slate-700 mb-1">${t('test.expected')}</p>
                     <p class="font-mono bg-slate-100 p-2 rounded">${formatFingering(suite.expected)}</p>
                 </div>
                 <div>
-                    <p class="font-bold text-slate-700 mb-1">Skutečnost:</p>
+                    <p class="font-bold text-slate-700 mb-1">${t('test.actual')}</p>
                     <p class="font-mono bg-slate-100 p-2 rounded">${formatFingering(result)}</p>
                 </div>
             `;
@@ -110,8 +110,8 @@ export function runAllTests() {
             const errBlock = document.createElement('div');
             errBlock.className = 'text-sm mb-4';
             errBlock.innerHTML = `
-                <p class="font-bold text-slate-700 mb-1">Skutečnost:</p>
-                <p class="font-mono bg-slate-100 p-2 rounded">${result == null ? 'Solver nevrátil výsledek.' : `Počet tónů: ${result.length} (očekáváno ${suite.input.length})`}</p>
+                <p class="font-bold text-slate-700 mb-1">${t('test.actual')}</p>
+                <p class="font-mono bg-slate-100 p-2 rounded">${result == null ? t('test.solverNoResult') : t('test.countMismatch', { n: result.length, expected: suite.input.length })}</p>
             `;
             testDiv.appendChild(errBlock);
         }
@@ -141,13 +141,13 @@ export function runAllTests() {
     // Sdílená legenda strun (jako na Home)
     const legendWrap = document.createElement('div');
     legendWrap.className = 'mt-6 pt-4 border-t border-slate-200';
-    legendWrap.innerHTML = '<p class="text-sm font-bold text-slate-700 mb-2">Legenda strun:</p>';
+    legendWrap.innerHTML = `<p class="text-sm font-bold text-slate-700 mb-2">${t('legend.strings')}</p>`;
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
     Object.entries(stringColors).forEach(([str, color]) => {
         const item = document.createElement('div');
         item.className = 'flex items-center gap-2';
-        item.innerHTML = `<span class="w-4 h-4 rounded" style="background-color:${color}"></span><span class="font-bold">${str} struna</span>`;
+        item.innerHTML = `<span class="w-4 h-4 rounded" style="background-color:${color}"></span><span class="font-bold">${t('legend.string', { s: str })}</span>`;
         legendItems.appendChild(item);
     });
     legendWrap.appendChild(legendItems);

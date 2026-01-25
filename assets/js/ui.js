@@ -28,14 +28,14 @@ function getMidiNumber(noteName) {
  * - 3. linka = D3 (MIDI 50)
  * - 4. linka = F3 (MIDI 53)
  * - 5. linka = A3 (MIDI 57)
- * 
+ *
  * Požadované pozice v basovém klíči:
  * - C2 (MIDI 36, velké C) = 2. pomocná linka pod osnovou
  * - D2 (MIDI 38) = pod 1. pomocnou linkou pod osnovou (v mezeře)
  * - c (MIDI 48, malé c = C3) = 1. mezera nad osnovou nebo na 1. pomocné lince nad
  * - c1 (MIDI 60, c1 = C4 = střední C) = 1. pomocná linka nad osnovou
  * - g1 (MIDI 67) = 3. pomocná linka nad osnovou
- * 
+ *
  * @param {number} midiNumber - MIDI číslo tónu
  * @param {number} baseLineY - Y pozice 1. linky (spodní) v pixelech
  * @param {number} lineSpacing - Vzdálenost mezi linkami v pixelech
@@ -46,17 +46,17 @@ function getNoteYPosition(midiNumber, baseLineY, lineSpacing, staffTop) {
     // V basovém klíči - správné mapování podle MIDI čísel:
     // G2 (MIDI 43) = 1. linka (spodní) = baseLineY
     // B2 (MIDI 47) = 2. linka = baseLineY - 1 * lineSpacing
-    // D3 (MIDI 50) = 3. linka = baseLineY - 2 * lineSpacing  
+    // D3 (MIDI 50) = 3. linka = baseLineY - 2 * lineSpacing
     // F3 (MIDI 53) = 4. linka = baseLineY - 3 * lineSpacing
     // A3 (MIDI 57) = 5. linka (vrchní) = staffTop = baseLineY - 4 * lineSpacing
     // C4 (MIDI 60, střední C) = 1. pomocná linka nad = staffTop - lineSpacing
-    // 
+    //
     // Pro noty pod osnovou:
     // C2 (MIDI 36, velké C) = 2. pomocná linka pod = baseLineY + 3.5 * lineSpacing
     // D2 (MIDI 38) = pod 1. pomocnou linkou = baseLineY + 3 * lineSpacing (v mezeře)
     // E2 (MIDI 40) = 1. pomocná linka pod = baseLineY + 2.5 * lineSpacing
     // F2 (MIDI 41) = pod osnovou v mezeře = baseLineY + 2 * lineSpacing
-    
+
     // Přímé mapování podle MIDI čísel pro basový klíč
     const notePositions = {
         // Noty pod osnovou (pomocné linky) - POZOR: větší Y = níže
@@ -94,12 +94,12 @@ function getNoteYPosition(midiNumber, baseLineY, lineSpacing, staffTop) {
         66: staffTop - 2.5 * lineSpacing, // f1#4
         67: staffTop - 3 * lineSpacing, // g1 (G4) - 3. pomocná linka nad osnovou (na lince)
     };
-    
+
     // Pokud máme přesné mapování, použij ho
     if (notePositions[midiNumber] !== undefined) {
         return notePositions[midiNumber];
     }
-    
+
     // Fallback: lineární interpolace
     if (midiNumber < 36) {
         // Velmi nízké noty - extrapolace dolů
@@ -128,22 +128,22 @@ function drawStaff(canvas, input, result) {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    
+
     // Nastavení stylů
     const bodyStyles = getComputedStyle(document.body);
     const rootStyles = getComputedStyle(document.documentElement);
     const isDarkMode = document.body.classList.contains('dark-mode');
-    const staffColor = bodyStyles.getPropertyValue('--color-text-primary').trim() || 
-                      rootStyles.getPropertyValue('--color-text-primary').trim() || 
+    const staffColor = bodyStyles.getPropertyValue('--color-text-primary').trim() ||
+                      rootStyles.getPropertyValue('--color-text-primary').trim() ||
                       (isDarkMode ? '#f1f5f9' : '#0f172a');
-    
+
     ctx.strokeStyle = staffColor;
     ctx.fillStyle = staffColor;
     ctx.lineWidth = 1.5;
-    
+
     // Vymazat canvas
     ctx.clearRect(0, 0, width, height);
-    
+
     // Nastavení osnovy
     // Osnova je uprostřed canvasu, aby bylo místo pro pomocné linky nad i pod
     const staffTop = 30; // Posunuto dolů, aby bylo místo pro pomocné linky nad osnovou
@@ -152,15 +152,15 @@ function drawStaff(canvas, input, result) {
     const noteSpacing = 44; // Stejné jako min-w-[44px]
     const noteStartX = 60; // Zarovnáno s prsty (stejný offset)
     const baseLineY = staffBottom; // 1. linka (spodní) = G2 (MIDI 43)
-    
+
     // Vykreslit basový klíč (F klíč) vlevo a získat jeho šířku
     const clefWidth = drawBassClef(ctx, 5, staffTop, staffBottom);
-    
+
     // Vypočítat skutečnou šířku potřebnou pro všechny noty
     const totalNotesWidth = result.length * noteSpacing;
     const staffEndX = noteStartX + totalNotesWidth + 20; // Konec poslední noty + mezera
     // Poznámka: totalNotesWidth se používá i na konci funkce pro return
-    
+
     // Vykreslit 5 linek osnovy - až na konec sekvence
     const actualStaffWidth = Math.max(width, staffEndX);
     for (let i = 0; i < 5; i++) {
@@ -170,7 +170,7 @@ function drawStaff(canvas, input, result) {
         ctx.lineTo(actualStaffWidth, y); // Linky až na konec sekvence
         ctx.stroke();
     }
-    
+
     input.forEach((noteName, idx) => {
         // X pozice: přesně pod prsty (stejné jako prsty s offsetem)
         // Prsty: offset 60px + idx * 44px, střed každého prstu je na 60 + idx * 44 + 22
@@ -179,10 +179,10 @@ function drawStaff(canvas, input, result) {
         const x = noteStartX + (idx * noteSpacing) + (noteSpacing / 2); // Střed sloupce
         const midiNumber = getMidiNumber(noteName);
         const noteY = getNoteYPosition(midiNumber, baseLineY, lineSpacing, staffTop);
-        
+
         // Vykreslit notu (plná hlavička bez nožičky)
         drawNote(ctx, x, noteY, staffColor);
-        
+
         // Vykreslit pomocné linky pokud je nota mimo osnovu
         const topLine = staffTop;
         const bottomLine = staffBottom;
@@ -190,7 +190,7 @@ function drawStaff(canvas, input, result) {
             drawLedgerLines(ctx, x, noteY, staffTop, staffBottom, lineSpacing, staffColor);
         }
     });
-    
+
     // Vrátit skutečnou šířku: offset pro klíč (60px) + všechny noty + malá mezera na konci
     return 60 + totalNotesWidth + 20; // Offset + šířka všech not + mezera
 }
@@ -202,49 +202,49 @@ function drawStaff(canvas, input, result) {
  */
 function drawBassClef(ctx, x, staffTop, staffBottom) {
     const lineSpacing = (staffBottom - staffTop) / 4;
-    
+
     // Pozice linek (odshora):
     const line1 = staffTop; // 1. linka shora
     const line2 = staffTop + lineSpacing; // 2. linka shora
     const line3 = staffTop + (2 * lineSpacing); // 3. linka shora
     const line4 = staffTop + (3 * lineSpacing); // 4. linka shora
     const line5 = staffBottom; // 5. linka shora
-    
+
     // Mezery (odshora):
     const space1 = staffTop + (lineSpacing / 2); // 1. mezera shora
     const space2 = staffTop + (1.5 * lineSpacing); // 2. mezera shora
-    
+
     // Větší basový klíč - začíná na 2. lince shora
     const clefStartY = line2;
     const clefTopY = line1; // Horní oblouk se dotýká 1. linky
     const clefBottomY = line4 + (lineSpacing / 2); // Končí mezi 4. a 5. linkou
-    
+
     const clefHeight = clefBottomY - clefStartY;
     // Zvětšit klíč - použít větší font (o 50% větší pro lepší viditelnost)
     const clefFontSize = clefHeight * 1.5;
     const clefWidth = clefFontSize * 0.7; // Poměr šířky k výšce
-    
+
     // Vykreslit basový klíč jako stylizovaný symbol (větší)
     ctx.font = `bold ${clefFontSize}px serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     // Posunout nahoru, aby horní oblouk se dotýkal 1. linky
     ctx.fillText('𝄢', x, clefStartY - (clefFontSize * 0.15)); // Unicode symbol basového klíče
-    
+
     // Tečky v 1. a 2. mezeře shora (pouze jednou, ne duplicitní)
     const dotRadius = 3;
     const dotX = x + clefWidth + 8; // Pozice teček za klíčem
-    
+
     // 1. mezera shora
     ctx.beginPath();
     ctx.arc(dotX, space1, dotRadius, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // 2. mezera shora
     ctx.beginPath();
     ctx.arc(dotX, space2, dotRadius, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Vrátit šířku klíče pro offset
     return clefWidth + 20; // Šířka klíče + mezera + tečky
 }
@@ -266,7 +266,7 @@ function drawNote(ctx, x, y, color) {
 function drawLedgerLines(ctx, x, y, staffTop, staffBottom, lineSpacing, color) {
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
-    
+
     // Pokud je nota pod osnovou
     if (y > staffBottom) {
         const lines = Math.ceil((y - staffBottom) / (lineSpacing / 2));
@@ -280,7 +280,7 @@ function drawLedgerLines(ctx, x, y, staffTop, staffBottom, lineSpacing, color) {
             }
         }
     }
-    
+
     // Pokud je nota nad osnovou
     if (y < staffTop) {
         const lines = Math.ceil((staffTop - y) / (lineSpacing / 2));
@@ -299,6 +299,8 @@ function drawLedgerLines(ctx, x, y, staffTop, staffBottom, lineSpacing, color) {
 // Uložit poslední výsledek pro překreslení canvasu při změně dark mode
 let lastResult = null;
 let lastInputForSolve = null;
+/** Původní vstup uživatele (bez enharmonických převodů). Používá se pro zobrazení výstupu. */
+let lastInput = null;
 
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
@@ -334,18 +336,18 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     // Řádek s římskými číslicemi poloh
     const positionRow = document.createElement('div');
     positionRow.className = 'flex items-start gap-1 text-sm font-bold text-slate-600';
-    
+
     result.forEach((step, idx) => {
         const positionSpan = document.createElement('span');
         positionSpan.className = 'inline-block text-center min-w-[44px]';
-        
+
         if (positionChanges.includes(idx) && step.p > 0) {
             positionSpan.textContent = toRoman(step.p);
             positionSpan.classList.add('text-slate-800');
         } else {
             positionSpan.textContent = '';
         }
-        
+
         positionRow.appendChild(positionSpan);
     });
     container.appendChild(positionRow);
@@ -353,18 +355,18 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     // Řádek s čísly prstů
     const fingerRow = document.createElement('div');
     fingerRow.className = 'flex items-center gap-1 text-lg font-bold';
-    
+
     result.forEach((step, idx) => {
         const fingerSpan = document.createElement('span');
         fingerSpan.className = 'inline-block text-center min-w-[44px]';
         const rootStylesLocal = getComputedStyle(document.documentElement);
         fingerSpan.style.color = stringColors[step.s] || rootStylesLocal.getPropertyValue('--color-text-primary').trim() || '#000';
-        
+
         let fingerText = step.f === 0 ? '0' : step.f.toString();
         if (step.ext === 1) {
             fingerText += ' ↑';
         }
-        
+
         fingerSpan.textContent = fingerText;
         fingerRow.appendChild(fingerSpan);
     });
@@ -373,7 +375,7 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     // Řádek s tóny
     const toneRow = document.createElement('div');
     toneRow.className = 'flex items-center gap-1 text-xl font-mono';
-    
+
     result.forEach((step, idx) => {
         const toneSpan = document.createElement('span');
         toneSpan.className = 'inline-block text-center min-w-[44px]';
@@ -386,10 +388,10 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     const legend = document.createElement('div');
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
     legend.innerHTML = '<p class="text-sm font-bold text-slate-700 mb-2">Legenda strun:</p>';
-    
+
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
-    
+
     Object.entries(stringColors).forEach(([string, color]) => {
         const legendItem = document.createElement('div');
         legendItem.className = 'flex items-center gap-2';
@@ -399,7 +401,7 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
         `;
         legendItems.appendChild(legendItem);
     });
-    
+
     legend.appendChild(legendItems);
     container.appendChild(legend);
 }
@@ -463,21 +465,21 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         renderTextOutput(container, result, input, positionChanges, stringColors, toRoman);
         return;
     }
-    
+
     const { Renderer, Stave, StaveNote, Voice, Formatter, Annotation, Accidental } = Vex.Flow;
-    
+
     // Nastavení osnovy
     const noteSpacing = 44;
     const clefOffset = 60;
     const totalWidth = clefOffset + (result.length * noteSpacing) + 20;
     // Zvětšená výška pro noty pod osnovou a anotace (více místa nahoře i dole)
     const totalHeight = 250;
-    
+
     // Vytvořit div pro VexFlow renderer
     const staffDiv = document.createElement('div');
     staffDiv.id = 'vexflow-staff-' + Date.now();
     staffDiv.className = 'staff-output rounded-lg';
-    
+
     // Vytvořit VexFlow renderer
     const renderer = new Renderer(staffDiv, Renderer.Backends.SVG);
     renderer.resize(totalWidth, totalHeight);
@@ -493,12 +495,12 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     context.setFillStyle(staffInk);
     context.setStrokeStyle(staffInk);
     stave.setContext(context).draw();
-    
+
     // Převést noty na VexFlow formát a vytvořit StaveNote objekty s anotacemi
     const notes = input.map((noteName, idx) => {
         const step = result[idx];
         const vexFlowNote = noteToVexFlow(noteName);
-        
+
         const note = new StaveNote({
             clef: 'bass',
             keys: [vexFlowNote],
@@ -518,10 +520,10 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         } catch (e) {
             // Ignorovat chyby
         }
-        
+
         // Přidat anotace: poloha (nahoře), prst (u noty), tón (dole)
         const annotations = [];
-        
+
         // Prst (u noty) - vždy zobrazit, přidat jako první
         const rootStylesLocal = getComputedStyle(document.documentElement);
         const fingerColor = stringColors[step.s] || bodyStyles.getPropertyValue('--color-text-primary').trim() || staffInk;
@@ -533,7 +535,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         fingerAnnotation.setFont('Arial', 14, 'bold');
         fingerAnnotation.setStyle({ fillStyle: fingerColor });
         annotations.push(fingerAnnotation);
-        
+
         // Poloha (nahoře) - pouze pokud je změna polohy, přidat jako druhou
         if (positionChanges.includes(idx) && step.p > 0) {
             const positionAnnotation = new Annotation(toRoman(step.p));
@@ -542,42 +544,42 @@ export function renderStaffOutput(container, result, input, positionChanges, str
             positionAnnotation.setStyle({ fillStyle: staffInk });
             annotations.push(positionAnnotation);
         }
-        
+
         // Tón (dole) - přidat jako poslední
         const toneAnnotation = new Annotation(input[idx]);
         toneAnnotation.setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
         toneAnnotation.setFont('Arial', 12, 'normal');
         toneAnnotation.setStyle({ fillStyle: staffInk });
         annotations.push(toneAnnotation);
-        
+
         // Přidat anotace k notě
         annotations.forEach(ann => note.addModifier(ann, 0));
-        
+
         return note;
     });
-    
+
     // Vytvořit Voice a formátovat noty
     const voice = new Voice({ num_beats: notes.length, beat_value: 1 });
     voice.addTickables(notes);
-    
+
     // Formátovat noty s pevnou šířkou
     const formatter = new Formatter();
     formatter.joinVoices([voice]);
     formatter.format([voice], totalWidth - clefOffset - 20);
-    
+
     // Vykreslit noty (kontext barvy pro note heady)
     context.setFillStyle(staffInk);
     context.setStrokeStyle(staffInk);
     voice.draw(context, stave);
-    
+
     // Kontejner pro osnovu s horizontálním scrollováním
     const staffContainer = document.createElement('div');
     staffContainer.className = 'overflow-x-auto -mx-8 px-8 md:mx-0 md:px-0';
     staffContainer.appendChild(staffDiv);
     container.appendChild(staffContainer);
-    
+
     if (opts.skipLegend) return;
-    
+
     // Legenda barev strun
     const legend = document.createElement('div');
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
@@ -606,16 +608,16 @@ function initSettings() {
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
     const settingsToggleIcon = document.getElementById('settingsToggleIcon');
-    
+
     if (!settingsSection || !settingsToggle || !settingsContent) return;
-    
+
     // Toggle skrývání/zobrazování nastavení
     settingsToggle.addEventListener('click', () => {
         const isHidden = settingsContent.classList.contains('hidden');
         settingsContent.classList.toggle('hidden');
         settingsToggleIcon.textContent = isHidden ? '▲' : '▼';
     });
-    
+
     // Přepínání mezi režimy výstupu
     const radioButtons = document.querySelectorAll('input[name="outputFormat"]');
     radioButtons.forEach(radio => {
@@ -664,9 +666,9 @@ function runSolver(skipHideAbout = false) {
     const display = document.getElementById('pathDisplay');
     const wrapper = document.getElementById('resultsWrapper');
 
-    let result, inputForSolve;
+    let result, inputForSolve, input = null;
     if (inputVal) {
-        const input = inputVal.split(/\s+/);
+        input = inputVal.split(/\s+/);
         const flatToSharpMap = {
             Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
             cb: 'H', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
@@ -692,7 +694,8 @@ function runSolver(skipHideAbout = false) {
         inputForSolve = lastInputForSolve;
     }
 
-    const displayTokens = inputForSolve.map(toDisplayNote);
+    const inputForDisplay = input !== null ? input : (lastInput || lastInputForSolve);
+    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(t)));
 
     display.innerHTML = '';
     if (result === null || result === undefined) {
@@ -722,7 +725,7 @@ function runSolver(skipHideAbout = false) {
         // Zjistit, kde se mění poloha (ignorovat prázdnou strunu - pozice 0)
         const positionChanges = [];
         let lastNonZeroPosition = null;
-        
+
         for (let i = 0; i < result.length; i++) {
             const currentPos = result[i].p;
             // Ignorovat prázdnou strunu (pozice 0)
@@ -738,7 +741,7 @@ function runSolver(skipHideAbout = false) {
         const container = document.createElement('div');
         container.className = 'w-full space-y-4';
 
-        // Zobrazit výstup podle vybraného režimu (displayTokens = H/B podle nastavení)
+        // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
         if (currentOutputFormat === 'staff') {
             renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
         } else {
@@ -747,18 +750,19 @@ function runSolver(skipHideAbout = false) {
 
         display.appendChild(container);
 
-        // Uložit výsledek pro pozdější překreslení
+        // Uložit výsledek pro pozdější překreslení (výstup zobrazuje původní vstup uživatele)
         lastResult = result;
         lastInputForSolve = inputForSolve;
+        if (input !== null) lastInput = input;
 
         // Vykreslit vizualizaci hmatníku na Canvas
         drawFingerboard(result, displayTokens);
-        
+
         // Zobrazit wrapper výsledků
         if (wrapper) {
             wrapper.classList.remove('hidden');
         }
-        
+
         // Zobrazit sekci Nastavení
         const settingsSection = document.getElementById('settingsSection');
         if (settingsSection) {

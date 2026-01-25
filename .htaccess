@@ -31,4 +31,4 @@
 </FilesMatch>
 
 # Výchozí soubor
-DirectoryIndex index.html
+DirectoryIndex index.php
