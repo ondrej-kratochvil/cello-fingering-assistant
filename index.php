@@ -32,6 +32,7 @@
 <?php
 $base = '';
 $pageTitle = 'Cello Fingering Assistant';
+$pageTitleKey = 'header.pageTitle';
 $taglineKey = 'header.tagline';
 $taglineFallback = 'Pro zadané tóny doporučí vhodný prstoklad';
 require __DIR__ . '/assets/partials/topbar.php';
@@ -53,15 +54,8 @@ require __DIR__ . '/assets/partials/topbar.php';
                     </p>
                     <p class="text-slate-700 leading-relaxed" data-i18n="about.p2" data-i18n-html>
                         Algoritmus upřednostňuje zůstat v jedné poloze, minimalizuje počet posunů mezi polohami a preferuje nižší polohy.
-                        Podporuje enharmonické záměny (např. e# → f, H# → c, Hb → A#) pro správné zpracování všech stupnic.
-                        Výstup lze zobrazit v režimu <strong>notové osnovy</strong> (VexFlow, basový klíč, noty s posuvkami, polohy, prsty a tóny jako anotace)
-                        nebo jako <strong>textový výstup</strong> (polohy, prsty, tóny). Oba režimy nabízí barevné rozlišení strun.
-                        Vizualizace hmatníku na Canvasu zobrazuje doporučený prstoklad s realistickým proporčním rozestupem poloh a propojením pohybu ruky.
-                    </p>
-                    <p class="text-slate-700 leading-relaxed" data-i18n="about.p3" data-i18n-html>
-                        Aplikace podporuje světlé a tmavé téma; notová osnova, text i hmatník se při přepnutí tématu automaticky překreslí.
+                        Podporuje enharmonické záměny pro správné zpracování všech stupnic.
                         Formát výstupu (notová osnova / text) se mění v sekci <strong>Nastavení</strong> pod výsledky.
-                        Tóny lze zadávat i v alternativním formátu (např. <code>c#1</code> místo <code>c1#</code>), aplikace automaticky převede na správný formát.
                     </p>
                 </div>
             </section>
@@ -141,9 +135,18 @@ require __DIR__ . '/assets/partials/topbar.php';
                 Zadejte tóny včetně rozlišení oktáv a posuvek oddělené mezerami, např. C c c1 c1# gb
             </label>
             <div class="flex flex-col md:flex-row gap-4">
-                <input type="text" id="melodyInput"
-                       class="flex-1 p-4 text-xl border-2 border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all font-mono shadow-inner"
-                       value="C D E F G A H c d e f g a h c1 d1 e1 f1 g1">
+                <div class="flex-1 relative">
+                    <input type="text" id="melodyInput"
+                           class="w-full p-4 pr-12 text-xl border-2 border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all font-mono shadow-inner"
+                           value="C D E F G A H c d e f g a h c1 d1 e1 f1 g1 a1 h1 c2">
+                    <button type="button" id="clearInputButton"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
+                            aria-label="Vymazat vstup" data-i18n-aria-label="aria.clearInput">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
                 <button id="solveButton"
                         class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
                         data-i18n="button.solve">
