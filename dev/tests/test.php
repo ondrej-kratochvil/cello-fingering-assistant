@@ -26,7 +26,8 @@ require __DIR__ . '/../../assets/partials/topbar.php';
             </div>
 
             <button onclick="runAllTests()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95 mb-6">
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95 mb-6"
+                    data-i18n="test.runAll">
                 Spustit všechny testy
             </button>
 
