@@ -521,9 +521,10 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     const bodyStyles = getComputedStyle(document.body);
     const staffInk = bodyStyles.getPropertyValue('--color-staff-ink').trim() || bodyStyles.getPropertyValue('--color-text-primary').trim() || '#0f172a';
 
-    // Vytvořit osnovu s basovým klíčem (menší odsazení shora)
+    // Počáteční klíč: pokud jsou všechny noty vyšší než a1, použít houslový klíč (bez zbytečné změny uprostřed)
+    const initialClef = firstHighNoteIndex === 0 ? 'treble' : 'bass';
     const stave = new Stave(0, 50, totalWidth);
-    stave.addClef('bass');
+    stave.addClef(initialClef);
     context.setFillStyle(staffInk);
     context.setStrokeStyle(staffInk);
     stave.setContext(context).draw();
@@ -586,28 +587,23 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         return note;
     });
 
-    // Vytvořit Voice a přidat noty (s případnou změnou klíče)
+    // Vytvořit Voice a přidat noty (s případnou změnou klíče uprostřed)
     let voice;
 
-    // Pokud jsou noty vyšší než a1, přidat změnu klíče před první takovou notou
-    if (firstHighNoteIndex >= 0) {
+    if (firstHighNoteIndex === 0) {
+        // Všechny noty jsou v houslovém klíči – osnova už má treble, žádná ClefNote
+        voice = new Voice({ num_beats: notes.length, beat_value: 1 });
+        voice.addTickables(notes);
+    } else if (firstHighNoteIndex > 0) {
+        // Smíšené: nejdřív basové noty, pak změna klíče, pak houslové noty
         const tickables = [];
-        // Přidat všechny noty před první vysokou notou
-        for (let i = 0; i < firstHighNoteIndex; i++) {
-            tickables.push(notes[i]);
-        }
-        // Přidat změnu klíče na houslový - ClefNote ignoruje ticks, takže nepočítáme ji do num_beats
-        const clefNote = new ClefNote('treble');
-        tickables.push(clefNote);
-        // Přidat zbývající noty
-        for (let i = firstHighNoteIndex; i < notes.length; i++) {
-            tickables.push(notes[i]);
-        }
-        // ClefNote ignoruje ticks, takže num_beats = počet not (bez ClefNote)
+        for (let i = 0; i < firstHighNoteIndex; i++) tickables.push(notes[i]);
+        tickables.push(new ClefNote('treble'));
+        for (let i = firstHighNoteIndex; i < notes.length; i++) tickables.push(notes[i]);
         voice = new Voice({ num_beats: notes.length, beat_value: 1 });
         voice.addTickables(tickables);
     } else {
-        // Žádné vysoké noty, přidat všechny noty s basovým klíčem
+        // Žádné vysoké noty – pouze basový klíč
         voice = new Voice({ num_beats: notes.length, beat_value: 1 });
         voice.addTickables(notes);
     }
