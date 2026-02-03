@@ -92,21 +92,45 @@ export function runAllTests() {
         testDiv.appendChild(header);
 
         if (!isPass && !isSuccessOnly && suite.expected) {
-            const expectedBlock = document.createElement('div');
-            expectedBlock.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4';
-            expectedBlock.innerHTML = `
-                <div>
-                    <p class="font-bold text-slate-700 mb-1">${t('test.expected')}</p>
-                    <p class="font-mono bg-slate-100 p-2 rounded">${formatFingering(suite.expected)}</p>
-                </div>
-                <div>
+            // Očekávaný výsledek - notová osnova
+            const expectedPositionChanges = getPositionChanges(suite.expected);
+            const expectedStaffContainer = document.createElement('div');
+            expectedStaffContainer.className = 'mb-4';
+            const expectedLabel = document.createElement('p');
+            expectedLabel.className = 'font-bold text-slate-700 mb-2';
+            expectedLabel.textContent = t('test.expected');
+            expectedStaffContainer.appendChild(expectedLabel);
+            const expectedStaffWrapper = document.createElement('div');
+            expectedStaffWrapper.className = 'w-full';
+            renderStaffOutput(expectedStaffWrapper, suite.expected, suite.input, expectedPositionChanges, stringColors, toPositionLabelDiatonic, { skipLegend: true });
+            expectedStaffContainer.appendChild(expectedStaffWrapper);
+            testDiv.appendChild(expectedStaffContainer);
+
+            // Skutečný výsledek - notová osnova
+            if (hasValidResult) {
+                const actualPositionChanges = getPositionChanges(result);
+                const actualStaffContainer = document.createElement('div');
+                actualStaffContainer.className = 'mb-4';
+                const actualLabel = document.createElement('p');
+                actualLabel.className = 'font-bold text-slate-700 mb-2';
+                actualLabel.textContent = t('test.actual');
+                actualStaffContainer.appendChild(actualLabel);
+                const actualStaffWrapper = document.createElement('div');
+                actualStaffWrapper.className = 'w-full';
+                renderStaffOutput(actualStaffWrapper, result, suite.input, actualPositionChanges, stringColors, toPositionLabelDiatonic, { skipLegend: true });
+                actualStaffContainer.appendChild(actualStaffWrapper);
+                testDiv.appendChild(actualStaffContainer);
+            } else {
+                // Pokud není validní výsledek, zobrazit textovou chybu
+                const errBlock = document.createElement('div');
+                errBlock.className = 'text-sm mb-4';
+                errBlock.innerHTML = `
                     <p class="font-bold text-slate-700 mb-1">${t('test.actual')}</p>
-                    <p class="font-mono bg-slate-100 p-2 rounded">${formatFingering(result)}</p>
-                </div>
-            `;
-            testDiv.appendChild(expectedBlock);
-        }
-        if (!isPass && isSuccessOnly) {
+                    <p class="font-mono bg-slate-100 p-2 rounded">${result == null ? t('test.solverNoResult') : t('test.countMismatch', { n: result.length, expected: suite.input.length })}</p>
+                `;
+                testDiv.appendChild(errBlock);
+            }
+        } else if (!isPass && isSuccessOnly) {
             const errBlock = document.createElement('div');
             errBlock.className = 'text-sm mb-4';
             errBlock.innerHTML = `
@@ -116,7 +140,8 @@ export function runAllTests() {
             testDiv.appendChild(errBlock);
         }
 
-        if (hasValidResult) {
+        // Pro úspěšné testy zobrazit notovou osnovu
+        if (isPass && hasValidResult) {
             const positionChanges = getPositionChanges(result);
             const staffContainer = document.createElement('div');
             staffContainer.className = 'w-full';

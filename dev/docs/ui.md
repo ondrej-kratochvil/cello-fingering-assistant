@@ -87,7 +87,7 @@ Aplikace používá centralizovaný design systém založený na CSS proměnnýc
 
 ### Light/Dark Mode
 
-Design systém podporuje automatické přepínání podle `prefers-color-scheme` a manuální přepínání pomocí třídy `.dark-mode` na `<body>` elementu.
+Design systém podporuje automatické přepínání podle `prefers-color-scheme` a manuální přepínání pomocí třídy `.dark-mode` na `<body>` elementu. Při změně dark mode se automaticky překreslí notové osnovy a hmatník pomocí callback `setCanvasRedrawCallback`.
 
 ### Sémantické třídy
 
@@ -144,14 +144,15 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
 ### Hlavní prvky
 
 - **Společný layout (PHP includes)**
-  - `assets/partials/topbar.php` – header (logo, **jednotné menu**, h1, tagline). Očekává `$base`, `$pageTitle`, `$taglineKey`, `$taglineFallback`.
+  - `assets/partials/topbar.php` – header (logo, **jednotné menu**, h1, tagline). Očekává `$base`, `$pageTitle`, `$pageTitleKey`, `$taglineKey`, `$taglineFallback`. Nadpis má `data-i18n` atribut pro aktualizaci při změně jazyka.
   - `assets/partials/footer.php` – patička.
   - `index.php` a `dev/tests/test.php` nastaví proměnné a volají `require __DIR__ . '/…/topbar.php'` resp. `footer.php`. Hlavička a patička jsou v prvním HTML (SEO, bez JS).
 
 - **Header a jednotné menu**
   - **Jedno menu** (`#mainNav`), žádná duplikace desktop/mobil. Na desktopu viditelné v řádku (`.main-nav`), na mobilu skryté; hamburger (`#menuToggle`) přepíná `body.nav-open`, CSS zobrazí menu jako overlay.
+  - **Hamburger menu**: Vždy viditelný v pravém horním rohu, neobtéká nadpis. CSS zajišťuje správné zkrácení nadpisu (`truncate`) a flex-shrink pro hamburger tlačítko.
   - Položky: Home, Testy, O aplikaci, přepínač Dark/Light, vlajky jazyka (🇨🇿 🇬🇧). O aplikaci na indexu: `preventDefault` + toggle sekce; na testu odkaz na `index.php`.
-  - Nadpis a tagline z PHP (`$pageTitle`, `$taglineKey`, `$taglineFallback`); i18n doplní překlady v prohlížeči.
+  - Nadpis a tagline z PHP (`$pageTitle`, `$pageTitleKey`, `$taglineKey`, `$taglineFallback`); i18n doplní překlady v prohlížeči. Nadpis má `data-i18n` atribut a aktualizuje se při změně jazyka.
 
 - **Label/input a Nastavení**
   - Vstup tónů: `<label for="melodyInput">` asociované s `<input id="melodyInput">`. Sekce Nastavení: skupinové popisky (Formát výstupu, Označení poloh, H/B) jako `<span>`, ne `<label>`.
@@ -167,6 +168,7 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
     - s posuvkami (`#` a `b` – např. `f#`, `gb`),
     - oddělené mezerou.
   - Label vysvětluje formát zadání.
+  - **Tlačítko "Clear input"**: Tlačítko s ikonou X v pravém rohu input pole pro rychlé vymazání hodnoty. Po kliknutí vymaže input a nastaví focus zpět na pole.
 
 - **Akční tlačítko**
   - Text: „Navrhnout prstoklad“.
@@ -175,10 +177,11 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
 - **Výstupní oblast**
   - `#resultsWrapper` (na začátku skrytý) obsahuje:
     - `#pathDisplay` – vizualizaci prstokladu podle vybraného formátu (**Nastavení → Formát výstupu**):
-      - **Notová osnova (výchozí)**: VexFlow SVG – basový klíč, celé noty, polohy nad notami (římské číslice při změně), prsty a tóny jako anotace, barevné struny. Kontejner `.staff-output`, horizontální scroll.
+      - **Notová osnova (výchozí)**: VexFlow SVG – basový klíč (výchozí), celé noty (whole notes), polohy nad notami (římské číslice při změně), prsty a tóny jako anotace, barevné struny. Pro noty vyšší než `a1` (MIDI 69) se automaticky přidá houslový klíč (treble clef) před první takovou notou. Kontejner `.staff-output`, horizontální scroll s pozadím na mobilních zařízeních.
       - **Textový výstup**: tři řádky – polohy (římské, při změně), prsty (barevně podle struny, `↑` pro širokou), tóny.
     - `<canvas id="fretboardCanvas">` – vizualizace hmatníku ve 2D (4 struny, polohy 1–12) s **černým pozadím** (ve světlém i tmavém režimu).
       Proporční rozestupy mezi polohami (menší směrem k mostku) odpovídají skutečným vzdálenostem na violoncelle.
+      **Zesvětlené čáry pro orientační body**: I., IV. a VII. poloha (diatonicky) = pozice 2, 7, 12 (chromaticky) jsou zobrazeny světlejší barvou (#707070) a silnější čarou (1.5px) pro lepší orientaci.
       Horizontální scroll na menších displejích.
   - **Sekce Nastavení** (skrývatelná): Formát výstupu (Notová osnova / Textový výstup), Označení poloh (diatonické / chromatické), Označení tónu H/B. Jazyk pouze v menu (vlajky).
 
@@ -222,13 +225,16 @@ Zodpovídá za:
 
 Vykreslí notovou osnovu pomocí **VexFlow** (SVG backend). Používá se, když je `currentOutputFormat === 'staff'`.
 
-- Vytvoří kontejner `.staff-output` (bez borderu), VexFlow `Renderer` + `Stave` (basový klíč), `StaveNote` (celé noty) a `Annotation` pro polohy, prsty a tóny.
+- Vytvoří kontejner `.staff-output` (bez borderu), VexFlow `Renderer` + `Stave` (basový klíč výchozí), `StaveNote` (celé noty - whole notes) a `Annotation` pro polohy, prsty a tóny.
+- **Dynamická změna klíče**: Pro noty vyšší než `a1` (MIDI 69) se automaticky přidá `ClefNote('treble')` před první takovou notou. Noty pod `a1` používají basový klíč, noty nad `a1` houslový klíč.
 - **Posuvky před notou**: Explicitně přidává `Accidental` modifikátory (`#` nebo `b`) k notám, aby byly vždy zobrazeny.
 - **Bez enharmonických záměn**: Noty se zobrazují přesně tak, jak je uživatel zadal (např. `e#` zůstane jako E#, ne F).
+- **Menší odsazení shora**: Osnova má menší top padding (50px místo 100px) pro kompaktnější zobrazení.
 - Barvy: `--color-staff-ink` (klíč, noty, polohy, tóny), barvy prstů podle strun (`--cello-string-*`). Pozadí z `--color-staff-bg`.
 - Kontext `setFillStyle` / `setStrokeStyle` před kreslením stave i před `voice.draw()`.
 - V dark mode CSS přepisuje `path` / `line` / `rect` v `[id^="vexflow-staff-"]` na bílou.
-- Legenda strun pod osnovou. Výstup v `overflow-x-auto` pro horizontální scroll.
+- **Překreslení při změně dark mode**: Callback `setCanvasRedrawCallback` volá `redrawResults()` pro překreslení osnov při změně tématu.
+- Legenda strun pod osnovou. Výstup v `overflow-x-auto` pro horizontální scroll s pozadím na mobilních zařízeních.
 
 ### Funkce `drawFingerboard(path, input)`
 
@@ -246,6 +252,7 @@ Pracuje s `<canvas id="fretboardCanvas">` o šířce 1000 px a výšce 400 px.
 
 - Vykreslí vertikální značky pro pozice 1–12:
   - jemné vertikální linky (`--color-fingerboard-fret`, #404040),
+  - **Zesvětlené čáry pro orientační body**: I., IV. a VII. poloha (diatonicky) = pozice 2, 7, 12 (chromaticky) jsou zobrazeny světlejší barvou (#707070) a silnější čarou (1.5px) pro lepší orientaci na hmatníku,
   - nahoře se zobrazí číslo polohy římsky (I–XII…) v barvě `--color-fingerboard-text` (#b0b0b0).
 
 - Vykreslí prázdné struny (pozice 0):
@@ -302,7 +309,9 @@ Podle **Nastavení → Označení tónu H/B** vrací zobrazovaný tón: H/Hes vs
 ### Inicializace
 
 - **Bootstrap** (`index.php`): `await initI18n()` → `setCanvasRedrawCallback(redrawResults)` → `initNavigation()` → `initUI()`. Volá se z async `main()` po `DOMContentLoaded`. Žádné `loadLayout` – topbar/footer jsou PHP include.
-- **`initUI()`** (export z `ui.js`): naplní `#jsonDisplay` JSON reprezentací `model`; pokud je v URL parametr `sequence`, nastaví ho do `#melodyInput`; inicializuje skrývání/zobrazení sekce "O aplikaci" podle `localStorage.getItem('aboutCollapsed')`; přidá listenery na "O aplikaci", Enter v inputu, tlačítko řešení, JSON toggle; volá `initSettings()` a `runSolver(true)`.
+- **`initUI()`** (export z `ui.js`): naplní `#jsonDisplay` JSON reprezentací `model`; pokud je v URL parametr `sequence`, nastaví ho do `#melodyInput`; inicializuje skrývání/zobrazení sekce "O aplikaci" podle `localStorage.getItem('aboutCollapsed')`; přidá listenery na "O aplikaci", Enter v inputu, **tlačítko "Clear input"** (vymaže input a nastaví focus), tlačítko řešení, JSON toggle; volá `initSettings()` a `runSolver(true)`. Listener na `languageChange` event překreslí výstup při změně jazyka.
 - **Nastavení**: Formát výstupu, Označení poloh, **Jazyk** (volá `setLanguage`, při změně `runSolver(true)`), **Označení H/B** (volá `setNoteNaming`, při změně `runSolver(true)`). Jazyk i H/B se načítají z `localStorage` při startu.
+- **Dark mode překreslení**: Při změně dark mode se osnovy a hmatník automaticky překreslí pomocí callback `setCanvasRedrawCallback`, který volá `redrawResults()`.
+- **Změna jazyka**: Při změně jazyka se aktualizují všechny texty včetně nadpisu v hlavičce (pomocí `data-i18n` atributu). Na testovací stránce se testy automaticky překreslí při změně jazyka pomocí listeneru na `languageChange` event.
 
 

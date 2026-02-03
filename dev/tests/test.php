@@ -14,6 +14,7 @@
 <?php
 $base = '../../';
 $pageTitle = 'Testy prstokladu';
+$pageTitleKey = 'test.pageTitle';
 $taglineKey = 'test.tagline';
 $taglineFallback = 'Ověření správnosti algoritmu';
 require __DIR__ . '/../../assets/partials/topbar.php';
@@ -40,7 +41,7 @@ require __DIR__ . '/../../assets/partials/topbar.php';
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
     <script type="module">
         import { initI18n } from '../../assets/js/i18n.js';
-        import { initNavigation } from '../../assets/js/navigation.js';
+        import { initNavigation, setCanvasRedrawCallback } from '../../assets/js/navigation.js';
         import { runAllTests } from '../../assets/js/test-runner.js';
 
         async function main() {
@@ -48,6 +49,21 @@ require __DIR__ . '/../../assets/partials/topbar.php';
                 await new Promise(r => document.addEventListener('DOMContentLoaded', r));
             }
             await initI18n();
+            // Překreslit osnovy při změně dark mode
+            setCanvasRedrawCallback(() => {
+                // Překreslit všechny testy při změně dark mode
+                const testResults = document.getElementById('testResults');
+                if (testResults && testResults.children.length > 0) {
+                    runAllTests();
+                }
+            });
+            // Překreslit testy při změně jazyka
+            window.addEventListener('languageChange', () => {
+                const testResults = document.getElementById('testResults');
+                if (testResults && testResults.children.length > 0) {
+                    runAllTests();
+                }
+            });
             await initNavigation();
             runAllTests();
         }

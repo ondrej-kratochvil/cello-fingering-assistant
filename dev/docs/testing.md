@@ -53,19 +53,20 @@ Stránka `test.php`:
   - použije `compareFingering()` k vyhodnocení,
   - vykreslí:
     - vstup,
-    - očekávaný prstoklad,
-    - skutečný prstoklad,
+    - **Pro selhané testy s očekávaným výsledkem**: Notové osnovy pro očekávaný i skutečný výsledek s popisky "Očekáváno" a "Skutečnost" nad každou osnovou,
+    - **Pro úspěšné testy**: Notovou osnovu se skutečným výsledkem,
     - stav (PROŠLO / SELHALO).
 - Nahoře i dole zobrazuje **souhrn**:
   - počet prošlých / selhaných / celkem,
   - krátká zpráva, zda všechny testy prošly.
-- U každého testu je tlačítko „Zobrazit prstoklad“:
+- U každého testu je tlačítko „Zobrazit prstoklad":
   - otevře `index.php` s danou sekvencí v parametru `sequence`,
   - umožní vizuálně analyzovat konkrétní případ v hlavní aplikaci.
+- **Překreslení při změně dark mode**: Callback `setCanvasRedrawCallback` volá `runAllTests()` pro překreslení všech testů při změně tématu.
+- **Překreslení při změně jazyka**: Listener na `languageChange` event volá `runAllTests()` pro překreslení všech testů s novými překlady.
 
 ## Manuální testy (UI/UX)
 
 Podle projektových pravidel jsou návrhy manuálních testů v souboru [`manual_tests.md`](./manual_tests.md).
-
 
 

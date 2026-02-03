@@ -1,5 +1,27 @@
 # Pravidla vývoje - Vanilla Stack
 
+## Umístění pravidel (firemní vs. projekt)
+
+- **Firemní standard (závazný pro všechny projekty)**  
+  - **Team Rules** (doporučeno): Cursor Dashboard → Team/Enterprise → pravidla spravuje admin, platí pro celý tým, lze vynucovat.  
+  - **Alternativa bez Team plánu**: Sdílený repozitář s pravidly (např. `company-cursor-rules`). V každém projektu: **Cursor Settings → Rules → Project Rules → Add Rule → Remote Rule (GitHub)** a odkaz na ten repo. Pravidla se verzují v gitu a synchronizují.  
+  - **User Rules** (Cursor Settings → Rules): platí globálně pro daného uživatele, ale nejsou v souboru – nelze sdílet přes git.
+
+- **Projektová pravidla (zpřesnění pro daný projekt)**  
+  - Tento soubor **`.cursorrules`** v rootu projektu (nebo soubory v **`.cursor/rules/`**).  
+  - Doplnění a **výjimky** k firemnímu standardu (např. „pouze čeština pro interní aplikaci“), detekce typu projektu, specifika stacku a složek.  
+  - **Konflikt vs. výjimka**: Cursor skládá **Team Rules → Project Rules → User Rules**; při přímém konfliktu má přednost dříve uvedený zdroj. Pokud firemní pravidlo výslovně umožňuje výjimku („projekt může uvést …“), pak projektová formulace není konflikt, ale platná výjimka. U pravidel z Remote Rule (GitHub) platí totéž – projekt může zužovat tam, kde je to v textu pravidel dovoleno.
+
+- **`.cursorrules` vs. `.cursor/rules/`**  
+  - **`.cursorrules`** (jeden soubor): Legacy formát. Cursor ho **neaplikuje automaticky v chatu** – Agent/Chat ho nemusí mít v kontextu. Vhodné pro projekty, kde stačí občas přidat pravidla ručně (@).  
+  - **`.cursor/rules/`** (složka, soubory `.md` / `.mdc`): Doporučený formát. Pravidla lze nastavit na **Always Apply** (`alwaysApply: true` v frontmatter), pak se přidávají do kontextu u každého chatu. Lze rozdělit pravidla do více souborů (např. `vanilla-stack.mdc`, `git.mdc`).  
+  - **Pokud chat/agent ignoruje pravidla (např. u git příkazů):**  
+    1. **Rychlé řešení:** V chatu explicitně přidej pravidla do kontextu – napiš **@** a vyber **.cursorrules** nebo konkrétní soubor z `.cursor/rules/`. Pravidla pak budou v kontextu daného vlákna.  
+    2. **Trvalé řešení:** Přesunout klíčová pravidla do **`.cursor/rules/`** a u hlavního souboru nastavit **Always Apply**. V Cursor Settings → Rules ověřit, že „Include .cursorrules“ / Project Rules jsou zapnuté.  
+    3. **První zpráva v novém chatu:** Na začátku vlákna lze napsat např. „Pracuj podle pravidel v .cursorrules (git: PowerShell, středník).“ – připomene to kontext bez nutnosti @.
+
+---
+
 ## Role
 
 Jsi seniorní full-stack vývojář a architekt. Tvým úkolem je vyvíjet, auditovat a udržovat aplikace na "Vanilla" stacku s minimálním technickým dluhem a kvalitní dokumentací.
@@ -78,6 +100,19 @@ Každá aplikace musí mít definovanou faviconu.
   - Formát: `© [aktuální rok] [název společnosti/projektu]`
   - Odkaz na web (pokud je relevantní)
   - *Poznámka: Text copyrightu se přizpůsobí konkrétnímu projektu*
+
+### Multijazyčnost (i18n)
+
+Aplikace podporují vícejazyčnost; **výchozí** je pár **čeština + angličtina**. Projekt může v `.cursorrules` uvést **výjimku** (např. „pouze čeština, interní aplikace“) – pak stačí jeden jazyk a přepínač jazyka v UI není nutný.
+
+- **Překlady**: Uložené v oddělených souborech (např. `assets/i18n/cs.json`, `assets/i18n/en.json`). Struktura dle klíčů (např. `nav.home`, `aria.menu`). Snadné přidání dalšího jazyka = nový JSON soubor.
+- **Žádné natvrdo v kódu**: Uživatelsky viditelné texty (tlačítka, popisky, nadpisy, aria-label) nejsou přímo v HTML/JS – používají se klíče a funkce typu `t(key)` resp. `t(key, { var: value })` pro interpolaci.
+- **Výběr jazyka v UI**: Viditelný přepínač jazyka (např. vlajky nebo zkratky v menu). Po změně jazyka se texty aktualizují **bez nutnosti obnovit stránku** (volání překladu a překreslení dynamického obsahu).
+- **Uložení volby**: Zvolený jazyk se ukládá (např. `localStorage`) a při dalším načtení se aplikuje.
+- **Dynamický obsah**: Všechny texty včetně nadpisů stránek, souhrnů a dynamicky generovaných bloků (např. výsledky testů) se při změně jazyka aktualizují – buď přes atributy (`data-i18n`, `data-i18n-html`, `data-i18n-aria-label`) a `applyTranslations()`, nebo překreslením komponenty, která texty vykresluje.
+- **HTML v překladech**: Pokud překlad obsahuje HTML (tučné, odkazy), používej oddělený atribut/klíč (např. `data-i18n-html`) a nastavuj `innerHTML` jen z důvěryhodného zdroje (vlastní JSON).
+
+*Poznámka: Konkrétní implementace (vlastní modul vs. knihovna) závisí na projektu; výše uvedené chování je závazné.*
 
 ### Responzivita
 
