@@ -56,4 +56,23 @@ Tyto testy jsou určené pro lidského testera. Ověřují aspekty, které se h�
 4. Obnov stránku: ověř, že jazyk, H/B i téma zůstaly (localStorage).
 5. Otevři `dev/tests/test.php`: ověř, že v menu jsou téma a vlajky, názvy a popisy testů a souhrn jsou v zvoleném jazyce.
 
+## 5. Editace prstokladu (modal + klávesnice)
+
+1. Na `index.php` zadej sekvenci `C D E F` a klikni **Navrhnout prstoklad**.
+2. Klikni na **Editovat prstoklad** (modal se má otevřít nad prvním prstem).
+3. Zkontroluj:
+   - modal je **těsně nad prstem**, ne překrývá notu,
+   - volby **Prst / Struna / Poloha** mají `Auto`,
+   - neplatné volby jsou **disabled** (např. u C prázdné struny).
+4. Stiskni na klávesnici čísla `1`, `2`, `3`:
+   - prst se nastaví,
+   - fokus se **posune na další notu**,
+   - modal zůstává otevřený a posouvá se s fokusem.
+5. Zkus zadat neplatný prst (např. pro velké C stiskni `2`):
+   - změna se neprovede,
+   - v modalu se zobrazí chybová hláška (cca 2 s).
+6. U jedné noty změň **strunu nebo polohu**:
+   - prst u noty se označí vykřičníkem `!` (např. `4↑!`),
+   - po změně se prstoklad znovu přepočítá a zachová uživatelské volby.
+
 

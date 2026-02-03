@@ -9,6 +9,7 @@
   "aria.langCs": "Čeština",
   "aria.langEn": "English",
   "aria.clearInput": "Vymazat vstup",
+  "aria.clearInput": "Vymazat vstup",
 
   "about.title": "O aplikaci",
   "about.p1": "<strong>Cello Fingering Assistant</strong> je nástroj pro návrh optimálního prstokladu pro violoncello. Analyzuje sekvenci tónů a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu a minimalizaci posunů.",
@@ -45,6 +46,10 @@
 
   "input.label": "Zadejte tóny včetně rozlišení oktáv a posuvek oddělené mezerami, např. C c c1 c1# gb",
   "button.solve": "Navrhnout prstoklad",
+  "button.editStart": "Editovat prstoklad",
+  "button.editStop": "Ukončit editaci",
+  "button.settingsOpen": "Nastavení",
+  "button.settingsClose": "Zavřít nastavení",
   "button.jsonShow": "Zobrazit JSON Model",
   "button.jsonHide": "Skrýt JSON Model",
   "legend.strings": "Legenda strun:",
@@ -65,6 +70,14 @@
   "settings.noteB": "B (Bb)",
 
   "errors.outOfRange": "Tón mimo rozsah nebo neznámý zápis.",
+  "errors.unplayableFinger": "Tento tón nelze zahrát zvoleným prstem.",
+
+  "modal.finger": "Prst",
+  "modal.string": "Struna",
+  "modal.position": "Poloha",
+  "modal.auto": "Auto",
+  "position.narrow": "úzká",
+  "position.wide": "široká",
 
   "test.pageTitle": "Testy prstokladu",
   "test.tagline": "Ověření správnosti algoritmu",

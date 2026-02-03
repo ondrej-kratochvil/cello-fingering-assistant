@@ -134,7 +134,7 @@ require __DIR__ . '/assets/partials/topbar.php';
             <label for="melodyInput" class="block text-sm font-bold text-slate-700 mb-2 tracking-wider" data-i18n="input.label">
                 Zadejte tóny včetně rozlišení oktáv a posuvek oddělené mezerami, např. C c c1 c1# gb
             </label>
-            <div class="flex flex-col md:flex-row gap-4">
+            <div class="space-y-4">
                 <div class="flex-1 relative">
                     <input type="text" id="melodyInput"
                            class="w-full p-4 pr-12 text-xl border-2 border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition-all font-mono shadow-inner"
@@ -147,11 +147,66 @@ require __DIR__ . '/assets/partials/topbar.php';
                         </svg>
                     </button>
                 </div>
-                <button id="solveButton"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
-                        data-i18n="button.solve">
-                    Navrhnout prstoklad
-                </button>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <button id="solveButton"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
+                            data-i18n="button.solve">
+                        Navrhnout prstoklad
+                    </button>
+                    <button id="editFingeringButton" type="button"
+                            class="bg-slate-700 hover:bg-slate-800 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
+                            data-i18n="button.editStart">
+                        Editovat prstoklad
+                    </button>
+                    <button id="settingsToggle" type="button"
+                            class="bg-white hover:bg-slate-100 text-slate-700 font-black py-4 px-10 rounded-2xl transition-all shadow-lg border border-slate-200 active:scale-95"
+                            data-i18n="button.settingsOpen" aria-expanded="false">
+                        Nastavení
+                    </button>
+                </div>
+                <div id="settingsSection" class="mt-2">
+                    <div id="settingsContent" class="hidden space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+                        <div>
+                            <span class="block text-sm font-bold text-slate-700 mb-2" data-i18n="settings.outputFormat">Formát výstupu:</span>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="outputFormat" value="staff" checked class="w-4 h-4 text-indigo-600">
+                                    <span data-i18n="settings.outputStaff">Notová osnova</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="outputFormat" value="text" class="w-4 h-4 text-indigo-600">
+                                    <span data-i18n="settings.outputText">Textový výstup</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm font-bold text-slate-700 mb-2" data-i18n="settings.positionLabel">Označení poloh:</span>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="positionLabel" value="diatonic" checked class="w-4 h-4 text-indigo-600">
+                                    <span data-i18n="settings.positionDiatonic">Diatonické (I, II↓, II↑, …)</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="positionLabel" value="chromatic" class="w-4 h-4 text-indigo-600">
+                                    <span data-i18n="settings.positionChromatic">Chromatické (I–XII)</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-sm font-bold text-slate-700 mb-2" data-i18n="settings.noteNaming">Označení tónu H/B:</span>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="noteNaming" value="H" checked class="w-4 h-4 text-indigo-600">
+                                    <span data-i18n="settings.noteH">H (Hes)</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="noteNaming" value="B" class="w-4 h-4 text-indigo-600">
+                                    <span data-i18n="settings.noteB">B (Bb)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -162,55 +217,6 @@ require __DIR__ . '/assets/partials/topbar.php';
 
             <div class="overflow-x-auto -mx-8 px-8 md:mx-0 md:px-0 mt-10">
                 <canvas id="fretboardCanvas" width="1000" height="400" class="border border-slate-300 rounded-lg"></canvas>
-            </div>
-        </div>
-
-        <!-- Sekce Nastavení -->
-        <div id="settingsSection" class="p-8 bg-slate-50 border-t border-slate-200 hidden">
-            <button id="settingsToggle" class="w-full flex items-center justify-between text-left font-bold text-slate-700 hover:text-slate-900 transition-colors">
-                <span class="text-lg" data-i18n="settings.title">⚙️ Nastavení</span>
-                <span id="settingsToggleIcon" class="text-slate-400">▼</span>
-            </button>
-            <div id="settingsContent" class="mt-4 space-y-4 hidden">
-                <div>
-                    <span class="block text-sm font-bold text-slate-700 mb-2" data-i18n="settings.outputFormat">Formát výstupu:</span>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="outputFormat" value="staff" checked class="w-4 h-4 text-indigo-600">
-                            <span data-i18n="settings.outputStaff">Notová osnova</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="outputFormat" value="text" class="w-4 h-4 text-indigo-600">
-                            <span data-i18n="settings.outputText">Textový výstup</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <span class="block text-sm font-bold text-slate-700 mb-2" data-i18n="settings.positionLabel">Označení poloh:</span>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="positionLabel" value="diatonic" checked class="w-4 h-4 text-indigo-600">
-                            <span data-i18n="settings.positionDiatonic">Diatonické (I, II↓, II↑, …)</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="positionLabel" value="chromatic" class="w-4 h-4 text-indigo-600">
-                            <span data-i18n="settings.positionChromatic">Chromatické (I–XII)</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <span class="block text-sm font-bold text-slate-700 mb-2" data-i18n="settings.noteNaming">Označení tónu H/B:</span>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="noteNaming" value="H" checked class="w-4 h-4 text-indigo-600">
-                            <span data-i18n="settings.noteH">H (Hes)</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="noteNaming" value="B" class="w-4 h-4 text-indigo-600">
-                            <span data-i18n="settings.noteB">B (Bb)</span>
-                        </label>
-                    </div>
-                </div>
             </div>
         </div>
 

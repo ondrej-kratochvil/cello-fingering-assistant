@@ -1,6 +1,6 @@
 # Algoritmus prstokladu
 
-Tento dokument popisuje hlavní heuristiky a penalizace v algoritmu `solve(sequence)` v `js/fingering.js`.
+Tento dokument popisuje hlavní heuristiky a penalizace v algoritmu `solve(sequence[, constraints])` v `js/fingering.js` (volitelná omezení pro editaci).
 
 ## Cíl
 

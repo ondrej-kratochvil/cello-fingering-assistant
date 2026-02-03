@@ -9,6 +9,7 @@
   "aria.langCs": "Czech",
   "aria.langEn": "English",
   "aria.clearInput": "Clear input",
+  "aria.clearInput": "Clear input",
 
   "about.title": "About",
   "about.p1": "<strong>Cello Fingering Assistant</strong> is a tool for designing optimal cello fingering. It analyses a sequence of notes and recommends the most suitable fingering with regard to position stability and minimising shifts.",
@@ -45,6 +46,10 @@
 
   "input.label": "Enter notes with octave and accidentals, space-separated, e.g. C c c1 c1# gb",
   "button.solve": "Suggest fingering",
+  "button.editStart": "Edit fingering",
+  "button.editStop": "Stop editing",
+  "button.settingsOpen": "Settings",
+  "button.settingsClose": "Close settings",
   "button.jsonShow": "Show JSON Model",
   "button.jsonHide": "Hide JSON Model",
   "legend.strings": "String legend:",
@@ -65,6 +70,14 @@
   "settings.noteB": "B (Bb)",
 
   "errors.outOfRange": "Note out of range or unknown notation.",
+  "errors.unplayableFinger": "This note cannot be played with the selected finger.",
+
+  "modal.finger": "Finger",
+  "modal.string": "String",
+  "modal.position": "Position",
+  "modal.auto": "Auto",
+  "position.narrow": "narrow",
+  "position.wide": "wide",
 
   "test.pageTitle": "Fingering tests",
   "test.tagline": "Algorithm correctness verification",

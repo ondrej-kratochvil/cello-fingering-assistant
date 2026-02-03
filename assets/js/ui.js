@@ -313,6 +313,14 @@ let lastResult = null;
 let lastInputForSolve = null;
 /** Původní vstup uživatele (bez enharmonických převodů). Používá se pro zobrazení výstupu. */
 let lastInput = null;
+const STORAGE_LAST_FINGERING = 'fingering:last';
+let editModeEnabled = false;
+let activeNoteIndex = null;
+let pendingActiveNoteIndex = null;
+let fingerTargets = [];
+let staffScrollContainer = null;
+let modalEl = null;
+let modalErrorTimeout = null;
 
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
@@ -340,6 +348,91 @@ function toPositionLabel(p, mode) {
     if (p === 0) return '';
     if (mode === 'chromatic') return CHROMATIC_ROMAN[p] ?? String(p);
     return POSITION_LABEL_MAP[p] ?? String(p);
+}
+
+function hasAnyUserDefined(step) {
+    if (!step || !step.userDefined) return false;
+    return !!(step.userDefined.f || step.userDefined.s || step.userDefined.pos);
+}
+
+function buildConstraintsFromResult(result) {
+    if (!result) return null;
+    return result.map((step) => {
+        if (!hasAnyUserDefined(step)) return null;
+        const constraint = { userDefined: { ...step.userDefined } };
+        if (step.userDefined.f) constraint.f = step.f;
+        if (step.userDefined.s) constraint.s = step.s;
+        if (step.userDefined.pos) {
+            constraint.p = step.p;
+            constraint.ext = step.ext;
+        }
+        return constraint;
+    });
+}
+
+function applyUserDefinedFlags(result, constraints) {
+    if (!constraints) return result;
+    return result.map((step, idx) => {
+        const constraint = constraints[idx];
+        if (!constraint || !constraint.userDefined) return step;
+        return { ...step, userDefined: { ...constraint.userDefined } };
+    });
+}
+
+function normalizeInputTokens(input) {
+    const flatToSharpMap = {
+        Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
+        cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
+        cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#',
+        cb2: 'h1', db2: 'c2#'
+    };
+    const sharpToNaturalMap = {
+        'E#': 'F', 'e#': 'f', 'e1#': 'f1', 'E1#': 'f1',
+        'H#': 'c', 'h#': 'c1'
+    };
+    return input.map((token) => {
+        let x = normalizeOctaveAccidentalSwap(token);
+        x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
+        const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
+        if (flat) return flat;
+        const sharp = sharpToNaturalMap[x] || sharpToNaturalMap[x.toLowerCase()];
+        if (sharp) return sharp;
+        return x;
+    });
+}
+
+function arraysEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    return a.every((val, idx) => val === b[idx]);
+}
+
+function saveLastFingeringState(state) {
+    if (!state || !state.input || !state.fingering) return;
+    localStorage.setItem(STORAGE_LAST_FINGERING, JSON.stringify(state));
+}
+
+function loadLastFingeringState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_LAST_FINGERING);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.input) || !Array.isArray(data.fingering)) return null;
+        if (data.input.length !== data.fingering.length) return null;
+        if (data.inputNormalized && data.inputNormalized.length !== data.input.length) return null;
+        return data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function matchesConstraint(option, constraint) {
+    if (!constraint) return true;
+    if (constraint.f !== undefined && option.f !== constraint.f) return false;
+    if (constraint.s !== undefined && option.s !== constraint.s) return false;
+    if (constraint.p !== undefined && option.p !== constraint.p) return false;
+    if (constraint.ext !== undefined && option.ext !== constraint.ext) return false;
+    return true;
 }
 
 /**
@@ -560,9 +653,20 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         if (step.ext === 1) {
             fingerText += '↑';
         }
+        if (hasAnyUserDefined(step)) {
+            fingerText += '!';
+        }
         const fingerAnnotation = new Annotation(fingerText);
         fingerAnnotation.setFont('Arial', 14, 'bold');
         fingerAnnotation.setStyle({ fillStyle: fingerColor });
+        if (typeof fingerAnnotation.setAttribute === 'function') {
+            try {
+                fingerAnnotation.setAttribute('data-finger-idx', String(idx));
+                fingerAnnotation.setAttribute('data-finger-role', 'finger');
+            } catch (e) {
+                // Ignorovat, pokud VexFlow atributy nepodporuje
+            }
+        }
         annotations.push(fingerAnnotation);
 
         // Poloha (nahoře) - pouze pokud je změna polohy, přidat jako druhou
@@ -620,11 +724,11 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     // Kontejner pro osnovu s horizontálním scrollováním
     const staffContainer = document.createElement('div');
-    staffContainer.className = 'overflow-x-auto md:mx-0 md:px-0';
+    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0';
     staffContainer.appendChild(staffDiv);
     container.appendChild(staffContainer);
 
-    if (opts.skipLegend) return;
+    if (opts.skipLegend) return staffDiv;
 
     // Legenda barev strun
     const legend = document.createElement('div');
@@ -646,6 +750,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     });
     legend.appendChild(legendItems);
     container.appendChild(legend);
+    return staffDiv;
 }
 
 // Inicializace sekce Nastavení
@@ -653,23 +758,29 @@ function initSettings() {
     const settingsSection = document.getElementById('settingsSection');
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
-    const settingsToggleIcon = document.getElementById('settingsToggleIcon');
 
     if (!settingsSection || !settingsToggle || !settingsContent) return;
 
     // Toggle skrývání/zobrazování nastavení
-    settingsToggle.addEventListener('click', () => {
+    const syncSettingsToggleLabel = () => {
         const isHidden = settingsContent.classList.contains('hidden');
+        settingsToggle.textContent = isHidden ? t('button.settingsOpen') : t('button.settingsClose');
+        settingsToggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+    };
+    settingsToggle.addEventListener('click', () => {
         settingsContent.classList.toggle('hidden');
-        settingsToggleIcon.textContent = isHidden ? '▲' : '▼';
+        syncSettingsToggleLabel();
     });
+    syncSettingsToggleLabel();
+    window.addEventListener('languageChange', syncSettingsToggleLabel);
 
     // Přepínání mezi režimy výstupu
     const radioButtons = document.querySelectorAll('input[name="outputFormat"]');
     radioButtons.forEach(radio => {
         radio.addEventListener('change', (e) => {
             currentOutputFormat = e.target.value;
-            if (lastResult && lastInputForSolve) runSolver(true);
+            if (currentOutputFormat !== 'staff') setEditMode(false);
+            if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
         });
     });
     const defaultFormat = document.querySelector('input[name="outputFormat"][value="staff"]');
@@ -687,7 +798,7 @@ function initSettings() {
         radio.addEventListener('change', (e) => {
             currentPositionLabelMode = e.target.value;
             localStorage.setItem('positionLabelMode', currentPositionLabelMode);
-            if (lastResult && lastInputForSolve) runSolver(true);
+            if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
         });
     });
 
@@ -698,7 +809,7 @@ function initSettings() {
     document.querySelectorAll('input[name="noteNaming"]').forEach((radio) => {
         radio.addEventListener('change', (e) => {
             setNoteNaming(e.target.value === 'B' ? 'B' : 'H');
-            if (lastResult && lastInputForSolve) runSolver(true);
+            if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
         });
     });
 }
@@ -707,34 +818,27 @@ const bToHMap = {
     B: 'H', Bb: 'Hb', b: 'h', bb: 'hb', b1: 'h1', bb1: 'hb1', B1: 'H1', Bb1: 'Hb1'
 };
 
-function runSolver(skipHideAbout = false) {
-    const inputVal = document.getElementById('melodyInput').value.trim();
+function runSolver(options = {}) {
+    const { skipHideAbout = false, preserveState = false } = options;
+    const inputEl = document.getElementById('melodyInput');
+    const inputVal = inputEl ? inputEl.value.trim() : '';
     const display = document.getElementById('pathDisplay');
     const wrapper = document.getElementById('resultsWrapper');
 
-    let result, inputForSolve, input = null;
+    let result = null;
+    let inputForSolve = null;
+    let input = null;
+
     if (inputVal) {
         input = inputVal.split(/\s+/);
-        const flatToSharpMap = {
-            Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
-            cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
-            cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#',
-            cb2: 'h1', db2: 'c2#'
-        };
-        const sharpToNaturalMap = {
-            'E#': 'F', 'e#': 'f', 'e1#': 'f1', 'E1#': 'f1',
-            'H#': 'c', 'h#': 'c1'
-        };
-        inputForSolve = input.map((token) => {
-            let x = normalizeOctaveAccidentalSwap(token);
-            x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
-            const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
-            if (flat) return flat;
-            const sharp = sharpToNaturalMap[x] || sharpToNaturalMap[x.toLowerCase()];
-            if (sharp) return sharp;
-            return x;
-        });
-        result = solve(inputForSolve);
+        const shouldReuse = preserveState && lastResult && lastInput && arraysEqual(input, lastInput);
+        if (shouldReuse) {
+            result = lastResult;
+            inputForSolve = lastInputForSolve;
+        } else {
+            inputForSolve = normalizeInputTokens(input);
+            result = solve(inputForSolve);
+        }
     } else {
         if (!lastResult || !lastInputForSolve) return;
         result = lastResult;
@@ -742,80 +846,1450 @@ function runSolver(skipHideAbout = false) {
     }
 
     const inputForDisplay = input !== null ? input : (lastInput || lastInputForSolve);
+    renderResults({
+        result,
+        inputForSolve,
+        inputForDisplay,
+        inputOriginal: input,
+        skipHideAbout,
+        display,
+        wrapper
+    });
+}
+
+function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, skipHideAbout, display, wrapper }) {
+    if (!display) return;
     const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(t)));
 
     display.innerHTML = '';
     if (result === null || result === undefined) {
         display.innerHTML = `<p class="text-red-500 font-bold p-4 text-center w-full">${t('errors.outOfRange')}</p>`;
-    } else {
-        // Při spuštění solveru z uživatelského vstupu skryjeme celý main a uložíme stav
-        if (!skipHideAbout) {
-            const mainElement = document.querySelector('main');
-            if (mainElement && !mainElement.classList.contains('hidden')) {
-                mainElement.classList.add('hidden');
-                localStorage.setItem('aboutCollapsed', 'true');
-            }
-        }
+        setEditMode(false);
+        updateEditButtonState();
+        return;
+    }
 
-        // Barvy pro struny (z CSS proměnných) – preferuj hodnoty z body (dark-mode)
-        const bodyStyles = getComputedStyle(document.body);
-        const rootStyles = getComputedStyle(document.documentElement);
-        const stringColors = {
-            'C': bodyStyles.getPropertyValue('--cello-string-c').trim() || rootStyles.getPropertyValue('--cello-string-c').trim(),
-            'G': bodyStyles.getPropertyValue('--cello-string-g').trim() || rootStyles.getPropertyValue('--cello-string-g').trim(),
-            'D': bodyStyles.getPropertyValue('--cello-string-d').trim() || rootStyles.getPropertyValue('--cello-string-d').trim(),
-            'A': bodyStyles.getPropertyValue('--cello-string-a').trim() || rootStyles.getPropertyValue('--cello-string-a').trim()
-        };
-
-        const toPositionLabelFn = (p) => toPositionLabel(p, currentPositionLabelMode);
-
-        // Zjistit, kde se mění poloha (ignorovat prázdnou strunu - pozice 0)
-        const positionChanges = [];
-        let lastNonZeroPosition = null;
-
-        for (let i = 0; i < result.length; i++) {
-            const currentPos = result[i].p;
-            // Ignorovat prázdnou strunu (pozice 0)
-            if (currentPos > 0) {
-                if (lastNonZeroPosition === null || currentPos !== lastNonZeroPosition) {
-                    positionChanges.push(i);
-                    lastNonZeroPosition = currentPos;
-                }
-            }
-        }
-
-        // Vytvořit kontejner pro výstup
-        const container = document.createElement('div');
-        container.className = 'w-full space-y-4';
-
-        // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
-        if (currentOutputFormat === 'staff') {
-            renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
-        } else {
-            renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
-        }
-
-        display.appendChild(container);
-
-        // Uložit výsledek pro pozdější překreslení (výstup zobrazuje původní vstup uživatele)
-        lastResult = result;
-        lastInputForSolve = inputForSolve;
-        if (input !== null) lastInput = input;
-
-        // Vykreslit vizualizaci hmatníku na Canvas
-        drawFingerboard(result, displayTokens);
-
-        // Zobrazit wrapper výsledků
-        if (wrapper) {
-            wrapper.classList.remove('hidden');
-        }
-
-        // Zobrazit sekci Nastavení
-        const settingsSection = document.getElementById('settingsSection');
-        if (settingsSection) {
-            settingsSection.classList.remove('hidden');
+    // Při spuštění solveru z uživatelského vstupu skryjeme celý main a uložíme stav
+    if (!skipHideAbout) {
+        const mainElement = document.querySelector('main');
+        if (mainElement && !mainElement.classList.contains('hidden')) {
+            mainElement.classList.add('hidden');
+            localStorage.setItem('aboutCollapsed', 'true');
         }
     }
+
+    // Barvy pro struny (z CSS proměnných) – preferuj hodnoty z body (dark-mode)
+    const bodyStyles = getComputedStyle(document.body);
+    const rootStyles = getComputedStyle(document.documentElement);
+    const stringColors = {
+        'C': bodyStyles.getPropertyValue('--cello-string-c').trim() || rootStyles.getPropertyValue('--cello-string-c').trim(),
+        'G': bodyStyles.getPropertyValue('--cello-string-g').trim() || rootStyles.getPropertyValue('--cello-string-g').trim(),
+        'D': bodyStyles.getPropertyValue('--cello-string-d').trim() || rootStyles.getPropertyValue('--cello-string-d').trim(),
+        'A': bodyStyles.getPropertyValue('--cello-string-a').trim() || rootStyles.getPropertyValue('--cello-string-a').trim()
+    };
+
+    const toPositionLabelFn = (p) => toPositionLabel(p, currentPositionLabelMode);
+
+    // Zjistit, kde se mění poloha (ignorovat prázdnou strunu - pozice 0)
+    const positionChanges = [];
+    let lastNonZeroPosition = null;
+
+    for (let i = 0; i < result.length; i++) {
+        const currentPos = result[i].p;
+        // Ignorovat prázdnou strunu (pozice 0)
+        if (currentPos > 0) {
+            if (lastNonZeroPosition === null || currentPos !== lastNonZeroPosition) {
+                positionChanges.push(i);
+                lastNonZeroPosition = currentPos;
+            }
+        }
+    }
+
+    // Vytvořit kontejner pro výstup
+    const container = document.createElement('div');
+    container.className = 'w-full space-y-4';
+
+    // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
+    let staffDiv = null;
+    if (currentOutputFormat === 'staff') {
+        staffDiv = renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
+    } else {
+        renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
+    }
+
+    display.appendChild(container);
+
+    // Uložit výsledek pro pozdější překreslení (výstup zobrazuje původní vstup uživatele)
+    lastResult = result;
+    lastInputForSolve = inputForSolve;
+    if (inputOriginal !== null) lastInput = inputOriginal;
+
+    if (lastInput && lastInputForSolve && lastResult) {
+        saveLastFingeringState({
+            input: lastInput,
+            inputNormalized: lastInputForSolve,
+            fingering: lastResult
+        });
+    }
+
+    // Vykreslit vizualizaci hmatníku na Canvas
+    drawFingerboard(result, displayTokens);
+
+    // Zobrazit wrapper výsledků
+    if (wrapper) {
+        wrapper.classList.remove('hidden');
+    }
+
+    const settingsSection = document.getElementById('settingsSection');
+    if (settingsSection) {
+        settingsSection.classList.remove('hidden');
+    }
+
+    if (currentOutputFormat === 'staff') {
+        setupFingeringEditor(staffDiv, result);
+    } else {
+        teardownFingeringEditor();
+    }
+    updateEditButtonState();
+}
+
+function updateEditButtonLabel() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    editButton.textContent = editModeEnabled ? t('button.editStop') : t('button.editStart');
+}
+
+function updateEditButtonState() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    const disabled = currentOutputFormat !== 'staff' || !lastResult;
+    editButton.disabled = disabled;
+    editButton.classList.toggle('opacity-60', disabled);
+    editButton.classList.toggle('cursor-not-allowed', disabled);
+    editButton.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    if (disabled && editModeEnabled) {
+        setEditMode(false);
+    }
+}
+
+function setEditMode(enabled, focusIndex = 0) {
+    if (!enabled) {
+        editModeEnabled = false;
+        activeNoteIndex = null;
+        pendingActiveNoteIndex = null;
+        closeModal();
+        updateEditButtonLabel();
+        return;
+    }
+    if (!lastResult || currentOutputFormat !== 'staff') {
+        editModeEnabled = false;
+        updateEditButtonLabel();
+        return;
+    }
+    editModeEnabled = true;
+    pendingActiveNoteIndex = Math.min(focusIndex, lastResult.length - 1);
+    if (fingerTargets.length) {
+        setActiveNoteIndex(pendingActiveNoteIndex);
+    }
+    updateEditButtonLabel();
+}
+
+function ensureModal() {
+    if (modalEl) return;
+    modalEl = document.createElement('div');
+    modalEl.id = 'fingeringModal';
+    modalEl.className = 'fingering-modal';
+    modalEl.setAttribute('role', 'dialog');
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.innerHTML = `
+        <div class="fingering-modal__error" data-role="error" aria-live="polite"></div>
+        <div class="fingering-modal__section" data-field="f">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="s">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="pos">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+    `;
+    modalEl.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-field]');
+        if (!button || button.disabled) return;
+        const field = button.dataset.field;
+        const isAuto = button.dataset.auto === 'true';
+        const value = button.dataset.value ?? null;
+        applyModalSelection(field, value, isAuto);
+    });
+    document.body.appendChild(modalEl);
+}
+
+function closeModal() {
+    if (!modalEl) return;
+    modalEl.classList.remove('is-open');
+    modalEl.setAttribute('aria-hidden', 'true');
+}
+
+function showModalError(message) {
+    if (!modalEl) return;
+    const errorEl = modalEl.querySelector('[data-role="error"]');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.classList.add('is-visible');
+    if (modalErrorTimeout) window.clearTimeout(modalErrorTimeout);
+    modalErrorTimeout = window.setTimeout(() => {
+        errorEl.textContent = '';
+        errorEl.classList.remove('is-visible');
+    }, 2000);
+}
+
+function hasMatchingOption(options, constraint) {
+    return options.some(opt => matchesConstraint(opt, constraint));
+}
+
+function renderModalButtons(container, field, items) {
+    container.innerHTML = '';
+    items.forEach((item) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'fingering-modal__btn';
+        if (item.active) button.classList.add('is-active');
+        if (item.isAuto) button.classList.add('is-auto');
+        if (item.disabled) button.classList.add('is-disabled');
+        button.disabled = !!item.disabled;
+        button.dataset.field = field;
+        if (item.isAuto) {
+            button.dataset.auto = 'true';
+        } else {
+            button.dataset.value = String(item.value);
+        }
+        button.textContent = item.label;
+        container.appendChild(button);
+    });
+}
+
+function renderModalContent() {
+    if (!modalEl || activeNoteIndex === null || !lastResult || !lastInputForSolve) return;
+    const step = lastResult[activeNoteIndex];
+    const noteKey = lastInputForSolve[activeNoteIndex];
+    if (!step || !noteKey) return;
+
+    const options = model[noteKey] || [];
+    const userDefined = step.userDefined || {};
+    const baseConstraint = {};
+    if (userDefined.f) baseConstraint.f = step.f;
+    if (userDefined.s) baseConstraint.s = step.s;
+    if (userDefined.pos) {
+        baseConstraint.p = step.p;
+        baseConstraint.ext = step.ext;
+    }
+
+    const sections = modalEl.querySelectorAll('.fingering-modal__section');
+    sections.forEach((section) => {
+        const field = section.getAttribute('data-field');
+        const label = section.querySelector('[data-role="label"]');
+        const buttonsWrap = section.querySelector('[data-role="buttons"]');
+        if (!label || !buttonsWrap) return;
+
+        if (field === 'f') {
+            label.textContent = t('modal.finger');
+            const autoConstraint = { ...baseConstraint };
+            delete autoConstraint.f;
+            const items = [
+                {
+                    label: t('modal.auto'),
+                    value: null,
+                    isAuto: true,
+                    disabled: !hasMatchingOption(options, autoConstraint),
+                    active: !userDefined.f
+                },
+                ...[0, 1, 2, 3, 4].map((f) => {
+                    const constraint = { ...baseConstraint, f };
+                    return {
+                        label: String(f),
+                        value: f,
+                        isAuto: false,
+                        disabled: !hasMatchingOption(options, constraint),
+                        active: userDefined.f && step.f === f
+                    };
+                })
+            ];
+            renderModalButtons(buttonsWrap, 'f', items);
+        }
+
+        if (field === 's') {
+            label.textContent = t('modal.string');
+            const autoConstraint = { ...baseConstraint };
+            delete autoConstraint.s;
+            const items = [
+                {
+                    label: t('modal.auto'),
+                    value: null,
+                    isAuto: true,
+                    disabled: !hasMatchingOption(options, autoConstraint),
+                    active: !userDefined.s
+                },
+                ...['C', 'G', 'D', 'A'].map((s) => {
+                    const constraint = { ...baseConstraint, s };
+                    return {
+                        label: s,
+                        value: s,
+                        isAuto: false,
+                        disabled: !hasMatchingOption(options, constraint),
+                        active: userDefined.s && step.s === s
+                    };
+                })
+            ];
+            renderModalButtons(buttonsWrap, 's', items);
+        }
+
+        if (field === 'pos') {
+            label.textContent = t('modal.position');
+            const autoConstraint = { ...baseConstraint };
+            delete autoConstraint.p;
+            delete autoConstraint.ext;
+
+            const uniquePositions = new Map();
+            options.forEach((opt) => {
+                if (opt.p > 0) {
+                    const key = `${opt.p}|${opt.ext}`;
+                    if (!uniquePositions.has(key)) {
+                        uniquePositions.set(key, { p: opt.p, ext: opt.ext });
+                    }
+                }
+            });
+
+            const positions = Array.from(uniquePositions.values())
+                .sort((a, b) => (a.p - b.p) || (a.ext - b.ext));
+
+            const items = [
+                {
+                    label: t('modal.auto'),
+                    value: null,
+                    isAuto: true,
+                    disabled: !hasMatchingOption(options, autoConstraint),
+                    active: !userDefined.pos
+                },
+                ...positions.map((pos) => {
+                    const constraint = { ...baseConstraint, p: pos.p, ext: pos.ext };
+                    const labelText = `${toPositionLabel(pos.p, currentPositionLabelMode)} ${pos.ext === 1 ? t('position.wide') : t('position.narrow')}`;
+                    return {
+                        label: labelText,
+                        value: `${pos.p}|${pos.ext}`,
+                        isAuto: false,
+                        disabled: !hasMatchingOption(options, constraint),
+                        active: userDefined.pos && step.p === pos.p && step.ext === pos.ext
+                    };
+                })
+            ];
+            renderModalButtons(buttonsWrap, 'pos', items);
+        }
+    });
+}
+
+function setActiveNoteIndex(index) {
+    if (!fingerTargets.length || !lastResult) return;
+    const clamped = Math.max(0, Math.min(index, lastResult.length - 1));
+    activeNoteIndex = clamped;
+    pendingActiveNoteIndex = null;
+
+    fingerTargets.forEach((target, idx) => {
+        if (target && target.hitboxEl) {
+            target.hitboxEl.classList.toggle('is-active', idx === clamped);
+        }
+    });
+
+    const target = fingerTargets[clamped];
+    if (!target || !target.anchorEl) return;
+    ensureModal();
+    renderModalContent();
+    modalEl.classList.add('is-open');
+    modalEl.setAttribute('aria-hidden', 'false');
+    scrollNoteIntoView(target.anchorEl);
+    positionModal(target.anchorEl);
+    window.setTimeout(() => positionModal(target.anchorEl), 200);
+}
+
+function positionModal(anchorEl) {
+    if (!modalEl || !anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const modalRect = modalEl.getBoundingClientRect();
+    const gap = 8;
+    let top = rect.top + window.scrollY - modalRect.height - gap;
+    if (top < window.scrollY + gap) {
+        top = rect.bottom + window.scrollY + gap;
+    }
+    let left = rect.left + window.scrollX + (rect.width / 2) - (modalRect.width / 2);
+    const minLeft = window.scrollX + gap;
+    const maxLeft = window.scrollX + window.innerWidth - modalRect.width - gap;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+    modalEl.style.left = `${left}px`;
+    modalEl.style.top = `${top}px`;
+}
+
+function scrollNoteIntoView(anchorEl) {
+    if (!staffScrollContainer || !anchorEl) return;
+    const containerRect = staffScrollContainer.getBoundingClientRect();
+    const noteRect = anchorEl.getBoundingClientRect();
+    const margin = 16;
+
+    if (noteRect.left < containerRect.left + margin) {
+        const delta = noteRect.left - containerRect.left - margin;
+        staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+    } else if (noteRect.right > containerRect.right - margin) {
+        const delta = noteRect.right - containerRect.right + margin;
+        staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+    }
+}
+
+function collectFingerElements(svg, expectedCount) {
+    const dataElements = Array.from(svg.querySelectorAll('[data-finger-idx]'));
+    if (dataElements.length) {
+        const mapped = [];
+        dataElements.forEach((el) => {
+            const idx = Number.parseInt(el.getAttribute('data-finger-idx'), 10);
+            if (!Number.isNaN(idx)) mapped[idx] = el;
+        });
+        if (mapped.filter(Boolean).length >= expectedCount) return mapped;
+    }
+
+    const textEls = Array.from(svg.querySelectorAll('text'));
+    const fingerRegex = /^[0-4](?:↑)?!?$/;
+    const fingerTexts = textEls.filter((el) => fingerRegex.test((el.textContent || '').trim()));
+    const sorted = fingerTexts.map((el) => {
+        let x = 0;
+        try { x = el.getBBox().x; } catch (e) { x = 0; }
+        return { el, x };
+    }).sort((a, b) => a.x - b.x).map(item => item.el);
+    return sorted.slice(0, expectedCount);
+}
+
+function createHitbox(svg, anchorEl, idx) {
+    let bbox;
+    try {
+        bbox = anchorEl.getBBox();
+    } catch (e) {
+        return null;
+    }
+    const size = 44;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', bbox.x + (bbox.width / 2) - (size / 2));
+    rect.setAttribute('y', bbox.y + (bbox.height / 2) - (size / 2));
+    rect.setAttribute('width', size);
+    rect.setAttribute('height', size);
+    rect.setAttribute('fill', 'transparent');
+    rect.setAttribute('class', 'fingering-hitbox');
+    rect.dataset.noteIndex = String(idx);
+    rect.style.cursor = 'pointer';
+    rect.style.pointerEvents = 'all';
+    rect.addEventListener('click', () => handleFingerClick(idx));
+    svg.appendChild(rect);
+    return rect;
+}
+
+function handleFingerClick(idx) {
+    if (!lastResult || currentOutputFormat !== 'staff') return;
+    if (!editModeEnabled) {
+        setEditMode(true, idx);
+        return;
+    }
+    setActiveNoteIndex(idx);
+}
+
+function setupFingeringEditor(staffDiv, result) {
+    fingerTargets = [];
+    staffScrollContainer = staffDiv ? staffDiv.parentElement : null;
+    if (!staffDiv || !result) return;
+    const svg = staffDiv.querySelector('svg');
+    if (!svg) return;
+
+    svg.querySelectorAll('.fingering-hitbox').forEach((el) => el.remove());
+    const anchors = collectFingerElements(svg, result.length);
+    if (!anchors || !anchors.length) return;
+
+    fingerTargets = anchors.map((anchorEl, idx) => {
+        if (!anchorEl) return null;
+        const hitboxEl = createHitbox(svg, anchorEl, idx);
+        return { anchorEl, hitboxEl };
+    });
+
+    if (editModeEnabled) {
+        const nextIndex = pendingActiveNoteIndex !== null ? pendingActiveNoteIndex : (activeNoteIndex ?? 0);
+        setActiveNoteIndex(nextIndex);
+    }
+}
+
+function teardownFingeringEditor() {
+    fingerTargets = [];
+    staffScrollContainer = null;
+    if (editModeEnabled) setEditMode(false);
+}
+
+function applyModalSelection(field, value, isAuto) {
+    if (activeNoteIndex === null || !lastResult || !lastInputForSolve) return;
+
+    const constraints = buildConstraintsFromResult(lastResult) || [];
+    const current = constraints[activeNoteIndex];
+    const nextConstraint = {
+        ...(current || {}),
+        userDefined: { ...(current && current.userDefined ? current.userDefined : {}) }
+    };
+
+    if (field === 'f') {
+        if (isAuto) {
+            delete nextConstraint.userDefined.f;
+            delete nextConstraint.f;
+        } else {
+            nextConstraint.userDefined.f = true;
+            nextConstraint.f = Number.parseInt(value, 10);
+        }
+    }
+
+    if (field === 's') {
+        if (isAuto) {
+            delete nextConstraint.userDefined.s;
+            delete nextConstraint.s;
+        } else {
+            nextConstraint.userDefined.s = true;
+            nextConstraint.s = value;
+        }
+    }
+
+    if (field === 'pos') {
+        if (isAuto) {
+            delete nextConstraint.userDefined.pos;
+            delete nextConstraint.p;
+            delete nextConstraint.ext;
+        } else if (value) {
+            const [pStr, extStr] = value.split('|');
+            nextConstraint.userDefined.pos = true;
+            nextConstraint.p = Number.parseInt(pStr, 10);
+            nextConstraint.ext = Number.parseInt(extStr, 10);
+        }
+    }
+
+    if (!nextConstraint.userDefined.f) delete nextConstraint.f;
+    if (!nextConstraint.userDefined.s) delete nextConstraint.s;
+    if (!nextConstraint.userDefined.pos) {
+        delete nextConstraint.p;
+        delete nextConstraint.ext;
+    }
+
+    if (!Object.keys(nextConstraint.userDefined).length) {
+        constraints[activeNoteIndex] = null;
+    } else {
+        constraints[activeNoteIndex] = nextConstraint;
+    }
+
+    const nextResult = solve(lastInputForSolve, constraints);
+    if (!nextResult) {
+        showModalError(t('errors.unplayableFinger'));
+        return;
+    }
+
+    const merged = applyUserDefinedFlags(nextResult, constraints);
+    const nextIndex = activeNoteIndex < merged.length - 1 ? activeNoteIndex + 1 : activeNoteIndex;
+    pendingActiveNoteIndex = nextIndex;
+
+    renderResults({
+        result: merged,
+        inputForSolve: lastInputForSolve,
+        inputForDisplay: lastInput || lastInputForSolve,
+        inputOriginal: null,
+        skipHideAbout: true,
+        display: document.getElementById('pathDisplay'),
+        wrapper: document.getElementById('resultsWrapper')
+    });
+}
+
+function isTypingTarget(target) {
+    if (!target) return false;
+    const tag = target.tagName ? target.tagName.toLowerCase() : '';
+    return tag === 'input' || tag === 'textarea' || target.isContentEditable;
+}
+
+function updateEditButtonLabel() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    editButton.textContent = editModeEnabled ? t('button.editStop') : t('button.editStart');
+}
+
+function updateEditButtonState() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    const disabled = currentOutputFormat !== 'staff' || !lastResult;
+    editButton.disabled = disabled;
+    editButton.classList.toggle('opacity-60', disabled);
+    editButton.classList.toggle('cursor-not-allowed', disabled);
+    editButton.setAttribute('aria-pressed', editModeEnabled ? 'true' : 'false');
+    if (disabled && editModeEnabled) setEditMode(false);
+}
+
+function setEditMode(enabled, focusIndex = 0) {
+    if (enabled === editModeEnabled && enabled) {
+        if (typeof focusIndex === 'number') setActiveNoteIndex(focusIndex);
+        return;
+    }
+    editModeEnabled = enabled;
+    updateEditButtonLabel();
+    const editButton = document.getElementById('editFingeringButton');
+    if (editButton) editButton.setAttribute('aria-pressed', editModeEnabled ? 'true' : 'false');
+    if (!enabled) {
+        closeModal();
+        activeNoteIndex = null;
+        pendingActiveNoteIndex = null;
+        return;
+    }
+    if (!lastResult || currentOutputFormat !== 'staff') {
+        editModeEnabled = false;
+        updateEditButtonLabel();
+        return;
+    }
+    pendingActiveNoteIndex = Math.min(focusIndex, lastResult.length - 1);
+    if (fingerTargets.length) setActiveNoteIndex(pendingActiveNoteIndex);
+}
+
+function ensureModal() {
+    if (modalEl) return;
+    modalEl = document.createElement('div');
+    modalEl.id = 'fingeringModal';
+    modalEl.className = 'fingering-modal';
+    modalEl.innerHTML = `
+        <div class="fingering-modal__error" data-role="error" aria-live="polite"></div>
+        <div class="fingering-modal__section" data-field="f">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="s">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="pos">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+    `;
+    modalEl.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-field]');
+        if (!button || button.disabled) return;
+        const field = button.dataset.field;
+        const isAuto = button.dataset.auto === '1';
+        const value = button.dataset.value;
+        applyModalSelection(field, value, isAuto);
+    });
+    document.body.appendChild(modalEl);
+}
+
+function closeModal() {
+    if (!modalEl) return;
+    modalEl.classList.remove('is-open');
+    clearModalError();
+}
+
+function clearModalError() {
+    if (!modalEl) return;
+    const errorEl = modalEl.querySelector('[data-role="error"]');
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.classList.remove('is-visible');
+    if (modalErrorTimeout) {
+        clearTimeout(modalErrorTimeout);
+        modalErrorTimeout = null;
+    }
+}
+
+function showModalError(message) {
+    if (!modalEl) return;
+    const errorEl = modalEl.querySelector('[data-role="error"]');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.classList.add('is-visible');
+    if (modalErrorTimeout) clearTimeout(modalErrorTimeout);
+    modalErrorTimeout = setTimeout(() => {
+        errorEl.textContent = '';
+        errorEl.classList.remove('is-visible');
+        modalErrorTimeout = null;
+    }, 2000);
+}
+
+function hasMatchingOption(options, constraint) {
+    if (!options || !options.length) return false;
+    return options.some(opt => matchesConstraint(opt, constraint));
+}
+
+function renderModalGroup(field, labelText, items) {
+    if (!modalEl) return;
+    const section = modalEl.querySelector(`.fingering-modal__section[data-field="${field}"]`);
+    if (!section) return;
+    const labelEl = section.querySelector('[data-role="label"]');
+    const buttonsEl = section.querySelector('[data-role="buttons"]');
+    if (labelEl) labelEl.textContent = labelText;
+    if (!buttonsEl) return;
+    buttonsEl.innerHTML = '';
+    items.forEach((item) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'fingering-modal__btn';
+        if (item.active) btn.classList.add('is-active');
+        if (item.auto) btn.classList.add('is-auto');
+        if (item.disabled) btn.classList.add('is-disabled');
+        btn.disabled = !!item.disabled;
+        btn.dataset.field = field;
+        if (item.auto) {
+            btn.dataset.auto = '1';
+        } else {
+            btn.dataset.value = item.value;
+        }
+        btn.textContent = item.label;
+        buttonsEl.appendChild(btn);
+    });
+}
+
+function renderModalContent() {
+    if (!modalEl || activeNoteIndex === null || !lastResult || !lastInputForSolve) return;
+    const step = lastResult[activeNoteIndex];
+    const noteKey = lastInputForSolve[activeNoteIndex];
+    const noteOptions = model[noteKey] || [];
+    const userDefined = step.userDefined || {};
+
+    const baseConstraint = {};
+    if (userDefined.f) baseConstraint.f = step.f;
+    if (userDefined.s) baseConstraint.s = step.s;
+    if (userDefined.pos) {
+        baseConstraint.p = step.p;
+        baseConstraint.ext = step.ext;
+    }
+
+    const fingerItems = [];
+    const autoFingerConstraint = { ...baseConstraint };
+    delete autoFingerConstraint.f;
+    fingerItems.push({
+        label: t('modal.auto'),
+        auto: true,
+        active: !userDefined.f,
+        disabled: !hasMatchingOption(noteOptions, autoFingerConstraint)
+    });
+    for (let f = 0; f <= 4; f++) {
+        const constraint = { ...baseConstraint, f };
+        fingerItems.push({
+            label: String(f),
+            value: String(f),
+            active: !!userDefined.f && step.f === f,
+            disabled: !hasMatchingOption(noteOptions, constraint)
+        });
+    }
+    renderModalGroup('f', t('modal.finger'), fingerItems);
+
+    const stringItems = [];
+    const autoStringConstraint = { ...baseConstraint };
+    delete autoStringConstraint.s;
+    stringItems.push({
+        label: t('modal.auto'),
+        auto: true,
+        active: !userDefined.s,
+        disabled: !hasMatchingOption(noteOptions, autoStringConstraint)
+    });
+    ['C', 'G', 'D', 'A'].forEach((s) => {
+        const constraint = { ...baseConstraint, s };
+        stringItems.push({
+            label: s,
+            value: s,
+            active: !!userDefined.s && step.s === s,
+            disabled: !hasMatchingOption(noteOptions, constraint)
+        });
+    });
+    renderModalGroup('s', t('modal.string'), stringItems);
+
+    const positionItems = [];
+    const autoPosConstraint = { ...baseConstraint };
+    delete autoPosConstraint.p;
+    delete autoPosConstraint.ext;
+    positionItems.push({
+        label: t('modal.auto'),
+        auto: true,
+        active: !userDefined.pos,
+        disabled: !hasMatchingOption(noteOptions, autoPosConstraint)
+    });
+
+    const positions = new Map();
+    noteOptions.forEach((opt) => {
+        if (opt.p > 0) {
+            const key = `${opt.p}|${opt.ext}`;
+            if (!positions.has(key)) positions.set(key, { p: opt.p, ext: opt.ext });
+        }
+    });
+    Array.from(positions.values())
+        .sort((a, b) => (a.p - b.p) || (a.ext - b.ext))
+        .forEach((pos) => {
+            const constraint = { ...baseConstraint, p: pos.p, ext: pos.ext };
+            const label = `${toPositionLabel(pos.p, currentPositionLabelMode)} ${pos.ext === 1 ? t('position.wide') : t('position.narrow')}`;
+            positionItems.push({
+                label,
+                value: `${pos.p}|${pos.ext}`,
+                active: !!userDefined.pos && step.p === pos.p && step.ext === pos.ext,
+                disabled: !hasMatchingOption(noteOptions, constraint)
+            });
+        });
+    renderModalGroup('pos', t('modal.position'), positionItems);
+}
+
+function setActiveNoteIndex(index) {
+    if (!lastResult || !fingerTargets.length) return;
+    const clamped = Math.max(0, Math.min(index, lastResult.length - 1));
+    const target = fingerTargets[clamped];
+    if (!target || !target.anchorEl) return;
+    activeNoteIndex = clamped;
+    fingerTargets.forEach((entry, idx) => {
+        if (entry && entry.hitboxEl) {
+            entry.hitboxEl.classList.toggle('is-active', idx === clamped);
+        }
+    });
+    ensureModal();
+    renderModalContent();
+    modalEl.classList.add('is-open');
+    scrollNoteIntoView(target.anchorEl);
+    positionModal(target.anchorEl);
+    setTimeout(() => positionModal(target.anchorEl), 200);
+}
+
+function applyModalSelection(field, value, isAuto) {
+    if (!lastResult || activeNoteIndex === null || !lastInputForSolve) return;
+    const constraints = buildConstraintsFromResult(lastResult) || [];
+    let updated = constraints[activeNoteIndex];
+    if (!updated) updated = { userDefined: {} };
+    updated = { ...updated, userDefined: { ...(updated.userDefined || {}) } };
+
+    if (field === 'f') {
+        if (isAuto) {
+            delete updated.userDefined.f;
+            delete updated.f;
+        } else {
+            updated.userDefined.f = true;
+            updated.f = Number(value);
+        }
+    } else if (field === 's') {
+        if (isAuto) {
+            delete updated.userDefined.s;
+            delete updated.s;
+        } else {
+            updated.userDefined.s = true;
+            updated.s = value;
+        }
+    } else if (field === 'pos') {
+        if (isAuto) {
+            delete updated.userDefined.pos;
+            delete updated.p;
+            delete updated.ext;
+        } else {
+            const [pRaw, extRaw] = String(value).split('|');
+            updated.userDefined.pos = true;
+            updated.p = Number(pRaw);
+            updated.ext = Number(extRaw);
+        }
+    }
+
+    if (!updated.userDefined.f) delete updated.f;
+    if (!updated.userDefined.s) delete updated.s;
+    if (!updated.userDefined.pos) {
+        delete updated.p;
+        delete updated.ext;
+    }
+
+    if (Object.keys(updated.userDefined).length === 0) {
+        constraints[activeNoteIndex] = null;
+    } else {
+        constraints[activeNoteIndex] = updated;
+    }
+
+    const nextResult = solve(lastInputForSolve, constraints);
+    if (!nextResult) {
+        showModalError(t('errors.unplayableFinger'));
+        return;
+    }
+
+    const merged = applyUserDefinedFlags(nextResult, constraints);
+    const nextIndex = activeNoteIndex < merged.length - 1 ? activeNoteIndex + 1 : activeNoteIndex;
+    pendingActiveNoteIndex = nextIndex;
+    renderResults({
+        result: merged,
+        inputForSolve: lastInputForSolve,
+        inputForDisplay: lastInput || lastInputForSolve,
+        inputOriginal: null,
+        skipHideAbout: true,
+        display: document.getElementById('pathDisplay'),
+        wrapper: document.getElementById('resultsWrapper')
+    });
+}
+
+function collectFingerTargets(svg, expectedCount) {
+    const mapping = new Array(expectedCount).fill(null);
+    const dataEls = Array.from(svg.querySelectorAll('[data-finger-idx]'));
+    if (dataEls.length) {
+        dataEls.forEach((el) => {
+            const idx = Number(el.getAttribute('data-finger-idx'));
+            if (!Number.isNaN(idx) && idx < expectedCount) mapping[idx] = el;
+        });
+        if (mapping.filter(Boolean).length === expectedCount) return mapping;
+    }
+    const texts = Array.from(svg.querySelectorAll('text'));
+    const fingerTexts = texts.filter((el) => /^[0-4](?:↑)?!?$/.test(el.textContent.trim()));
+    const sorted = fingerTexts.map((el) => {
+        try {
+            const box = el.getBBox();
+            return { el, x: box.x };
+        } catch (e) {
+            return { el, x: 0 };
+        }
+    }).sort((a, b) => a.x - b.x);
+    return sorted.slice(0, expectedCount).map(item => item.el);
+}
+
+function createHitbox(svg, anchorEl, index) {
+    try {
+        const bbox = anchorEl.getBBox();
+        const size = 44;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', String(bbox.x + (bbox.width / 2) - (size / 2)));
+        rect.setAttribute('y', String(bbox.y + (bbox.height / 2) - (size / 2)));
+        rect.setAttribute('width', String(size));
+        rect.setAttribute('height', String(size));
+        rect.setAttribute('fill', 'transparent');
+        rect.setAttribute('class', 'fingering-hitbox');
+        rect.setAttribute('data-note-index', String(index));
+        rect.addEventListener('click', () => handleFingerClick(index));
+        svg.appendChild(rect);
+        return rect;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setupFingeringEditor(staffDiv, result) {
+    fingerTargets = [];
+    staffScrollContainer = null;
+    if (!staffDiv || !result || !result.length) return;
+    const svg = staffDiv.querySelector('svg');
+    if (!svg) return;
+    staffScrollContainer = staffDiv.parentElement;
+    svg.querySelectorAll('.fingering-hitbox').forEach(el => el.remove());
+
+    const anchors = collectFingerTargets(svg, result.length);
+    anchors.forEach((el, idx) => {
+        if (!el) return;
+        const hitbox = createHitbox(svg, el, idx);
+        fingerTargets[idx] = { anchorEl: el, hitboxEl: hitbox };
+    });
+
+    if (editModeEnabled) {
+        const targetIndex = pendingActiveNoteIndex !== null
+            ? pendingActiveNoteIndex
+            : (activeNoteIndex ?? 0);
+        pendingActiveNoteIndex = null;
+        setActiveNoteIndex(targetIndex);
+    }
+}
+
+function teardownFingeringEditor() {
+    fingerTargets = [];
+    staffScrollContainer = null;
+    setEditMode(false);
+}
+
+function handleFingerClick(index) {
+    if (!lastResult || currentOutputFormat !== 'staff') return;
+    if (!editModeEnabled) {
+        setEditMode(true, index);
+        return;
+    }
+    setActiveNoteIndex(index);
+}
+
+function scrollNoteIntoView(anchorEl) {
+    if (!staffScrollContainer || !anchorEl) return;
+    const containerRect = staffScrollContainer.getBoundingClientRect();
+    const noteRect = anchorEl.getBoundingClientRect();
+    const margin = 16;
+    if (noteRect.left < containerRect.left + margin) {
+        const delta = noteRect.left - containerRect.left - margin;
+        staffScrollContainer.scrollTo({
+            left: staffScrollContainer.scrollLeft + delta,
+            behavior: 'smooth'
+        });
+    } else if (noteRect.right > containerRect.right - margin) {
+        const delta = noteRect.right - containerRect.right + margin;
+        staffScrollContainer.scrollTo({
+            left: staffScrollContainer.scrollLeft + delta,
+            behavior: 'smooth'
+        });
+    }
+}
+
+function positionModal(anchorEl) {
+    if (!modalEl || !anchorEl) return;
+    const gap = 8;
+    const targetRect = anchorEl.getBoundingClientRect();
+    modalEl.style.visibility = 'hidden';
+    modalEl.classList.add('is-open');
+    const modalRect = modalEl.getBoundingClientRect();
+    let left = targetRect.left + (targetRect.width / 2) - (modalRect.width / 2);
+    let top = targetRect.top - modalRect.height - gap;
+    const minLeft = gap;
+    const maxLeft = window.innerWidth - modalRect.width - gap;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+    if (top < gap) {
+        top = targetRect.bottom + gap;
+    }
+    modalEl.style.left = `${left + window.scrollX}px`;
+    modalEl.style.top = `${top + window.scrollY}px`;
+    modalEl.style.visibility = 'visible';
+}
+
+function updateEditButtonLabel() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    editButton.textContent = editModeEnabled ? t('button.editStop') : t('button.editStart');
+}
+
+function updateEditButtonState() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    const disabled = currentOutputFormat !== 'staff' || !lastResult;
+    editButton.disabled = disabled;
+    editButton.classList.toggle('opacity-60', disabled);
+    editButton.classList.toggle('cursor-not-allowed', disabled);
+    if (disabled && editModeEnabled) setEditMode(false);
+}
+
+function setEditMode(enabled, focusIndex = 0) {
+    editModeEnabled = enabled;
+    updateEditButtonLabel();
+    if (!enabled) {
+        activeNoteIndex = null;
+        pendingActiveNoteIndex = null;
+        closeModal();
+        return;
+    }
+    if (!lastResult || currentOutputFormat !== 'staff') {
+        editModeEnabled = false;
+        updateEditButtonLabel();
+        return;
+    }
+    const targetIndex = Math.min(Math.max(focusIndex, 0), lastResult.length - 1);
+    pendingActiveNoteIndex = targetIndex;
+    if (fingerTargets.length) {
+        setActiveNoteIndex(targetIndex);
+    }
+}
+
+function ensureModal() {
+    if (modalEl) return;
+    modalEl = document.createElement('div');
+    modalEl.id = 'fingeringModal';
+    modalEl.className = 'fingering-modal';
+    modalEl.innerHTML = `
+        <div class="fingering-modal__error" data-role="error" aria-live="polite"></div>
+        <div class="fingering-modal__section" data-field="f">
+            <div class="fingering-modal__label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="s">
+            <div class="fingering-modal__label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="pos">
+            <div class="fingering-modal__label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+    `;
+    modalEl.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-field]');
+        if (!button || button.disabled) return;
+        const field = button.getAttribute('data-field');
+        const isAuto = button.getAttribute('data-auto') === '1';
+        const value = button.getAttribute('data-value');
+        applyModalSelection(field, value, isAuto);
+    });
+    document.body.appendChild(modalEl);
+}
+
+function closeModal() {
+    if (!modalEl) return;
+    modalEl.classList.remove('is-open');
+}
+
+function showModalError(message) {
+    if (!modalEl) return;
+    const errorEl = modalEl.querySelector('[data-role="error"]');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.classList.add('is-visible');
+    if (modalErrorTimeout) clearTimeout(modalErrorTimeout);
+    modalErrorTimeout = setTimeout(() => {
+        errorEl.textContent = '';
+        errorEl.classList.remove('is-visible');
+    }, 2000);
+}
+
+function setActiveNoteIndex(index) {
+    if (!lastResult || !fingerTargets.length) return;
+    const clamped = Math.min(Math.max(index, 0), lastResult.length - 1);
+    const target = fingerTargets[clamped];
+    if (!target || !target.anchorEl) return;
+    activeNoteIndex = clamped;
+    ensureModal();
+    renderModalContent();
+    positionModal(target.anchorEl);
+    scrollNoteIntoView(target.anchorEl);
+    highlightActiveHitbox();
+    modalEl.classList.add('is-open');
+}
+
+function highlightActiveHitbox() {
+    fingerTargets.forEach((target, idx) => {
+        if (!target || !target.hitboxEl) return;
+        target.hitboxEl.classList.toggle('is-active', idx === activeNoteIndex);
+    });
+}
+
+function positionModal(anchorEl) {
+    if (!modalEl || !anchorEl) return;
+    modalEl.style.visibility = 'hidden';
+    modalEl.classList.add('is-open');
+    const anchorRect = anchorEl.getBoundingClientRect();
+    const modalRect = modalEl.getBoundingClientRect();
+    const gap = 8;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
+    let left = anchorRect.left + scrollX + (anchorRect.width / 2) - (modalRect.width / 2);
+    let top = anchorRect.top + scrollY - modalRect.height - gap;
+
+    const minLeft = scrollX + gap;
+    const maxLeft = scrollX + window.innerWidth - modalRect.width - gap;
+    left = Math.min(Math.max(left, minLeft), maxLeft);
+
+    if (top < scrollY + gap) {
+        top = anchorRect.bottom + scrollY + gap;
+    }
+
+    modalEl.style.left = `${left}px`;
+    modalEl.style.top = `${top}px`;
+    modalEl.style.visibility = 'visible';
+}
+
+function scrollNoteIntoView(anchorEl) {
+    if (!staffScrollContainer || !anchorEl) return;
+    const containerRect = staffScrollContainer.getBoundingClientRect();
+    const noteRect = anchorEl.getBoundingClientRect();
+    const margin = 16;
+
+    if (noteRect.left < containerRect.left + margin) {
+        const diff = noteRect.left - containerRect.left - margin;
+        staffScrollContainer.scrollTo({
+            left: staffScrollContainer.scrollLeft + diff,
+            behavior: 'smooth'
+        });
+    } else if (noteRect.right > containerRect.right - margin) {
+        const diff = noteRect.right - containerRect.right + margin;
+        staffScrollContainer.scrollTo({
+            left: staffScrollContainer.scrollLeft + diff,
+            behavior: 'smooth'
+        });
+    }
+    window.requestAnimationFrame(() => positionModal(anchorEl));
+    setTimeout(() => positionModal(anchorEl), 250);
+}
+
+function renderModalContent() {
+    if (!modalEl || activeNoteIndex === null || !lastResult || !lastInputForSolve) return;
+    const step = lastResult[activeNoteIndex];
+    const noteKey = lastInputForSolve[activeNoteIndex];
+    const noteOptions = model[noteKey] || [];
+
+    const baseConstraint = {};
+    if (step.userDefined && step.userDefined.f) baseConstraint.f = step.f;
+    if (step.userDefined && step.userDefined.s) baseConstraint.s = step.s;
+    if (step.userDefined && step.userDefined.pos) {
+        baseConstraint.p = step.p;
+        baseConstraint.ext = step.ext;
+    }
+
+    const buildButtons = (field, items) => {
+        const section = modalEl.querySelector(`.fingering-modal__section[data-field="${field}"]`);
+        if (!section) return;
+        const label = section.querySelector('.fingering-modal__label');
+        const buttonsWrap = section.querySelector('.fingering-modal__buttons');
+        if (label) {
+            label.textContent = field === 'f'
+                ? t('modal.finger')
+                : field === 's'
+                    ? t('modal.string')
+                    : t('modal.position');
+        }
+        if (!buttonsWrap) return;
+        buttonsWrap.innerHTML = '';
+        items.forEach((item) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'fingering-modal__btn';
+            if (item.active) btn.classList.add('is-active');
+            if (item.auto) btn.classList.add('is-auto');
+            if (item.disabled) {
+                btn.disabled = true;
+                btn.classList.add('is-disabled');
+            }
+            btn.setAttribute('data-field', field);
+            if (item.auto) {
+                btn.setAttribute('data-auto', '1');
+            } else {
+                btn.setAttribute('data-value', item.value);
+            }
+            btn.textContent = item.label;
+            buttonsWrap.appendChild(btn);
+        });
+    };
+
+    const hasMatchingOption = (constraint) => noteOptions.some(opt => matchesConstraint(opt, constraint));
+
+    const fingerButtons = [0, 1, 2, 3, 4].map((finger) => {
+        const constraint = { ...baseConstraint, f: finger };
+        return {
+            label: String(finger),
+            value: String(finger),
+            active: !!(step.userDefined && step.userDefined.f && step.f === finger),
+            disabled: !hasMatchingOption(constraint)
+        };
+    });
+    fingerButtons.push({
+        label: t('modal.auto'),
+        auto: true,
+        active: !(step.userDefined && step.userDefined.f),
+        disabled: !hasMatchingOption({ ...baseConstraint, f: undefined })
+    });
+    buildButtons('f', fingerButtons);
+
+    const strings = ['C', 'G', 'D', 'A'];
+    const stringButtons = strings.map((s) => {
+        const constraint = { ...baseConstraint, s };
+        return {
+            label: s,
+            value: s,
+            active: !!(step.userDefined && step.userDefined.s && step.s === s),
+            disabled: !hasMatchingOption(constraint)
+        };
+    });
+    stringButtons.push({
+        label: t('modal.auto'),
+        auto: true,
+        active: !(step.userDefined && step.userDefined.s),
+        disabled: !hasMatchingOption({ ...baseConstraint, s: undefined })
+    });
+    buildButtons('s', stringButtons);
+
+    const posMap = new Map();
+    noteOptions.forEach((opt) => {
+        if (opt.p > 0) {
+            const key = `${opt.p}|${opt.ext}`;
+            if (!posMap.has(key)) posMap.set(key, { p: opt.p, ext: opt.ext });
+        }
+    });
+    const positions = Array.from(posMap.values()).sort((a, b) => a.p - b.p || a.ext - b.ext);
+    const positionButtons = positions.map((pos) => {
+        const constraint = { ...baseConstraint, p: pos.p, ext: pos.ext };
+        const label = `${toPositionLabel(pos.p, currentPositionLabelMode)} ${pos.ext === 1 ? t('position.wide') : t('position.narrow')}`;
+        return {
+            label,
+            value: `${pos.p}|${pos.ext}`,
+            active: !!(step.userDefined && step.userDefined.pos && step.p === pos.p && step.ext === pos.ext),
+            disabled: !hasMatchingOption(constraint)
+        };
+    });
+    positionButtons.push({
+        label: t('modal.auto'),
+        auto: true,
+        active: !(step.userDefined && step.userDefined.pos),
+        disabled: !hasMatchingOption({ ...baseConstraint, p: undefined, ext: undefined })
+    });
+    buildButtons('pos', positionButtons);
+}
+
+function applyModalSelection(field, value, isAuto) {
+    if (!lastResult || !lastInputForSolve || activeNoteIndex === null) return;
+    const constraints = buildConstraintsFromResult(lastResult) || [];
+    const current = constraints[activeNoteIndex];
+    const updated = {
+        ...(current || {}),
+        userDefined: { ...(current && current.userDefined ? current.userDefined : {}) }
+    };
+
+    if (field === 'f') {
+        if (isAuto) {
+            delete updated.userDefined.f;
+            delete updated.f;
+        } else {
+            updated.userDefined.f = true;
+            updated.f = Number(value);
+        }
+    } else if (field === 's') {
+        if (isAuto) {
+            delete updated.userDefined.s;
+            delete updated.s;
+        } else {
+            updated.userDefined.s = true;
+            updated.s = value;
+        }
+    } else if (field === 'pos') {
+        if (isAuto) {
+            delete updated.userDefined.pos;
+            delete updated.p;
+            delete updated.ext;
+        } else {
+            const [pRaw, extRaw] = value.split('|');
+            updated.userDefined.pos = true;
+            updated.p = Number(pRaw);
+            updated.ext = Number(extRaw);
+        }
+    }
+
+    if (!updated.userDefined.f) delete updated.f;
+    if (!updated.userDefined.s) delete updated.s;
+    if (!updated.userDefined.pos) {
+        delete updated.p;
+        delete updated.ext;
+    }
+
+    if (!updated.userDefined.f && !updated.userDefined.s && !updated.userDefined.pos) {
+        constraints[activeNoteIndex] = null;
+    } else {
+        constraints[activeNoteIndex] = updated;
+    }
+
+    const nextResult = solve(lastInputForSolve, constraints);
+    if (!nextResult) {
+        showModalError(t('errors.unplayableFinger'));
+        return;
+    }
+
+    const merged = applyUserDefinedFlags(nextResult, constraints);
+    const nextIndex = Math.min(activeNoteIndex + 1, merged.length - 1);
+    pendingActiveNoteIndex = nextIndex;
+
+    renderResults({
+        result: merged,
+        inputForSolve: lastInputForSolve,
+        inputForDisplay: lastInput || lastInputForSolve,
+        inputOriginal: null,
+        skipHideAbout: true,
+        display: document.getElementById('pathDisplay'),
+        wrapper: document.getElementById('resultsWrapper')
+    });
+}
+
+function setupFingeringEditor(staffDiv, result) {
+    fingerTargets = [];
+    staffScrollContainer = null;
+    if (!staffDiv || !result || !result.length) return;
+    const svg = staffDiv.querySelector('svg');
+    if (!svg) return;
+
+    staffScrollContainer = staffDiv.parentElement;
+    svg.querySelectorAll('.fingering-hitbox').forEach((el) => el.remove());
+
+    const anchors = collectFingerAnchors(svg, result.length);
+    anchors.forEach((anchorEl, idx) => {
+        if (!anchorEl) return;
+        const hitbox = createFingerHitbox(svg, anchorEl, idx);
+        fingerTargets[idx] = { anchorEl, hitboxEl: hitbox };
+    });
+
+    if (editModeEnabled) {
+        const targetIdx = pendingActiveNoteIndex !== null
+            ? pendingActiveNoteIndex
+            : (activeNoteIndex !== null ? activeNoteIndex : 0);
+        pendingActiveNoteIndex = null;
+        setActiveNoteIndex(targetIdx);
+    }
+}
+
+function teardownFingeringEditor() {
+    fingerTargets = [];
+    staffScrollContainer = null;
+    if (modalEl) {
+        modalEl.classList.remove('is-open');
+    }
+    setEditMode(false);
+}
+
+function collectFingerAnchors(svg, expectedCount) {
+    if (!svg) return [];
+    const anchors = new Array(expectedCount);
+    const dataAnchors = Array.from(svg.querySelectorAll('[data-finger-idx]'));
+    if (dataAnchors.length >= expectedCount) {
+        dataAnchors.forEach((el) => {
+            const idx = Number(el.getAttribute('data-finger-idx'));
+            if (!Number.isNaN(idx)) anchors[idx] = el;
+        });
+        return anchors;
+    }
+
+    const fingerRegex = /^[0-4](?:↑)?!?$/;
+    const textEls = Array.from(svg.querySelectorAll('text'));
+    const candidates = textEls
+        .filter(el => fingerRegex.test((el.textContent || '').trim()))
+        .map(el => {
+            try {
+                const box = el.getBBox();
+                return { el, x: box.x };
+            } catch (e) {
+                return { el, x: 0 };
+            }
+        })
+        .sort((a, b) => a.x - b.x)
+        .slice(0, expectedCount);
+
+    candidates.forEach((item, idx) => {
+        anchors[idx] = item.el;
+    });
+    return anchors;
+}
+
+function createFingerHitbox(svg, anchorEl, idx) {
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    let box;
+    try {
+        box = anchorEl.getBBox();
+    } catch (e) {
+        box = { x: 0, y: 0, width: 0, height: 0 };
+    }
+    const size = 44;
+    const centerX = box.x + (box.width / 2);
+    const centerY = box.y + (box.height / 2);
+    rect.setAttribute('x', String(centerX - size / 2));
+    rect.setAttribute('y', String(centerY - size / 2));
+    rect.setAttribute('width', String(size));
+    rect.setAttribute('height', String(size));
+    rect.setAttribute('fill', 'transparent');
+    rect.setAttribute('class', 'fingering-hitbox');
+    rect.setAttribute('data-note-index', String(idx));
+    rect.style.cursor = 'pointer';
+    rect.style.pointerEvents = 'all';
+    rect.addEventListener('click', () => handleFingerClick(idx));
+    svg.appendChild(rect);
+    return rect;
+}
+
+function handleFingerClick(idx) {
+    if (!lastResult || currentOutputFormat !== 'staff') return;
+    if (!editModeEnabled) {
+        setEditMode(true, idx);
+        return;
+    }
+    setActiveNoteIndex(idx);
 }
 
 function drawFingerboard(path, input) {
@@ -994,7 +2468,7 @@ window.toggleJson = toggleJson;
 window.drawFingerboard = drawFingerboard;
 /** Překreslí výstup a hmatník (např. po změně tématu). Použije lastResult a lastInputForSolve. */
 window.redrawResults = function redrawResults() {
-    if (lastResult && lastInputForSolve) runSolver(true);
+    if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
 };
 Object.defineProperty(window, 'lastResult', {
     get: () => lastResult,
@@ -1017,6 +2491,15 @@ export function initUI() {
     const melodyInputEl = document.getElementById('melodyInput');
     if (sequenceParam && melodyInputEl) {
         melodyInputEl.value = decodeURIComponent(sequenceParam);
+    }
+    if (!sequenceParam && melodyInputEl) {
+        const savedState = loadLastFingeringState();
+        if (savedState) {
+            melodyInputEl.value = savedState.input.join(' ');
+            lastResult = savedState.fingering;
+            lastInput = savedState.input;
+            lastInputForSolve = savedState.inputNormalized || normalizeInputTokens(savedState.input);
+        }
     }
 
     const mainElement = document.querySelector('main');
@@ -1060,15 +2543,57 @@ export function initUI() {
     const solveButton = document.getElementById('solveButton');
     if (solveButton) solveButton.addEventListener('click', () => runSolver());
 
+    const editButton = document.getElementById('editFingeringButton');
+    if (editButton) {
+        editButton.addEventListener('click', () => {
+            if (editModeEnabled) {
+                setEditMode(false);
+                return;
+            }
+            if (!lastResult) runSolver();
+            if (lastResult) setEditMode(true, 0);
+        });
+    }
+
     const toggleJsonButton = document.getElementById('toggleJsonButton');
     if (toggleJsonButton) toggleJsonButton.addEventListener('click', toggleJson);
 
     initSettings();
 
+    updateEditButtonLabel();
+
     window.addEventListener('languageChange', () => {
-        if (lastResult && lastInputForSolve) runSolver(true);
+        updateEditButtonLabel();
+        if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
     });
 
-    runSolver(true);
+    document.addEventListener('keydown', (e) => {
+        if (!editModeEnabled || currentOutputFormat !== 'staff') return;
+        if (e.key === 'Escape') {
+            setEditMode(false);
+            return;
+        }
+        if (isTypingTarget(e.target)) return;
+        if (!/^[0-4]$/.test(e.key)) return;
+        e.preventDefault();
+        applyModalSelection('f', e.key, false);
+    });
+
+    document.addEventListener('mousedown', (e) => {
+        if (!editModeEnabled) return;
+        if (modalEl && modalEl.contains(e.target)) return;
+        if (e.target.closest && e.target.closest('.fingering-hitbox')) return;
+        if (editButton && editButton.contains(e.target)) return;
+        setEditMode(false);
+    });
+
+    window.addEventListener('resize', () => {
+        if (editModeEnabled && activeNoteIndex !== null) {
+            const target = fingerTargets[activeNoteIndex];
+            if (target && target.anchorEl) positionModal(target.anchorEl);
+        }
+    });
+
+    runSolver({ skipHideAbout: true, preserveState: true });
 }
 

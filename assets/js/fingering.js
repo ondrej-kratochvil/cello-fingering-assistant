@@ -71,13 +71,30 @@ function createFingeringModel() {
 
 const model = createFingeringModel();
 
+function matchesConstraint(option, constraint) {
+    if (!constraint) return true;
+    if (constraint.f !== undefined && option.f !== constraint.f) return false;
+    if (constraint.s !== undefined && option.s !== constraint.s) return false;
+    if (constraint.p !== undefined && option.p !== constraint.p) return false;
+    if (constraint.ext !== undefined && option.ext !== constraint.ext) return false;
+    return true;
+}
+
+function filterOptionsByConstraint(options, constraint) {
+    if (!constraint) return options;
+    return options.filter(opt => matchesConstraint(opt, constraint));
+}
+
 // --- THE METODICAL ALGORITHM v7 ---
 
-function solve(sequence) {
+function solve(sequence, constraints = null) {
     console.log('=== ŘEŠENÍ SEKVENCE:', sequence.join(' '), '===');
     let layers = [];
 
-    layers[0] = (model[sequence[0]] || []).map(opt => ({
+    const firstOptions = filterOptionsByConstraint(model[sequence[0]] || [], constraints ? constraints[0] : null);
+    if (!firstOptions.length) return null;
+
+    layers[0] = firstOptions.map(opt => ({
         path: [opt],
         cost: (opt.p * 10) + (opt.ext * 500),
         lastP: opt.p,
@@ -88,8 +105,10 @@ function solve(sequence) {
 
     for (let i = 1; i < sequence.length; i++) {
         const note = sequence[i];
-        const options = model[note];
-        if (!options) return null;
+        const rawOptions = model[note];
+        if (!rawOptions) return null;
+        const options = filterOptionsByConstraint(rawOptions, constraints ? constraints[i] : null);
+        if (!options.length) return null;
 
         console.log(`\n--- Vrstva ${i}: ${note} (${options.length} možností) ---`);
         layers[i] = [];
@@ -309,8 +328,11 @@ function solve(sequence) {
             const prevStep = result[idx - 1];
             if (prevStep.f === 3 && prevStep.ext === 0 &&
                 prevStep.p === wide4th.p && prevStep.s === wide4th.s) {
-                result[idx - 1] = { ...prevStep, f: 2, ext: 1 };
-                console.log(`  Oprava: ${prevStep.s}${prevStep.p.toString().padStart(2, '0')}${prevStep.f}${prevStep.ext} -> ${result[idx - 1].s}${result[idx - 1].p.toString().padStart(2, '0')}${result[idx - 1].f}${result[idx - 1].ext} (před 4. prstem v široké)`);
+                const candidate = { ...prevStep, f: 2, ext: 1 };
+                if (!constraints || matchesConstraint(candidate, constraints[idx - 1])) {
+                    result[idx - 1] = candidate;
+                    console.log(`  Oprava: ${prevStep.s}${prevStep.p.toString().padStart(2, '0')}${prevStep.f}${prevStep.ext} -> ${result[idx - 1].s}${result[idx - 1].p.toString().padStart(2, '0')}${result[idx - 1].f}${result[idx - 1].ext} (před 4. prstem v široké)`);
+                }
             }
         }
 
@@ -319,8 +341,11 @@ function solve(sequence) {
             const nextStep = result[idx + 1];
             if (nextStep.f === 3 && nextStep.ext === 0 &&
                 nextStep.p === wide4th.p && nextStep.s === wide4th.s) {
-                result[idx + 1] = { ...nextStep, f: 2, ext: 1 };
-                console.log(`  Oprava: ${nextStep.s}${nextStep.p.toString().padStart(2, '0')}${nextStep.f}${nextStep.ext} -> ${result[idx + 1].s}${result[idx + 1].p.toString().padStart(2, '0')}${result[idx + 1].f}${result[idx + 1].ext} (po 4. prstu v široké)`);
+                const candidate = { ...nextStep, f: 2, ext: 1 };
+                if (!constraints || matchesConstraint(candidate, constraints[idx + 1])) {
+                    result[idx + 1] = candidate;
+                    console.log(`  Oprava: ${nextStep.s}${nextStep.p.toString().padStart(2, '0')}${nextStep.f}${nextStep.ext} -> ${result[idx + 1].s}${result[idx + 1].p.toString().padStart(2, '0')}${result[idx + 1].f}${result[idx + 1].ext} (po 4. prstu v široké)`);
+                }
             }
         }
     });
@@ -354,7 +379,8 @@ function solve(sequence) {
                 const candidates = prevOptions.filter(opt =>
                     opt.s === last.s &&
                     opt.p === last.p &&
-                    opt.f !== 0
+                    opt.f !== 0 &&
+                    (!constraints || matchesConstraint(opt, constraints[prevIdx]))
                 );
 
                 if (candidates.length > 0) {
