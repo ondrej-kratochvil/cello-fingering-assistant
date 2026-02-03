@@ -1516,12 +1516,31 @@ function positionModal(anchorEl) {
 }
 
 function scrollNoteIntoView(anchorEl) {
-    if (!staffScrollContainer || !anchorEl) return;
+    if (!staffScrollContainer || !anchorEl) {
+        console.log('[edit-scroll] missing container/anchor', {
+            activeNoteIndex,
+            hasContainer: !!staffScrollContainer,
+            hasAnchor: !!anchorEl
+        });
+        return;
+    }
     const margin = 16;
     const attemptScroll = () => {
         const containerRect = staffScrollContainer.getBoundingClientRect();
         const noteRect = anchorEl.getBoundingClientRect();
+        const isVisible = noteRect.left >= containerRect.left + margin &&
+            noteRect.right <= containerRect.right - margin;
+        const debugBase = {
+            activeNoteIndex,
+            containerLeft: Math.round(containerRect.left),
+            containerRight: Math.round(containerRect.right),
+            noteLeft: Math.round(noteRect.left),
+            noteRight: Math.round(noteRect.right),
+            scrollLeft: Math.round(staffScrollContainer.scrollLeft),
+            isVisible
+        };
         if (!containerRect.width || !noteRect.width) {
+            console.log('[edit-scroll] fallback scrollIntoView (no width)', debugBase);
             if (typeof anchorEl.scrollIntoView === 'function') {
                 anchorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
@@ -1530,10 +1549,14 @@ function scrollNoteIntoView(anchorEl) {
 
         if (noteRect.left < containerRect.left + margin) {
             const delta = noteRect.left - containerRect.left - margin;
+            console.log('[edit-scroll] scroll left', { ...debugBase, delta: Math.round(delta) });
             staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
         } else if (noteRect.right > containerRect.right - margin) {
             const delta = noteRect.right - containerRect.right + margin;
+            console.log('[edit-scroll] scroll right', { ...debugBase, delta: Math.round(delta) });
             staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+        } else {
+            console.log('[edit-scroll] no scroll needed', debugBase);
         }
     };
     window.requestAnimationFrame(attemptScroll);
