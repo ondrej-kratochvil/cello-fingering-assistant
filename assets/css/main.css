@@ -558,6 +558,17 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
     color: var(--color-text-primary);
 }
 
+/* Skrytý input pro mobilní klávesnici v editaci */
+.edit-keyboard-input {
+    position: fixed;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    bottom: 0;
+    left: 0;
+}
+
 /* Touch-friendly velikosti (min 44x44px) */
 .touch-target {
     min-width: 2.75rem;  /* 44px */

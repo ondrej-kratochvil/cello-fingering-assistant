@@ -328,6 +328,7 @@ let saveTestDefaultName = '';
 let saveTestReturnFocusEl = null;
 let activeFingerHighlightEl = null;
 let activeFingerHighlightSvg = null;
+let editKeyboardInputEl = null;
 
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
@@ -986,6 +987,7 @@ function setEditMode(enabled, focusIndex = 0) {
         pendingActiveNoteIndex = null;
         closeModal();
         clearActiveFingerHighlight();
+        blurEditKeyboardInput();
         updateEditButtonLabel();
         return;
     }
@@ -1000,6 +1002,7 @@ function setEditMode(enabled, focusIndex = 0) {
         setActiveNoteIndex(pendingActiveNoteIndex);
     }
     updateEditButtonLabel();
+    focusEditKeyboardInput();
 }
 
 function ensureModal() {
@@ -1302,6 +1305,47 @@ function updateActiveFingerHighlight(anchorEl) {
     }
 }
 
+function ensureEditKeyboardInput() {
+    if (editKeyboardInputEl) return;
+    editKeyboardInputEl = document.createElement('input');
+    editKeyboardInputEl.type = 'text';
+    editKeyboardInputEl.inputMode = 'numeric';
+    editKeyboardInputEl.pattern = '[0-4]*';
+    editKeyboardInputEl.autocomplete = 'off';
+    editKeyboardInputEl.className = 'edit-keyboard-input';
+    editKeyboardInputEl.setAttribute('aria-label', t('aria.editKeyboard'));
+    editKeyboardInputEl.addEventListener('input', (e) => {
+        if (!editModeEnabled || currentOutputFormat !== 'staff') {
+            editKeyboardInputEl.value = '';
+            return;
+        }
+        const value = e.target.value || '';
+        const digits = value.match(/[0-4]/g);
+        if (digits) {
+            digits.forEach((digit) => applyModalSelection('f', digit, false));
+        }
+        editKeyboardInputEl.value = '';
+    });
+    document.body.appendChild(editKeyboardInputEl);
+}
+
+function focusEditKeyboardInput() {
+    if (!editKeyboardInputEl || !editModeEnabled || currentOutputFormat !== 'staff') return;
+    if (document.activeElement === editKeyboardInputEl) return;
+    try {
+        editKeyboardInputEl.focus({ preventScroll: true });
+    } catch (e) {
+        editKeyboardInputEl.focus();
+    }
+}
+
+function blurEditKeyboardInput() {
+    if (!editKeyboardInputEl) return;
+    if (document.activeElement === editKeyboardInputEl) {
+        editKeyboardInputEl.blur();
+    }
+}
+
 function ensureSaveTestModal() {
     if (saveTestModalEl) return;
     saveTestModalEl = document.createElement('div');
@@ -1473,17 +1517,27 @@ function positionModal(anchorEl) {
 
 function scrollNoteIntoView(anchorEl) {
     if (!staffScrollContainer || !anchorEl) return;
-    const containerRect = staffScrollContainer.getBoundingClientRect();
-    const noteRect = anchorEl.getBoundingClientRect();
     const margin = 16;
+    const attemptScroll = () => {
+        const containerRect = staffScrollContainer.getBoundingClientRect();
+        const noteRect = anchorEl.getBoundingClientRect();
+        if (!containerRect.width || !noteRect.width) {
+            if (typeof anchorEl.scrollIntoView === 'function') {
+                anchorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            return;
+        }
 
-    if (noteRect.left < containerRect.left + margin) {
-        const delta = noteRect.left - containerRect.left - margin;
-        staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
-    } else if (noteRect.right > containerRect.right - margin) {
-        const delta = noteRect.right - containerRect.right + margin;
-        staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
-    }
+        if (noteRect.left < containerRect.left + margin) {
+            const delta = noteRect.left - containerRect.left - margin;
+            staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+        } else if (noteRect.right > containerRect.right - margin) {
+            const delta = noteRect.right - containerRect.right + margin;
+            staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+        }
+    };
+    window.requestAnimationFrame(attemptScroll);
+    window.setTimeout(attemptScroll, 120);
 }
 
 function collectFingerElements(svg, expectedCount) {
@@ -1644,6 +1698,7 @@ function applyModalSelection(field, value, isAuto) {
         display: document.getElementById('pathDisplay'),
         wrapper: document.getElementById('resultsWrapper')
     });
+    focusEditKeyboardInput();
 }
 
 function isTypingTarget(target) {
@@ -1938,6 +1993,7 @@ export function initUI() {
     initSettings();
 
     updateEditButtonLabel();
+    ensureEditKeyboardInput();
 
     window.addEventListener('languageChange', () => {
         updateEditButtonLabel();

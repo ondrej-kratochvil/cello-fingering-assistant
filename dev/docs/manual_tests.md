@@ -81,4 +81,9 @@ Tyto testy jsou určené pro lidského testera. Ověřují aspekty, které se h�
    - otevři `dev/tests/test.php` a ověř, že se nově uložený test spustí,
    - očekávaný prstoklad odpovídá uloženému prstokladu z Home.
 
+8. **Mobilní editace a scroll**:
+   - na mobilu vstup do režimu editace,
+   - při změně prstu v modalu se aktivní nota **automaticky posune do zobrazení** (horizontální scroll),
+   - ověř, že se zobrazí **virtuální numerická klávesnice** (0–4).
+
 

@@ -10,6 +10,7 @@
   "aria.langEn": "English",
   "aria.clearInput": "Vymazat vstup",
   "aria.clearTestName": "Vymazat název testu",
+  "aria.editKeyboard": "Zadání prstů (0–4)",
 
   "about.title": "O aplikaci",
   "about.p1": "<strong>Cello Fingering Assistant</strong> je nástroj pro návrh optimálního prstokladu pro violoncello. Analyzuje sekvenci tónů a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu a minimalizaci posunů.",

@@ -236,6 +236,7 @@ Zodpovídá za:
 - Neplatné volby jsou **disabled**; chybová hláška se zobrazí **uvnitř modalu** na 2 s.
 - Klávesy **0–4** nastaví prst a posunou fokus na další notu (modal zůstává otevřený).
 - Šipky **← / →** posouvají fokus mezi notami.
+- V režimu editace se na mobilech aktivuje **virtuální numerická klávesnice** (skrytý input s `inputmode="numeric"`).
 - Uživatelské volby jsou v prstech označeny **vykřičníkem** (`4↑!`) a ukládají se do `userDefined`.
 
 ### Funkce `renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman)`
