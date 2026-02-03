@@ -1647,6 +1647,8 @@ function drawFingerboard(path, input) {
     const fingerboardStroke = bodyStyles.getPropertyValue('--color-fingerboard-stroke').trim() || rootStyles.getPropertyValue('--color-fingerboard-stroke').trim() || '#e0e0e0';
 
     const strings = ['A', 'D', 'G', 'C'];
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const cStringTextColor = isDarkMode ? '#0f172a' : '#ffffff';
     const stringYPositions = {};
     const stringSpacing = height / (strings.length + 1);
     strings.forEach((str, idx) => { stringYPositions[str] = stringSpacing * (idx + 1); });
@@ -1683,7 +1685,8 @@ function drawFingerboard(path, input) {
         ctx.moveTo(0, stringYPositions[str]);
         ctx.lineTo(width, stringYPositions[str]);
         ctx.stroke();
-        ctx.fillStyle = stringColors[str];
+        const labelColor = (str === 'C' && !isDarkMode) ? '#ffffff' : stringColors[str];
+        ctx.fillStyle = labelColor;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(str, stringLabelX, stringYPositions[str] + 5);
@@ -1726,7 +1729,7 @@ function drawFingerboard(path, input) {
             ctx.strokeStyle = fingerboardStroke;
             ctx.lineWidth = 2;
             ctx.stroke();
-            const openNumberColor = step.s === 'C' ? '#0f172a' : fingerboardStroke;
+            const openNumberColor = step.s === 'C' ? cStringTextColor : fingerboardStroke;
             ctx.fillStyle = openNumberColor;
             ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
@@ -1780,7 +1783,7 @@ function drawFingerboard(path, input) {
         ctx.strokeStyle = fingerboardStroke;
         ctx.lineWidth = 2;
         ctx.stroke();
-        const fingerNumberColor = step.s === 'C' ? '#0f172a' : fingerboardStroke;
+        const fingerNumberColor = step.s === 'C' ? cStringTextColor : fingerboardStroke;
         ctx.fillStyle = fingerNumberColor;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
