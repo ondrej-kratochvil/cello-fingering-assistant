@@ -325,6 +325,7 @@ let modalErrorTimeout = null;
 let saveTestModalEl = null;
 let saveTestNameInputEl = null;
 let saveTestDefaultName = '';
+let saveTestReturnFocusEl = null;
 let activeFingerHighlightEl = null;
 let activeFingerHighlightSvg = null;
 
@@ -1263,10 +1264,13 @@ function updateActiveFingerHighlight(anchorEl) {
     activeFingerHighlightEl.setAttribute('width', String(box.width + padX * 2));
     activeFingerHighlightEl.setAttribute('height', String(box.height + padY * 2));
 
-    if (activeFingerHighlightEl.parentNode !== svg) {
-        svg.insertBefore(activeFingerHighlightEl, anchorEl);
+    const parent = anchorEl.parentNode && anchorEl.parentNode.nodeType === 1
+        ? anchorEl.parentNode
+        : svg;
+    if (activeFingerHighlightEl.parentNode !== parent) {
+        parent.insertBefore(activeFingerHighlightEl, anchorEl);
     } else if (activeFingerHighlightEl.nextSibling !== anchorEl) {
-        svg.insertBefore(activeFingerHighlightEl, anchorEl);
+        parent.insertBefore(activeFingerHighlightEl, anchorEl);
     }
 }
 
@@ -1344,19 +1348,31 @@ function updateSaveTestModalTexts() {
 function openSaveTestModal(defaultName) {
     ensureSaveTestModal();
     saveTestDefaultName = defaultName || '';
+    saveTestReturnFocusEl = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    saveTestModalEl.classList.add('is-open');
+    saveTestModalEl.setAttribute('aria-hidden', 'false');
     if (saveTestNameInputEl) {
         saveTestNameInputEl.value = saveTestDefaultName;
         saveTestNameInputEl.focus();
         saveTestNameInputEl.select();
     }
-    saveTestModalEl.classList.add('is-open');
-    saveTestModalEl.setAttribute('aria-hidden', 'false');
 }
 
 function closeSaveTestModal() {
     if (!saveTestModalEl) return;
+    if (saveTestReturnFocusEl && typeof saveTestReturnFocusEl.focus === 'function') {
+        saveTestReturnFocusEl.focus();
+    } else {
+        const saveTestButton = document.getElementById('saveTestButton');
+        if (saveTestButton && typeof saveTestButton.focus === 'function') {
+            saveTestButton.focus();
+        }
+    }
     saveTestModalEl.classList.remove('is-open');
     saveTestModalEl.setAttribute('aria-hidden', 'true');
+    saveTestReturnFocusEl = null;
 }
 
 function handleSaveTestConfirm() {
