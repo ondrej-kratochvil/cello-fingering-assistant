@@ -1003,7 +1003,7 @@ function ensureModal() {
     modalEl.setAttribute('aria-hidden', 'true');
     modalEl.innerHTML = `
         <div class="fingering-modal__error" data-role="error" aria-live="polite"></div>
-        <div class="fingering-modal__section" data-field="f">
+        <div class="fingering-modal__section" data-field="pos">
             <div class="fingering-modal__label" data-role="label"></div>
             <div class="fingering-modal__buttons" data-role="buttons"></div>
         </div>
@@ -1011,7 +1011,7 @@ function ensureModal() {
             <div class="fingering-modal__label" data-role="label"></div>
             <div class="fingering-modal__buttons" data-role="buttons"></div>
         </div>
-        <div class="fingering-modal__section" data-field="pos">
+        <div class="fingering-modal__section" data-field="f">
             <div class="fingering-modal__label" data-role="label"></div>
             <div class="fingering-modal__buttons" data-role="buttons"></div>
         </div>
@@ -1218,9 +1218,10 @@ function positionModal(anchorEl) {
     const rect = anchorEl.getBoundingClientRect();
     const modalRect = modalEl.getBoundingClientRect();
     const gap = 8;
-    let top = rect.top + window.scrollY - modalRect.height - gap;
+    const verticalOffset = -10;
+    let top = rect.top + window.scrollY - modalRect.height - gap + verticalOffset;
     if (top < window.scrollY + gap) {
-        top = rect.bottom + window.scrollY + gap;
+        top = rect.bottom + window.scrollY + gap + verticalOffset;
     }
     let left = rect.left + window.scrollX + (rect.width / 2) - (modalRect.width / 2);
     const minLeft = window.scrollX + gap;
@@ -1693,6 +1694,13 @@ export function initUI() {
             return;
         }
         if (isTypingTarget(e.target)) return;
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            const direction = e.key === 'ArrowLeft' ? -1 : 1;
+            const currentIndex = activeNoteIndex ?? 0;
+            setActiveNoteIndex(currentIndex + direction);
+            return;
+        }
         if (!/^[0-4]$/.test(e.key)) return;
         e.preventDefault();
         applyModalSelection('f', e.key, false);
