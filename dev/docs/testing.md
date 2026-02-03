@@ -28,6 +28,8 @@ K porovnání prstokladů slouží:
 - Posuny mezi polohami – např. `d1 e1 f1 g1` (A struna, přechod z 5. do 7. polohy).
 - Jednoduchá stupnice na C struně – `C D E F` ve 2. poloze.
 - Přesuny přes více strun – `g a h c`.
+- Prázdné struny – `C G d a`.
+- Preference nižší polohy – `g` na D struně.
 - Dlouhá sekvence `g a h c1 d1 e1 f1# g1` ověřující, že algoritmus:
   - používá co nejméně poloh (ideálně 2),
   - preferuje nižší polohy,

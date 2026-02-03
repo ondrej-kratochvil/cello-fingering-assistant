@@ -257,6 +257,29 @@ const testSuites = [
         description: 'Sekvence přes více strun'
     },
     {
+        name: 'Prázdné struny C G d a',
+        nameKey: 'test.openStrings.name',
+        descriptionKey: 'test.openStrings.desc',
+        input: ['C', 'G', 'd', 'a'],
+        expected: [
+            { s: 'C', p: 0, f: 0, ext: 0 },
+            { s: 'G', p: 0, f: 0, ext: 0 },
+            { s: 'D', p: 0, f: 0, ext: 0 },
+            { s: 'A', p: 0, f: 0, ext: 0 }
+        ],
+        description: 'Preferuje otevřené struny'
+    },
+    {
+        name: 'Preference nižší polohy pro g',
+        nameKey: 'test.stringPreference.name',
+        descriptionKey: 'test.stringPreference.desc',
+        input: ['g'],
+        expected: [
+            { s: 'D', p: 2, f: 4, ext: 0 }
+        ],
+        description: 'Nižší poloha na D struně'
+    },
+    {
         name: 'Dlouhá sekvence g a h c1 d1 e1 f1# g1',
         nameKey: 'test.long.name',
         descriptionKey: 'test.long.desc',

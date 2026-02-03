@@ -232,8 +232,10 @@ Zodpovídá za:
 - Aktivace tlačítkem **Editovat prstoklad** nebo klikem na číslo prstu v notové osnově.
 - Nad prsty se vykresluje **klikací hitbox** v SVG (44×44), který otevírá modal.
 - Modal je ukotven **nad prstem**, obsahuje volby **Prst / Struna / Poloha** včetně **Auto**.
+- Aktivní prst má **zvýrazněné pozadí**: SVG `<rect>` s radiálním přechodem (žlutý střed → bílý okraj) vložený za číslo prstu.
 - Neplatné volby jsou **disabled**; chybová hláška se zobrazí **uvnitř modalu** na 2 s.
 - Klávesy **0–4** nastaví prst a posunou fokus na další notu (modal zůstává otevřený).
+- Šipky **← / →** posouvají fokus mezi notami.
 - Uživatelské volby jsou v prstech označeny **vykřičníkem** (`4↑!`) a ukládají se do `userDefined`.
 
 ### Funkce `renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman)`
