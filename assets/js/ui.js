@@ -1280,6 +1280,8 @@ function updateActiveFingerHighlight(anchorEl) {
         activeFingerHighlightEl.setAttribute('rx', '8');
         activeFingerHighlightEl.setAttribute('ry', '8');
         activeFingerHighlightEl.setAttribute('pointer-events', 'none');
+        activeFingerHighlightEl.setAttribute('stroke', 'none');
+        activeFingerHighlightEl.setAttribute('stroke-width', '0');
         activeFingerHighlightSvg = svg;
     }
     let box;

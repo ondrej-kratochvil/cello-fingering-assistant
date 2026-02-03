@@ -475,6 +475,7 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
 .fingering-highlight {
     fill: url(#fingering-highlight-gradient-light);
     pointer-events: none;
+    stroke: none;
 }
 
 /* Modal pro uložení testu */
