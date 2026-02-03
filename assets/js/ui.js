@@ -1,5 +1,6 @@
 // --- UI FUNCTIONS ---
 import { solve, model } from './fingering.js';
+import { appendLocalTest } from './tests.js';
 import { t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations } from './i18n.js';
 
 /**
@@ -1672,6 +1673,35 @@ export function initUI() {
             }
             if (!lastResult) runSolver();
             if (lastResult) setEditMode(true, 0);
+        });
+    }
+
+    const saveTestButton = document.getElementById('saveTestButton');
+    if (saveTestButton) {
+        saveTestButton.addEventListener('click', () => {
+            if (!lastResult || !lastInputForSolve) {
+                runSolver();
+            }
+            if (!lastResult || !lastInputForSolve) return;
+            const inputVal = melodyInputEl ? melodyInputEl.value.trim() : '';
+            const inputTokens = inputVal
+                ? inputVal.split(/\s+/)
+                : (lastInput || lastInputForSolve || []);
+            if (!inputTokens.length) return;
+            const expected = lastResult.map(step => ({
+                s: step.s,
+                p: step.p,
+                f: step.f,
+                ext: step.ext
+            }));
+            appendLocalTest({
+                id: `local-${Date.now()}`,
+                name: inputTokens.join(' '),
+                description: '',
+                input: inputTokens,
+                expected,
+                createdAt: new Date().toISOString()
+            });
         });
     }
 

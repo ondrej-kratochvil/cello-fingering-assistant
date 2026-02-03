@@ -22,7 +22,7 @@ K porovnání prstokladů slouží:
 
 ### Testovací sady
 
-`testSuites` obsahuje několik klíčových scénářů:
+`testSuites` obsahuje několik klíčových scénářů (statické). Test runner navíc načítá **lokální testy** z `localStorage` (uložené tlačítkem „Uložit jako test“ na Home).
 
 - Základní sekvence v jedné poloze – např. `e f# g#` na D struně s širokou polohou.
 - Posuny mezi polohami – např. `d1 e1 f1 g1` (A struna, přechod z 5. do 7. polohy).
@@ -48,7 +48,7 @@ Stránka `test.php`:
 
 - Načítá `js/fingering.js` a `js/tests.js`.
 - Funkce `runAllTests()`:
-  - projde `testSuites`,
+  - projde `testSuites` + lokální testy z `localStorage`,
   - pro každý test zavolá `solve()`,
   - použije `compareFingering()` k vyhodnocení,
   - vykreslí:

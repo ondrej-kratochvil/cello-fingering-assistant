@@ -135,6 +135,20 @@
 - **Status**: ✅ Hotovo
 - **Poznámka**: Dokumentace je v `dev/docs/`, ale měla by být aktualizována o nové změny
 
+### 9. Správa testů (lokálně → DB)
+- **Status**: 🟡 Rozpracováno
+- **Fáze 1 (lokálně)**:
+  - Tlačítko **„Uložit jako test“** na Home ukládá aktuální vstup + prstoklad do `localStorage`.
+  - Stránka **Testy** spouští statické testy + testy z `localStorage`.
+- **Fáze 2 (DB)**:
+  - Uložení testů do DB (REST endpointy).
+  - Všechny současné testy migrovat do DB.
+  - Na Testy přidat tlačítka **Upravit** a **Smazat**.
+  - Na Home při editaci testu zobrazit **Uložit** a **Uložit jako nový**.
+  - Tlačítko **Uložit jako test** zůstává pro přidání nového testu mimo editaci.
+  - **Admin režim**: přidávání/úpravy/mazání dostupné jen při speciálním GET parametru,
+    který se přenáší mezi Home a Testy.
+
 ## 📋 Priorita úkolů
 
 ### Fáze 1 - Kritické (musí být hotovo) ✅ DOKONČENO

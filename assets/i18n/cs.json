@@ -48,6 +48,7 @@
   "button.solve": "Navrhnout prstoklad",
   "button.editStart": "Editovat prstoklad",
   "button.editStop": "Ukončit editaci",
+  "button.saveTest": "Uložit jako test",
   "button.settingsOpen": "Nastavení",
   "button.settingsClose": "Zavřít nastavení",
   "button.jsonShow": "Zobrazit JSON Model",

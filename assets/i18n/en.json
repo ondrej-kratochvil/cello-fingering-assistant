@@ -48,6 +48,7 @@
   "button.solve": "Suggest fingering",
   "button.editStart": "Edit fingering",
   "button.editStop": "Stop editing",
+  "button.saveTest": "Save as test",
   "button.settingsOpen": "Settings",
   "button.settingsClose": "Close settings",
   "button.jsonShow": "Show JSON Model",

@@ -2,7 +2,7 @@
 // UI logika pro test runner v prohlížeči
 
 import { solve } from './fingering.js';
-import { compareFingering, formatFingering, prepareInputForSolve, testSuites } from './tests.js';
+import { compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites } from './tests.js';
 import { renderStaffOutput, toPositionLabel } from './ui.js';
 import { t } from './i18n.js';
 
@@ -51,7 +51,9 @@ export function runAllTests() {
     let passed = 0;
     let failed = 0;
 
-    testSuites.forEach((suite, index) => {
+    const allSuites = [...testSuites, ...getLocalTestSuites()];
+
+    allSuites.forEach((suite, index) => {
         const testDiv = document.createElement('div');
         testDiv.className = 'p-6 rounded-2xl border-2 test-running space-y-4';
         testDiv.id = `test-${index}`;

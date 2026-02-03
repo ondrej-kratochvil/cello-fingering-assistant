@@ -75,4 +75,8 @@ Tyto testy jsou určené pro lidského testera. Ověřují aspekty, které se h�
    - prst u noty se označí vykřičníkem `!` (např. `4↑!`),
    - po změně se prstoklad znovu přepočítá a zachová uživatelské volby.
 
+7. Klikni na **Uložit jako test**:
+   - otevři `dev/tests/test.php` a ověř, že se nově uložený test spustí,
+   - očekávaný prstoklad odpovídá uloženému prstokladu z Home.
+
 

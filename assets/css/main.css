@@ -456,14 +456,11 @@ body.dark-mode [id^="vexflow-staff-"] svg rect {
 /* Klikací hitbox nad prsty */
 .fingering-hitbox {
     cursor: pointer;
-    fill: #ffffff;
-    fill-opacity: 0;
-    stroke: #ffffff;
-    stroke-width: 0;
+    fill: transparent;
+    stroke: none;
 }
 .fingering-hitbox.is-active {
-    stroke: #ffffff;
-    stroke-width: 1.5;
+    stroke: none;
 }
 
 /* Touch-friendly velikosti (min 44x44px) */

@@ -158,6 +158,11 @@ require __DIR__ . '/assets/partials/topbar.php';
                             data-i18n="button.editStart">
                         Editovat prstoklad
                     </button>
+                    <button id="saveTestButton" type="button"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
+                            data-i18n="button.saveTest">
+                        Uložit jako test
+                    </button>
                     <button id="settingsToggle" type="button"
                             class="bg-white hover:bg-slate-100 text-slate-700 font-black py-4 px-10 rounded-2xl transition-all shadow-lg border border-slate-200 active:scale-95"
                             data-i18n="button.settingsOpen" aria-expanded="false">

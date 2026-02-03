@@ -114,6 +114,68 @@ function prepareInputForSolve(input) {
     });
 }
 
+const STORAGE_TESTS_KEY = 'fingering:tests';
+
+function normalizeStoredTest(entry) {
+    if (!entry || !Array.isArray(entry.input) || !Array.isArray(entry.expected)) return null;
+    const expected = entry.expected
+        .filter(item => item && typeof item.s === 'string')
+        .map(item => ({
+            s: item.s,
+            p: Number(item.p),
+            f: Number(item.f),
+            ext: Number(item.ext)
+        }))
+        .filter(item => Number.isFinite(item.p) && Number.isFinite(item.f) && Number.isFinite(item.ext));
+    if (!expected.length || expected.length !== entry.expected.length) return null;
+    return {
+        id: entry.id || `local-${Date.now()}`,
+        name: entry.name || 'Lokalni test',
+        description: entry.description || '',
+        input: entry.input.filter(token => typeof token === 'string'),
+        expected,
+        createdAt: entry.createdAt || null
+    };
+}
+
+function loadLocalTests() {
+    if (typeof localStorage === 'undefined') return [];
+    try {
+        const raw = localStorage.getItem(STORAGE_TESTS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(normalizeStoredTest).filter(Boolean);
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveLocalTests(tests) {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(STORAGE_TESTS_KEY, JSON.stringify(tests));
+}
+
+function appendLocalTest(entry) {
+    const normalized = normalizeStoredTest(entry);
+    if (!normalized) return null;
+    const tests = loadLocalTests();
+    tests.push(normalized);
+    saveLocalTests(tests);
+    return normalized;
+}
+
+function getLocalTestSuites() {
+    return loadLocalTests().map((test) => ({
+        name: test.name,
+        description: test.description || '',
+        input: test.input,
+        expected: test.expected,
+        source: 'local',
+        localId: test.id
+    }));
+}
+
 // Pomocná funkce pro formátování prstokladu pro zobrazení
 function formatFingering(fingering) {
     if (!fingering) return 'null';
@@ -413,7 +475,9 @@ const testSuites = [
 function runTests() {
     const runner = new TestRunner();
 
-    testSuites.forEach(suite => {
+    const allSuites = [...testSuites, ...getLocalTestSuites()];
+
+    allSuites.forEach(suite => {
         runner.test(suite.name, () => {
             const inputForSolve = prepareInputForSolve(suite.input);
             const result = solve(inputForSolve);
@@ -436,5 +500,15 @@ function runTests() {
 }
 
 // Export funkcí pro ESM
-export { TestRunner, runTests, compareFingering, formatFingering, prepareInputForSolve, testSuites };
+export {
+    TestRunner,
+    runTests,
+    compareFingering,
+    formatFingering,
+    prepareInputForSolve,
+    testSuites,
+    STORAGE_TESTS_KEY,
+    appendLocalTest,
+    getLocalTestSuites
+};
 
