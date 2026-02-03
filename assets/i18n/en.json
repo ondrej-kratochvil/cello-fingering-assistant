@@ -9,7 +9,7 @@
   "aria.langCs": "Czech",
   "aria.langEn": "English",
   "aria.clearInput": "Clear input",
-  "aria.clearInput": "Clear input",
+  "aria.clearTestName": "Clear test name",
 
   "about.title": "About",
   "about.p1": "<strong>Cello Fingering Assistant</strong> is a tool for designing optimal cello fingering. It analyses a sequence of notes and recommends the most suitable fingering with regard to position stability and minimising shifts.",
@@ -49,6 +49,8 @@
   "button.editStart": "Edit fingering",
   "button.editStop": "Stop editing",
   "button.saveTest": "Save as test",
+  "button.save": "Save",
+  "button.cancel": "Cancel",
   "button.settingsOpen": "Settings",
   "button.settingsClose": "Close settings",
   "button.jsonShow": "Show JSON Model",
@@ -77,6 +79,8 @@
   "modal.string": "String",
   "modal.position": "Position",
   "modal.auto": "Auto",
+  "modal.saveTestTitle": "Save test",
+  "modal.saveTestLabel": "Test name",
   "position.narrow": "narrow",
   "position.wide": "wide",
 

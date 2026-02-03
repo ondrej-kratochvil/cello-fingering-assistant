@@ -322,6 +322,11 @@ let fingerTargets = [];
 let staffScrollContainer = null;
 let modalEl = null;
 let modalErrorTimeout = null;
+let saveTestModalEl = null;
+let saveTestNameInputEl = null;
+let saveTestDefaultName = '';
+let activeFingerHighlightEl = null;
+let activeFingerHighlightSvg = null;
 
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
@@ -979,6 +984,7 @@ function setEditMode(enabled, focusIndex = 0) {
         activeNoteIndex = null;
         pendingActiveNoteIndex = null;
         closeModal();
+        clearActiveFingerHighlight();
         updateEditButtonLabel();
         return;
     }
@@ -1191,6 +1197,193 @@ function renderModalContent() {
     });
 }
 
+function ensureHighlightDefs(svg) {
+    if (!svg) return;
+    if (svg.querySelector('#fingering-highlight-gradient')) return;
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        svg.insertBefore(defs, svg.firstChild);
+    }
+    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+    gradient.setAttribute('id', 'fingering-highlight-gradient');
+    gradient.setAttribute('cx', '50%');
+    gradient.setAttribute('cy', '50%');
+    gradient.setAttribute('r', '60%');
+
+    const stopInner = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stopInner.setAttribute('offset', '0%');
+    stopInner.setAttribute('stop-color', '#facc15');
+    const stopOuter = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stopOuter.setAttribute('offset', '100%');
+    stopOuter.setAttribute('stop-color', '#ffffff');
+    gradient.appendChild(stopInner);
+    gradient.appendChild(stopOuter);
+    defs.appendChild(gradient);
+}
+
+function clearActiveFingerHighlight() {
+    if (activeFingerHighlightEl && activeFingerHighlightEl.parentNode) {
+        activeFingerHighlightEl.parentNode.removeChild(activeFingerHighlightEl);
+    }
+    activeFingerHighlightEl = null;
+    activeFingerHighlightSvg = null;
+}
+
+function updateActiveFingerHighlight(anchorEl) {
+    if (!anchorEl) {
+        clearActiveFingerHighlight();
+        return;
+    }
+    const svg = anchorEl.ownerSVGElement;
+    if (!svg) return;
+    ensureHighlightDefs(svg);
+
+    if (activeFingerHighlightEl && activeFingerHighlightSvg !== svg) {
+        clearActiveFingerHighlight();
+    }
+    if (!activeFingerHighlightEl) {
+        activeFingerHighlightEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        activeFingerHighlightEl.classList.add('fingering-highlight');
+        activeFingerHighlightEl.setAttribute('rx', '8');
+        activeFingerHighlightEl.setAttribute('ry', '8');
+        activeFingerHighlightEl.setAttribute('pointer-events', 'none');
+        activeFingerHighlightSvg = svg;
+    }
+    let box;
+    try {
+        box = anchorEl.getBBox();
+    } catch (e) {
+        return;
+    }
+    const padX = 8;
+    const padY = 6;
+    activeFingerHighlightEl.setAttribute('x', String(box.x - padX));
+    activeFingerHighlightEl.setAttribute('y', String(box.y - padY));
+    activeFingerHighlightEl.setAttribute('width', String(box.width + padX * 2));
+    activeFingerHighlightEl.setAttribute('height', String(box.height + padY * 2));
+
+    if (activeFingerHighlightEl.parentNode !== svg) {
+        svg.insertBefore(activeFingerHighlightEl, anchorEl);
+    } else if (activeFingerHighlightEl.nextSibling !== anchorEl) {
+        svg.insertBefore(activeFingerHighlightEl, anchorEl);
+    }
+}
+
+function ensureSaveTestModal() {
+    if (saveTestModalEl) return;
+    saveTestModalEl = document.createElement('div');
+    saveTestModalEl.className = 'save-test-modal';
+    saveTestModalEl.setAttribute('aria-hidden', 'true');
+    saveTestModalEl.innerHTML = `
+        <div class="save-test-modal__dialog" role="dialog" aria-modal="true">
+            <div class="save-test-modal__title" data-role="title"></div>
+            <label class="save-test-modal__label" data-role="label" for="saveTestNameInput"></label>
+            <div class="save-test-modal__input">
+                <input id="saveTestNameInput" type="text" autocomplete="off">
+                <button type="button" data-role="clear" aria-label=""></button>
+            </div>
+            <div class="save-test-modal__actions">
+                <button type="button" class="is-secondary" data-role="cancel"></button>
+                <button type="button" class="is-primary" data-role="save"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(saveTestModalEl);
+
+    saveTestNameInputEl = saveTestModalEl.querySelector('#saveTestNameInput');
+    const clearButton = saveTestModalEl.querySelector('[data-role="clear"]');
+    const cancelButton = saveTestModalEl.querySelector('[data-role="cancel"]');
+    const saveButton = saveTestModalEl.querySelector('[data-role="save"]');
+
+    if (clearButton && saveTestNameInputEl) {
+        clearButton.textContent = '×';
+        clearButton.addEventListener('click', () => {
+            saveTestNameInputEl.value = '';
+            saveTestNameInputEl.focus();
+        });
+    }
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => closeSaveTestModal());
+    }
+    if (saveButton) {
+        saveButton.addEventListener('click', () => handleSaveTestConfirm());
+    }
+    saveTestModalEl.addEventListener('click', (e) => {
+        if (e.target === saveTestModalEl) closeSaveTestModal();
+    });
+    if (saveTestNameInputEl) {
+        saveTestNameInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeSaveTestModal();
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSaveTestConfirm();
+            }
+        });
+    }
+    updateSaveTestModalTexts();
+}
+
+function updateSaveTestModalTexts() {
+    if (!saveTestModalEl) return;
+    const title = saveTestModalEl.querySelector('[data-role="title"]');
+    const label = saveTestModalEl.querySelector('[data-role="label"]');
+    const clearButton = saveTestModalEl.querySelector('[data-role="clear"]');
+    const cancelButton = saveTestModalEl.querySelector('[data-role="cancel"]');
+    const saveButton = saveTestModalEl.querySelector('[data-role="save"]');
+    if (title) title.textContent = t('modal.saveTestTitle');
+    if (label) label.textContent = t('modal.saveTestLabel');
+    if (cancelButton) cancelButton.textContent = t('button.cancel');
+    if (saveButton) saveButton.textContent = t('button.save');
+    if (clearButton) clearButton.setAttribute('aria-label', t('aria.clearTestName'));
+}
+
+function openSaveTestModal(defaultName) {
+    ensureSaveTestModal();
+    saveTestDefaultName = defaultName || '';
+    if (saveTestNameInputEl) {
+        saveTestNameInputEl.value = saveTestDefaultName;
+        saveTestNameInputEl.focus();
+        saveTestNameInputEl.select();
+    }
+    saveTestModalEl.classList.add('is-open');
+    saveTestModalEl.setAttribute('aria-hidden', 'false');
+}
+
+function closeSaveTestModal() {
+    if (!saveTestModalEl) return;
+    saveTestModalEl.classList.remove('is-open');
+    saveTestModalEl.setAttribute('aria-hidden', 'true');
+}
+
+function handleSaveTestConfirm() {
+    if (!lastResult || !lastInputForSolve) return;
+    const inputVal = saveTestNameInputEl ? saveTestNameInputEl.value.trim() : '';
+    const name = inputVal || saveTestDefaultName || 'Test';
+    const inputTokens = lastInput && lastInput.length
+        ? lastInput
+        : lastInputForSolve || [];
+    if (!inputTokens.length) return;
+    const expected = lastResult.map(step => ({
+        s: step.s,
+        p: step.p,
+        f: step.f,
+        ext: step.ext
+    }));
+    appendLocalTest({
+        id: `local-${Date.now()}`,
+        name,
+        description: '',
+        input: inputTokens,
+        expected,
+        createdAt: new Date().toISOString()
+    });
+    closeSaveTestModal();
+}
+
 function setActiveNoteIndex(index) {
     if (!fingerTargets.length || !lastResult) return;
     const clamped = Math.max(0, Math.min(index, lastResult.length - 1));
@@ -1206,6 +1399,7 @@ function setActiveNoteIndex(index) {
     const target = fingerTargets[clamped];
     if (!target || !target.anchorEl) return;
     ensureModal();
+    updateActiveFingerHighlight(target.anchorEl);
     renderModalContent();
     modalEl.classList.add('is-open');
     modalEl.setAttribute('aria-hidden', 'false');
@@ -1516,7 +1710,8 @@ function drawFingerboard(path, input) {
             ctx.strokeStyle = fingerboardStroke;
             ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.fillStyle = fingerboardStroke;
+            const openNumberColor = step.s === 'C' ? '#0f172a' : fingerboardStroke;
+            ctx.fillStyle = openNumberColor;
             ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('0', openStringX, y + 4);
@@ -1569,7 +1764,8 @@ function drawFingerboard(path, input) {
         ctx.strokeStyle = fingerboardStroke;
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.fillStyle = fingerboardStroke;
+        const fingerNumberColor = step.s === 'C' ? '#0f172a' : fingerboardStroke;
+        ctx.fillStyle = fingerNumberColor;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(step.f.toString(), x, y + 5);
@@ -1684,24 +1880,8 @@ export function initUI() {
             }
             if (!lastResult || !lastInputForSolve) return;
             const inputVal = melodyInputEl ? melodyInputEl.value.trim() : '';
-            const inputTokens = inputVal
-                ? inputVal.split(/\s+/)
-                : (lastInput || lastInputForSolve || []);
-            if (!inputTokens.length) return;
-            const expected = lastResult.map(step => ({
-                s: step.s,
-                p: step.p,
-                f: step.f,
-                ext: step.ext
-            }));
-            appendLocalTest({
-                id: `local-${Date.now()}`,
-                name: inputTokens.join(' '),
-                description: '',
-                input: inputTokens,
-                expected,
-                createdAt: new Date().toISOString()
-            });
+            const defaultName = inputVal || (lastInput ? lastInput.join(' ') : lastInputForSolve.join(' '));
+            openSaveTestModal(defaultName);
         });
     }
 
@@ -1714,6 +1894,7 @@ export function initUI() {
 
     window.addEventListener('languageChange', () => {
         updateEditButtonLabel();
+        updateSaveTestModalTexts();
         if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
     });
 

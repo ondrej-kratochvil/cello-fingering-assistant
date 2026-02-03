@@ -326,6 +326,16 @@ body.dark-mode [id^="vexflow-staff-"] svg rect {
     stroke: #ffffff !important;
 }
 
+/* Přepsat dark-mode barvy pro interaktivní vrstvy */
+body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-hitbox {
+    fill: transparent !important;
+    stroke: none !important;
+}
+body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
+    fill: url(#fingering-highlight-gradient) !important;
+    stroke: none !important;
+}
+
 /* --- SEMANTICKÉ TŘÍDY --- */
 
 /* Typografie */
@@ -461,6 +471,90 @@ body.dark-mode [id^="vexflow-staff-"] svg rect {
 }
 .fingering-hitbox.is-active {
     stroke: none;
+}
+.fingering-highlight {
+    fill: url(#fingering-highlight-gradient);
+    pointer-events: none;
+}
+
+/* Modal pro uložení testu */
+.save-test-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.45);
+    padding: var(--spacing-lg);
+}
+.save-test-modal.is-open {
+    display: flex;
+}
+.save-test-modal__dialog {
+    width: min(90vw, 420px);
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-lg);
+}
+.save-test-modal__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-black);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-md);
+}
+.save-test-modal__label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-xs);
+    display: block;
+}
+.save-test-modal__input {
+    position: relative;
+}
+.save-test-modal__input input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    border: 2px solid var(--color-border-secondary);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-secondary);
+}
+.save-test-modal__input button {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+.save-test-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+.save-test-modal__actions button {
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-bold);
+    border: none;
+    cursor: pointer;
+}
+.save-test-modal__actions .is-primary {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+.save-test-modal__actions .is-secondary {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
 }
 
 /* Touch-friendly velikosti (min 44x44px) */

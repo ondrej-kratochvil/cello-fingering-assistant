@@ -175,7 +175,7 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
 - **Akční tlačítka**
   - **Navrhnout prstoklad**: spouští `runSolver()` (nový výpočet).
   - **Editovat prstoklad**: zapíná režim editace (modal nad prsty v notové osnově).
-  - **Uložit jako test**: uloží aktuální vstup + prstoklad do `localStorage` (pro testovací stránku).
+  - **Uložit jako test**: otevře modal pro pojmenování a uloží vstup + prstoklad do `localStorage`.
   - **Nastavení**: rozbaluje/skládá panel Nastavení pod tlačítky.
 
 - **Výstupní oblast**

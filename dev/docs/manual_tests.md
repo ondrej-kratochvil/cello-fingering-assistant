@@ -76,6 +76,8 @@ Tyto testy jsou určené pro lidského testera. Ověřují aspekty, které se h�
    - po změně se prstoklad znovu přepočítá a zachová uživatelské volby.
 
 7. Klikni na **Uložit jako test**:
+   - zobrazí se modal s názvem (předvyplněn sekvencí),
+   - zadej vlastní název a klikni **Uložit**,
    - otevři `dev/tests/test.php` a ověř, že se nově uložený test spustí,
    - očekávaný prstoklad odpovídá uloženému prstokladu z Home.
 
