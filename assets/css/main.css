@@ -332,7 +332,7 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-hitbox {
     stroke: none !important;
 }
 body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
-    fill: url(#fingering-highlight-gradient) !important;
+    fill: url(#fingering-highlight-gradient-dark) !important;
     stroke: none !important;
 }
 
@@ -473,7 +473,7 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
     stroke: none;
 }
 .fingering-highlight {
-    fill: url(#fingering-highlight-gradient);
+    fill: url(#fingering-highlight-gradient-light);
     pointer-events: none;
 }
 

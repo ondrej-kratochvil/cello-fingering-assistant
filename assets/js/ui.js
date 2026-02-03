@@ -1200,27 +1200,56 @@ function renderModalContent() {
 
 function ensureHighlightDefs(svg) {
     if (!svg) return;
-    if (svg.querySelector('#fingering-highlight-gradient')) return;
+    if (svg.querySelector('#fingering-highlight-gradient-light') &&
+        svg.querySelector('#fingering-highlight-gradient-dark')) return;
     let defs = svg.querySelector('defs');
     if (!defs) {
         defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
         svg.insertBefore(defs, svg.firstChild);
     }
-    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
-    gradient.setAttribute('id', 'fingering-highlight-gradient');
-    gradient.setAttribute('cx', '50%');
-    gradient.setAttribute('cy', '50%');
-    gradient.setAttribute('r', '60%');
+    const createGradient = (id, innerColor, outerColor, outerOpacity = null) => {
+        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+        gradient.setAttribute('id', id);
+        gradient.setAttribute('cx', '50%');
+        gradient.setAttribute('cy', '50%');
+        gradient.setAttribute('r', '60%');
 
-    const stopInner = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    stopInner.setAttribute('offset', '0%');
-    stopInner.setAttribute('stop-color', '#facc15');
-    const stopOuter = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    stopOuter.setAttribute('offset', '100%');
-    stopOuter.setAttribute('stop-color', '#ffffff');
-    gradient.appendChild(stopInner);
-    gradient.appendChild(stopOuter);
-    defs.appendChild(gradient);
+        const stopInner = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stopInner.setAttribute('offset', '0%');
+        stopInner.setAttribute('stop-color', innerColor);
+        const stopOuter = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stopOuter.setAttribute('offset', '100%');
+        stopOuter.setAttribute('stop-color', outerColor);
+        if (outerOpacity !== null) stopOuter.setAttribute('stop-opacity', String(outerOpacity));
+        gradient.appendChild(stopInner);
+        gradient.appendChild(stopOuter);
+        defs.appendChild(gradient);
+    };
+
+    if (!svg.querySelector('#fingering-highlight-gradient-light')) {
+        createGradient('fingering-highlight-gradient-light', '#facc15', '#ffffff');
+    }
+    if (!svg.querySelector('#fingering-highlight-gradient-dark')) {
+        createGradient('fingering-highlight-gradient-dark', '#000000', '#000000', 0);
+    }
+}
+
+function ensureHighlightLayer(svg) {
+    if (!svg) return null;
+    let layer = svg.querySelector('g.fingering-highlight-layer');
+    if (!layer) {
+        layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        layer.setAttribute('class', 'fingering-highlight-layer');
+        const defs = svg.querySelector('defs');
+        if (defs && defs.nextSibling) {
+            svg.insertBefore(layer, defs.nextSibling);
+        } else if (defs) {
+            svg.appendChild(layer);
+        } else {
+            svg.insertBefore(layer, svg.firstChild);
+        }
+    }
+    return layer;
 }
 
 function clearActiveFingerHighlight() {
@@ -1239,6 +1268,8 @@ function updateActiveFingerHighlight(anchorEl) {
     const svg = anchorEl.ownerSVGElement;
     if (!svg) return;
     ensureHighlightDefs(svg);
+    const layer = ensureHighlightLayer(svg);
+    if (!layer) return;
 
     if (activeFingerHighlightEl && activeFingerHighlightSvg !== svg) {
         clearActiveFingerHighlight();
@@ -1264,13 +1295,8 @@ function updateActiveFingerHighlight(anchorEl) {
     activeFingerHighlightEl.setAttribute('width', String(box.width + padX * 2));
     activeFingerHighlightEl.setAttribute('height', String(box.height + padY * 2));
 
-    const parent = anchorEl.parentNode && anchorEl.parentNode.nodeType === 1
-        ? anchorEl.parentNode
-        : svg;
-    if (activeFingerHighlightEl.parentNode !== parent) {
-        parent.insertBefore(activeFingerHighlightEl, anchorEl);
-    } else if (activeFingerHighlightEl.nextSibling !== anchorEl) {
-        parent.insertBefore(activeFingerHighlightEl, anchorEl);
+    if (activeFingerHighlightEl.parentNode !== layer) {
+        layer.appendChild(activeFingerHighlightEl);
     }
 }
 
