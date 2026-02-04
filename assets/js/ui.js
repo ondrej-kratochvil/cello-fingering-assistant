@@ -1525,60 +1525,33 @@ function findScrollableParent(el) {
 }
 
 function scrollNoteIntoView(anchorEl) {
-    if (!anchorEl) {
-        console.log('[edit-scroll] missing anchor', { activeNoteIndex });
-        return;
-    }
+    if (!anchorEl) return;
     const containerCandidate = staffScrollContainer && staffScrollContainer.scrollWidth > staffScrollContainer.clientWidth + 1
         ? staffScrollContainer
         : findScrollableParent(anchorEl) || staffScrollContainer;
-    if (!containerCandidate) {
-        console.log('[edit-scroll] missing container', { activeNoteIndex });
-        return;
-    }
+    if (!containerCandidate) return;
 
     const margin = 16;
     const attemptScroll = () => {
         const containerRect = containerCandidate.getBoundingClientRect();
         const noteRect = anchorEl.getBoundingClientRect();
-        const isVisible = noteRect.left >= containerRect.left + margin &&
-            noteRect.right <= containerRect.right - margin;
         const noteCenter = noteRect.left + (noteRect.width / 2);
         const containerCenter = containerRect.left + (containerRect.width / 2);
         const centerDelta = noteCenter - containerCenter;
         const centerThreshold = Math.min(24, containerRect.width * 0.1);
-        const debugBase = {
-            activeNoteIndex,
-            containerLeft: Math.round(containerRect.left),
-            containerRight: Math.round(containerRect.right),
-            containerWidth: Math.round(containerRect.width),
-            containerClientWidth: Math.round(containerCandidate.clientWidth),
-            containerScrollWidth: Math.round(containerCandidate.scrollWidth),
-            noteLeft: Math.round(noteRect.left),
-            noteRight: Math.round(noteRect.right),
-            scrollLeft: Math.round(containerCandidate.scrollLeft),
-            isVisible,
-            centerDelta: Math.round(centerDelta)
-        };
         if (!containerRect.width || !noteRect.width) {
-            console.log('[edit-scroll] fallback scrollIntoView (no width)', debugBase);
             if (typeof anchorEl.scrollIntoView === 'function') {
                 anchorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
             return;
         }
 
-        if (Math.abs(centerDelta) <= centerThreshold) {
-            console.log('[edit-scroll] centered', debugBase);
-            return;
-        }
+        if (Math.abs(centerDelta) <= centerThreshold) return;
         const maxScroll = Math.max(0, containerCandidate.scrollWidth - containerCandidate.clientWidth);
         const targetScroll = Math.min(
             Math.max(containerCandidate.scrollLeft + centerDelta, 0),
             maxScroll
         );
-        const appliedDelta = targetScroll - containerCandidate.scrollLeft;
-        console.log('[edit-scroll] center scroll', { ...debugBase, appliedDelta: Math.round(appliedDelta) });
         containerCandidate.scrollTo({ left: targetScroll, behavior: 'smooth' });
     };
     window.requestAnimationFrame(attemptScroll);
