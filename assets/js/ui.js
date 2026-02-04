@@ -1515,18 +1515,31 @@ function positionModal(anchorEl) {
     modalEl.style.top = `${top}px`;
 }
 
+function findScrollableParent(el) {
+    let current = el;
+    while (current && current !== document.body) {
+        if (current.scrollWidth > current.clientWidth + 1) return current;
+        current = current.parentElement;
+    }
+    return null;
+}
+
 function scrollNoteIntoView(anchorEl) {
-    if (!staffScrollContainer || !anchorEl) {
-        console.log('[edit-scroll] missing container/anchor', {
-            activeNoteIndex,
-            hasContainer: !!staffScrollContainer,
-            hasAnchor: !!anchorEl
-        });
+    if (!anchorEl) {
+        console.log('[edit-scroll] missing anchor', { activeNoteIndex });
         return;
     }
+    const containerCandidate = staffScrollContainer && staffScrollContainer.scrollWidth > staffScrollContainer.clientWidth + 1
+        ? staffScrollContainer
+        : findScrollableParent(anchorEl) || staffScrollContainer;
+    if (!containerCandidate) {
+        console.log('[edit-scroll] missing container', { activeNoteIndex });
+        return;
+    }
+
     const margin = 16;
     const attemptScroll = () => {
-        const containerRect = staffScrollContainer.getBoundingClientRect();
+        const containerRect = containerCandidate.getBoundingClientRect();
         const noteRect = anchorEl.getBoundingClientRect();
         const isVisible = noteRect.left >= containerRect.left + margin &&
             noteRect.right <= containerRect.right - margin;
@@ -1534,9 +1547,12 @@ function scrollNoteIntoView(anchorEl) {
             activeNoteIndex,
             containerLeft: Math.round(containerRect.left),
             containerRight: Math.round(containerRect.right),
+            containerWidth: Math.round(containerRect.width),
+            containerClientWidth: Math.round(containerCandidate.clientWidth),
+            containerScrollWidth: Math.round(containerCandidate.scrollWidth),
             noteLeft: Math.round(noteRect.left),
             noteRight: Math.round(noteRect.right),
-            scrollLeft: Math.round(staffScrollContainer.scrollLeft),
+            scrollLeft: Math.round(containerCandidate.scrollLeft),
             isVisible
         };
         if (!containerRect.width || !noteRect.width) {
@@ -1550,11 +1566,11 @@ function scrollNoteIntoView(anchorEl) {
         if (noteRect.left < containerRect.left + margin) {
             const delta = noteRect.left - containerRect.left - margin;
             console.log('[edit-scroll] scroll left', { ...debugBase, delta: Math.round(delta) });
-            staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+            containerCandidate.scrollTo({ left: containerCandidate.scrollLeft + delta, behavior: 'smooth' });
         } else if (noteRect.right > containerRect.right - margin) {
             const delta = noteRect.right - containerRect.right + margin;
             console.log('[edit-scroll] scroll right', { ...debugBase, delta: Math.round(delta) });
-            staffScrollContainer.scrollTo({ left: staffScrollContainer.scrollLeft + delta, behavior: 'smooth' });
+            containerCandidate.scrollTo({ left: containerCandidate.scrollLeft + delta, behavior: 'smooth' });
         } else {
             console.log('[edit-scroll] no scroll needed', debugBase);
         }
