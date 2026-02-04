@@ -280,6 +280,16 @@ const testSuites = [
         description: 'Nižší poloha na D struně'
     },
     {
+        name: 'Otevřená struna d',
+        nameKey: 'test.openD.name',
+        descriptionKey: 'test.openD.desc',
+        input: ['d'],
+        expected: [
+            { s: 'D', p: 0, f: 0, ext: 0 }
+        ],
+        description: 'Preferuje otevřenou strunu D'
+    },
+    {
         name: 'Dlouhá sekvence g a h c1 d1 e1 f1# g1',
         nameKey: 'test.long.name',
         descriptionKey: 'test.long.desc',

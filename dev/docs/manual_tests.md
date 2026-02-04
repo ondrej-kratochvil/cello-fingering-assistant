@@ -83,7 +83,7 @@ Tyto testy jsou určené pro lidského testera. Ověřují aspekty, které se h�
 
 8. **Mobilní editace a scroll**:
    - na mobilu vstup do režimu editace,
-   - při změně prstu v modalu se aktivní nota **automaticky posune do zobrazení** (horizontální scroll),
+   - při změně prstu v modalu se aktivní nota **automaticky posune do zobrazení** a ideálně se **centruje**,
    - ověř, že se zobrazí **virtuální numerická klávesnice** (0–4).
 
 

@@ -119,6 +119,8 @@
   "test.openStrings.desc": "Preferuje otevřené struny",
   "test.stringPreference.name": "Preference nižší polohy pro g",
   "test.stringPreference.desc": "Nižší poloha na D struně",
+  "test.openD.name": "Otevřená struna d",
+  "test.openD.desc": "Preferuje otevřenou strunu D",
   "test.long.name": "Dlouhá sekvence g a h c1 d1 e1 f1# g1",
   "test.long.desc": "Jen 2 polohy",
   "test.scale.cdur.name": "C dur",

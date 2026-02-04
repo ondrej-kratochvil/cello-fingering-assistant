@@ -36,6 +36,9 @@ Testy obsahují několik sad tónů s očekávanými prstoklady:
 3. **Sekvence C D E F** - C struna, I. poloha
 4. **Sekvence a h c1 d1** - A struna s posuny
 5. **Sekvence g a h c** - Sekvence přes více strun
+6. **Prázdné struny C G d a** - Preferuje otevřené struny
+7. **Preference nižší polohy pro g** - Nižší poloha na D struně
+8. **Otevřená struna d** - Preferuje otevřenou strunu D
 
 Při úpravách algoritmu musí všechny tyto testy stále procházet, aby byla zajištěna konzistence a správnost řešení.
 
@@ -61,3 +64,10 @@ Při úpravách algoritmu:
 4. Pokud algoritmus vrací jiný (ale stále správný) výsledek, upravte očekávané hodnoty v `assets/js/tests.js`
 
 Dokumentace je v `dev/docs/` (architektura, algoritmus, UI, testování, roadmapa).
+
+## Nápověda (editace prstokladu)
+
+- **Klik na prst** v notové osnově otevře modal (Poloha / Struna / Prst).
+- **Klávesy 0–4** nastaví prst a posunou fokus na další notu.
+- **Šipky ← / →** posouvají fokus mezi notami.
+- Na mobilu se v režimu editace aktivuje **numerická klávesnice**.

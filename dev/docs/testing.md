@@ -30,6 +30,7 @@ K porovnání prstokladů slouží:
 - Přesuny přes více strun – `g a h c`.
 - Prázdné struny – `C G d a`.
 - Preference nižší polohy – `g` na D struně.
+- Otevřená struna – `d` (D struna).
 - Dlouhá sekvence `g a h c1 d1 e1 f1# g1` ověřující, že algoritmus:
   - používá co nejméně poloh (ideálně 2),
   - preferuje nižší polohy,

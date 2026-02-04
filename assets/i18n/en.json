@@ -119,6 +119,8 @@
   "test.openStrings.desc": "Prefers open strings",
   "test.stringPreference.name": "Lower position preference for g",
   "test.stringPreference.desc": "Lower position on the D string",
+  "test.openD.name": "Open D string",
+  "test.openD.desc": "Prefers the open D string",
   "test.long.name": "Long sequence g a h c1 d1 e1 f1# g1",
   "test.long.desc": "Only 2 positions",
   "test.scale.cdur.name": "C major",

@@ -237,6 +237,7 @@ Zodpovídá za:
 - Klávesy **0–4** nastaví prst a posunou fokus na další notu (modal zůstává otevřený).
 - Šipky **← / →** posouvají fokus mezi notami.
 - V režimu editace se na mobilech aktivuje **virtuální numerická klávesnice** (skrytý input s `inputmode="numeric"`).
+- Aktivní nota se při editaci **centruje v horizontálním scrollu**, aby byl vidět kontext.
 - Uživatelské volby jsou v prstech označeny **vykřičníkem** (`4↑!`) a ukládají se do `userDefined`.
 
 ### Funkce `renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman)`
