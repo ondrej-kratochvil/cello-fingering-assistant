@@ -1543,6 +1543,10 @@ function scrollNoteIntoView(anchorEl) {
         const noteRect = anchorEl.getBoundingClientRect();
         const isVisible = noteRect.left >= containerRect.left + margin &&
             noteRect.right <= containerRect.right - margin;
+        const noteCenter = noteRect.left + (noteRect.width / 2);
+        const containerCenter = containerRect.left + (containerRect.width / 2);
+        const centerDelta = noteCenter - containerCenter;
+        const centerThreshold = Math.min(24, containerRect.width * 0.1);
         const debugBase = {
             activeNoteIndex,
             containerLeft: Math.round(containerRect.left),
@@ -1553,7 +1557,8 @@ function scrollNoteIntoView(anchorEl) {
             noteLeft: Math.round(noteRect.left),
             noteRight: Math.round(noteRect.right),
             scrollLeft: Math.round(containerCandidate.scrollLeft),
-            isVisible
+            isVisible,
+            centerDelta: Math.round(centerDelta)
         };
         if (!containerRect.width || !noteRect.width) {
             console.log('[edit-scroll] fallback scrollIntoView (no width)', debugBase);
@@ -1563,17 +1568,18 @@ function scrollNoteIntoView(anchorEl) {
             return;
         }
 
-        if (noteRect.left < containerRect.left + margin) {
-            const delta = noteRect.left - containerRect.left - margin;
-            console.log('[edit-scroll] scroll left', { ...debugBase, delta: Math.round(delta) });
-            containerCandidate.scrollTo({ left: containerCandidate.scrollLeft + delta, behavior: 'smooth' });
-        } else if (noteRect.right > containerRect.right - margin) {
-            const delta = noteRect.right - containerRect.right + margin;
-            console.log('[edit-scroll] scroll right', { ...debugBase, delta: Math.round(delta) });
-            containerCandidate.scrollTo({ left: containerCandidate.scrollLeft + delta, behavior: 'smooth' });
-        } else {
-            console.log('[edit-scroll] no scroll needed', debugBase);
+        if (Math.abs(centerDelta) <= centerThreshold) {
+            console.log('[edit-scroll] centered', debugBase);
+            return;
         }
+        const maxScroll = Math.max(0, containerCandidate.scrollWidth - containerCandidate.clientWidth);
+        const targetScroll = Math.min(
+            Math.max(containerCandidate.scrollLeft + centerDelta, 0),
+            maxScroll
+        );
+        const appliedDelta = targetScroll - containerCandidate.scrollLeft;
+        console.log('[edit-scroll] center scroll', { ...debugBase, appliedDelta: Math.round(appliedDelta) });
+        containerCandidate.scrollTo({ left: targetScroll, behavior: 'smooth' });
     };
     window.requestAnimationFrame(attemptScroll);
     window.setTimeout(attemptScroll, 120);
