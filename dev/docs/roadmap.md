@@ -135,6 +135,82 @@
 - **Status**: ✅ Hotovo
 - **Poznámka**: Dokumentace je v `dev/docs/`, ale měla by být aktualizována o nové změny
 
+### 9. Správa testů (lokálně → DB)
+- **Status**: 🟡 Rozpracováno
+- **Fáze 1 (lokálně)**:
+  - Tlačítko **„Uložit jako test“** na Home ukládá aktuální vstup + prstoklad do `localStorage`.
+  - Stránka **Testy** spouští statické testy + testy z `localStorage`.
+- **Fáze 2 (DB)**:
+  - Uložení testů do DB (REST endpointy).
+  - Všechny současné testy migrovat do DB.
+  - Na Testy přidat tlačítka **Upravit** a **Smazat**.
+  - Na Home při editaci testu zobrazit **Uložit** a **Uložit jako nový**.
+  - Tlačítko **Uložit jako test** zůstává pro přidání nového testu mimo editaci.
+  - **Admin režim**: přidávání/úpravy/mazání dostupné jen při speciálním GET parametru,
+    který se přenáší mezi Home a Testy.
+
+### 10. Ukládání uživatelských sekvencí a prstokladů (DB + verze)
+- **Status**: 🔴 Nezahájeno
+- **Cíl**: ukládat **tónové sekvence** a **verze prstokladů** (včetně `userDefined`) do DB.
+- **Flow na Home**:
+  1. Uživatel zadá sekvenci tónů a klikne **Navrhnout prstoklad**.
+  2. **Okamžitě** se uloží sekvence tónů do DB a vrátí se `sequence_id`.
+  3. Při každé úpravě prstokladu se uloží **nová verze** (soft-delete předchozí).
+  4. Pokud se změní sekvence tónů, vytvoří se **nové `sequence_id`**.
+- **Verzování (soft-delete)**:
+  - při nové verzi se u staré nastaví `valid_to`,
+  - aktuální verze má `valid_to = NULL`.
+
+#### 10.1 DB schéma – sekvence
+- **Tabulka `sequences`**
+  - `id` (INT, AI, PK)
+  - `input_json` (JSON) – původní tokeny
+  - `input_normalized_json` (JSON) – normalizace pro solver
+  - `created_at` (DATETIME)
+  - `updated_at` (DATETIME)
+
+#### 10.2 DB schéma – prstoklady (verze)
+- **Tabulka `fingerings`**
+  - `id` (INT, AI, PK)
+  - `sequence_id` (INT, FK → `sequences.id`)
+  - `json` (JSON) – celý prstoklad `{s,p,f,ext,userDefined}`
+  - `valid_from` (DATETIME)
+  - `valid_to` (DATETIME, NULL = aktivní)
+
+#### 10.3 DB schéma – testy
+- **Tabulka `tests`**
+  - `id` (INT, AI, PK)
+  - `name` (VARCHAR)
+  - `description` (TEXT, NULL)
+  - `input_json` (JSON)
+  - `expected_json` (JSON) – `{s,p,f,ext}` pro každý tón
+  - `valid_from` (DATETIME)
+  - `valid_to` (DATETIME, NULL = aktivní)
+  - `created_at` (DATETIME)
+  - `updated_at` (DATETIME)
+
+#### 10.4 REST API (návrh)
+- `POST /api/sequences` → vytvoří sekvenci, vrací `sequence_id`
+- `POST /api/fingerings` → uloží novou verzi prstokladu k `sequence_id`
+- `GET /api/sequences/{id}` → načte sekvenci + poslední prstoklad
+- `GET /api/tests` → aktivní testy
+- `POST /api/tests` → vytvoří nový test (admin režim)
+- `PUT /api/tests/{id}` → upraví test (admin režim, soft-delete staré verze)
+- `DELETE /api/tests/{id}` → soft-delete (admin režim)
+
+#### 10.5 Admin režim (GET token)
+- Speciální GET parametr (např. `?admin=1` nebo token) **přenášený** mezi Home/Testy.
+- Bez parametru jsou **tlačítka pro správu** skryta.
+- V admin režimu:
+  - Testy: **Upravit** / **Smazat**
+  - Home při editaci testu: **Uložit** / **Uložit jako nový**
+  - Home mimo editaci testu: **Uložit jako test**
+
+#### 10.6 Front-end integrace (zatím chybí)
+- Po `solve` uložit sekvenci do DB a uložit `sequence_id` do stavu.
+- Při změně prstokladu poslat **celý JSON** se `userDefined`.
+- Načítání posledního stavu **ze serveru** (místo `localStorage`).
+
 ## 📋 Priorita úkolů
 
 ### Fáze 1 - Kritické (musí být hotovo) ✅ DOKONČENO

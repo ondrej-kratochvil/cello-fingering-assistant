@@ -66,7 +66,7 @@ Aplikace používá centralizovaný design systém založený na CSS proměnnýc
 - **Překlady**: `assets/i18n/cs.json`, `assets/i18n/en.json`; snadné přidání dalších jazyků.
 - **Funkce**: `t(key)`, `t(key, { var: value })` pro interpolaci; `setLanguage(locale)`, `getLanguage()`; `setNoteNaming('H'|'B')`, `getNoteNaming()`; `applyTranslations()` pro `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]`.
 - **Ukládání**: jazyk a H/B v `localStorage`; při načtení `initI18n()` načte locale, aplikuje překlady, nastaví `lang` na `<html>`.
-- **Bootstrap**: `index.php` a `dev/tests/test.php` volají `await initI18n()` před `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver(true)`).
+- **Bootstrap**: `index.php` a `dev/tests/test.php` volají `await initI18n()` před `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver({ skipHideAbout: true, preserveState: true })`).
 
 #### Spacing (8px base unit)
 - `--spacing-xs`: 0.25rem (4px)
@@ -106,7 +106,7 @@ Design systém podporuje automatické přepínání podle `prefers-color-scheme`
 - **Překlady**: `assets/i18n/cs.json`, `assets/i18n/en.json`; snadné přidání dalších jazyků.
 - **Funkce**: `t(key)`, `t(key, { var: value })` pro interpolaci; `setLanguage(locale)`, `getLanguage()`; `setNoteNaming('H'|'B')`, `getNoteNaming()`; `applyTranslations()` pro `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]`.
 - **Ukládání**: jazyk a H/B v `localStorage`; při načtení `initI18n()` načte locale, aplikuje překlady, nastaví `lang` na `<html>`.
-- **Bootstrap**: `index.php` a `dev/tests/test.php` volají `await initI18n()` před `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver(true)`).
+- **Bootstrap**: `index.php` a `dev/tests/test.php` volají `await initI18n()` před `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver({ skipHideAbout: true, preserveState: true })`).
 
 ## SEO a Meta tagy
 
@@ -154,8 +154,10 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
   - Položky: Home, Testy, O aplikaci, přepínač Dark/Light, vlajky jazyka (🇨🇿 🇬🇧). O aplikaci na indexu: `preventDefault` + toggle sekce; na testu odkaz na `index.php`.
   - Nadpis a tagline z PHP (`$pageTitle`, `$pageTitleKey`, `$taglineKey`, `$taglineFallback`); i18n doplní překlady v prohlížeči. Nadpis má `data-i18n` atribut a aktualizuje se při změně jazyka.
 
-- **Label/input a Nastavení**
-  - Vstup tónů: `<label for="melodyInput">` asociované s `<input id="melodyInput">`. Sekce Nastavení: skupinové popisky (Formát výstupu, Označení poloh, H/B) jako `<span>`, ne `<label>`.
+- **Label/input a ovládací tlačítka**
+  - Vstup tónů: `<label for="melodyInput">` asociované s `<input id="melodyInput">`.
+  - Pod inputem jsou tlačítka: **Navrhnout prstoklad**, **Editovat prstoklad** (toggle) a **Nastavení** (toggle, rozbalí panel pod tlačítky).
+  - Sekce Nastavení používá skupinové popisky (Formát výstupu, Označení poloh, H/B) jako `<span>`, ne `<label>`.
 
 - **Karty „Hlavní funkce“**
   - Popisky s HTML (např. `<strong>`) používají `data-i18n-html`; `applyTranslations` nastaví `innerHTML`.
@@ -170,9 +172,11 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
   - Label vysvětluje formát zadání.
   - **Tlačítko "Clear input"**: Tlačítko s ikonou X v pravém rohu input pole pro rychlé vymazání hodnoty. Po kliknutí vymaže input a nastaví focus zpět na pole.
 
-- **Akční tlačítko**
-  - Text: „Navrhnout prstoklad“.
-  - Volá funkci `runSolver()` z `js/ui.js`.
+- **Akční tlačítka**
+  - **Navrhnout prstoklad**: spouští `runSolver()` (nový výpočet).
+  - **Editovat prstoklad**: zapíná režim editace (modal nad prsty v notové osnově).
+  - **Uložit jako test**: otevře modal pro pojmenování a uloží vstup + prstoklad do `localStorage`.
+  - **Nastavení**: rozbaluje/skládá panel Nastavení pod tlačítky.
 
 - **Výstupní oblast**
   - `#resultsWrapper` (na začátku skrytý) obsahuje:
@@ -183,7 +187,8 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
       Proporční rozestupy mezi polohami (menší směrem k mostku) odpovídají skutečným vzdálenostem na violoncelle.
       **Zesvětlené čáry pro orientační body**: I., IV. a VII. poloha (diatonicky) = pozice 2, 7, 12 (chromaticky) jsou zobrazeny světlejší barvou (#707070) a silnější čarou (1.5px) pro lepší orientaci.
       Horizontální scroll na menších displejích.
-  - **Sekce Nastavení** (skrývatelná): Formát výstupu (Notová osnova / Textový výstup), Označení poloh (diatonické / chromatické), Označení tónu H/B. Jazyk pouze v menu (vlajky).
+- **Sekce Nastavení** (skrývatelná): Formát výstupu (Notová osnova / Textový výstup), Označení poloh (diatonické / chromatické), Označení tónu H/B. Jazyk pouze v menu (vlajky).
+  - Panel je umístěn pod tlačítky; zůstává otevřený do ručního zavření.
 
 - **JSON model**
   - Tlačítko „Zobrazit JSON Model" přepíná viditelnost bloku s JSON reprezentací `model` z `assets/js/fingering.js`.
@@ -202,7 +207,7 @@ Zodpovídá za:
 
 1. Načtení vstupu:
    - přečte hodnotu z `#melodyInput`,
-   - pokud je prázdné a existují `lastResult` / `lastInput`, použije je k **překreslení** (např. při přepnutí dark/light tématu) bez nového řešení.
+   - při `preserveState: true` (nebo prázdném vstupu) použije `lastResult` / `lastInput` pro **překreslení** bez nového řešení (např. po změně tématu nebo jazyka).
 
 2. Mapování béček na enharmonické křížky (pouze při novém řešení):
    - např. `gb` → `f#`, `db` → `c#` apod.,
@@ -211,6 +216,7 @@ Zodpovídá za:
 
 4. Volání algoritmu (pouze při vyplněném vstupu):
    - `solve(inputForSolve)` z `assets/js/fingering.js` (ESM modul).
+   - Při editaci se volá `solve(inputForSolve, constraints)` s omezeními z uživatelských úprav.
 
 5. Vykreslení výstupu podle `currentOutputFormat`:
    - **Notová osnova**: `renderStaffOutput()` – VexFlow (basový klíč, celé noty, anotace polohy/prsty/tóny, barvy strun). Barvy z `--color-staff-ink`, `--color-staff-bg`; kontext `setFillStyle` / `setStrokeStyle` před kreslením.
@@ -219,7 +225,20 @@ Zodpovídá za:
 6. Vykreslení hmatníku na Canvas:
    - volá `drawFingerboard(result, input)`.
 
-7. Uložení `lastResult` / `lastInputForSolve` pro pozdější překreslení (např. při změně tématu, jazyka nebo H/B). Překreslení volá `redrawResults()` (alias `runSolver(true)`).
+7. Uložení `lastResult` / `lastInputForSolve` pro pozdější překreslení (např. při změně tématu, jazyka nebo H/B). Překreslení volá `redrawResults()` (alias `runSolver({ skipHideAbout: true, preserveState: true })`).
+
+### Režim editace prstokladu
+
+- Aktivace tlačítkem **Editovat prstoklad** nebo klikem na číslo prstu v notové osnově.
+- Nad prsty se vykresluje **klikací hitbox** v SVG (44×44), který otevírá modal.
+- Modal je ukotven **nad prstem**, obsahuje volby **Prst / Struna / Poloha** včetně **Auto**.
+- Aktivní prst má **zvýrazněné pozadí**: SVG `<rect>` s radiálním přechodem (žlutý střed → bílý okraj) vložený za číslo prstu.
+- Neplatné volby jsou **disabled**; chybová hláška se zobrazí **uvnitř modalu** na 2 s.
+- Klávesy **0–4** nastaví prst a posunou fokus na další notu (modal zůstává otevřený).
+- Šipky **← / →** posouvají fokus mezi notami.
+- V režimu editace se na mobilech aktivuje **virtuální numerická klávesnice** (skrytý input s `inputmode="numeric"`).
+- Aktivní nota se při editaci **centruje v horizontálním scrollu**, aby byl vidět kontext.
+- Uživatelské volby jsou v prstech označeny **vykřičníkem** (`4↑!`) a ukládají se do `userDefined`.
 
 ### Funkce `renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman)`
 
@@ -309,8 +328,8 @@ Podle **Nastavení → Označení tónu H/B** vrací zobrazovaný tón: H/Hes vs
 ### Inicializace
 
 - **Bootstrap** (`index.php`): `await initI18n()` → `setCanvasRedrawCallback(redrawResults)` → `initNavigation()` → `initUI()`. Volá se z async `main()` po `DOMContentLoaded`. Žádné `loadLayout` – topbar/footer jsou PHP include.
-- **`initUI()`** (export z `ui.js`): naplní `#jsonDisplay` JSON reprezentací `model`; pokud je v URL parametr `sequence`, nastaví ho do `#melodyInput`; inicializuje skrývání/zobrazení sekce "O aplikaci" podle `localStorage.getItem('aboutCollapsed')`; přidá listenery na "O aplikaci", Enter v inputu, **tlačítko "Clear input"** (vymaže input a nastaví focus), tlačítko řešení, JSON toggle; volá `initSettings()` a `runSolver(true)`. Listener na `languageChange` event překreslí výstup při změně jazyka.
-- **Nastavení**: Formát výstupu, Označení poloh, **Jazyk** (volá `setLanguage`, při změně `runSolver(true)`), **Označení H/B** (volá `setNoteNaming`, při změně `runSolver(true)`). Jazyk i H/B se načítají z `localStorage` při startu.
+- **`initUI()`** (export z `ui.js`): naplní `#jsonDisplay` JSON reprezentací `model`; pokud je v URL parametr `sequence`, nastaví ho do `#melodyInput`; jinak se pokusí obnovit poslední stav z `localStorage` (`fingering:last`). Inicializuje skrývání/zobrazení sekce "O aplikaci" podle `localStorage.getItem('aboutCollapsed')`; přidá listenery na "O aplikaci", Enter v inputu, **tlačítko "Clear input"**, **Editovat prstoklad**, JSON toggle; volá `initSettings()` a `runSolver({ skipHideAbout: true, preserveState: true })`. Listener na `languageChange` event překreslí výstup při změně jazyka.
+- **Nastavení**: Formát výstupu, Označení poloh, **Jazyk** (volá `setLanguage`, při změně `runSolver({ skipHideAbout: true, preserveState: true })`), **Označení H/B** (volá `setNoteNaming`, při změně `runSolver({ skipHideAbout: true, preserveState: true })`). Jazyk i H/B se načítají z `localStorage` při startu.
 - **Dark mode překreslení**: Při změně dark mode se osnovy a hmatník automaticky překreslí pomocí callback `setCanvasRedrawCallback`, který volá `redrawResults()`.
 - **Změna jazyka**: Při změně jazyka se aktualizují všechny texty včetně nadpisu v hlavičce (pomocí `data-i18n` atributu). Na testovací stránce se testy automaticky překreslí při změně jazyka pomocí listeneru na `languageChange` event.
 

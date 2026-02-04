@@ -1,5 +1,6 @@
 // --- UI FUNCTIONS ---
 import { solve, model } from './fingering.js';
+import { appendLocalTest } from './tests.js';
 import { t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations } from './i18n.js';
 
 /**
@@ -313,6 +314,21 @@ let lastResult = null;
 let lastInputForSolve = null;
 /** Původní vstup uživatele (bez enharmonických převodů). Používá se pro zobrazení výstupu. */
 let lastInput = null;
+const STORAGE_LAST_FINGERING = 'fingering:last';
+let editModeEnabled = false;
+let activeNoteIndex = null;
+let pendingActiveNoteIndex = null;
+let fingerTargets = [];
+let staffScrollContainer = null;
+let modalEl = null;
+let modalErrorTimeout = null;
+let saveTestModalEl = null;
+let saveTestNameInputEl = null;
+let saveTestDefaultName = '';
+let saveTestReturnFocusEl = null;
+let activeFingerHighlightEl = null;
+let activeFingerHighlightSvg = null;
+let editKeyboardInputEl = null;
 
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
@@ -340,6 +356,91 @@ function toPositionLabel(p, mode) {
     if (p === 0) return '';
     if (mode === 'chromatic') return CHROMATIC_ROMAN[p] ?? String(p);
     return POSITION_LABEL_MAP[p] ?? String(p);
+}
+
+function hasAnyUserDefined(step) {
+    if (!step || !step.userDefined) return false;
+    return !!(step.userDefined.f || step.userDefined.s || step.userDefined.pos);
+}
+
+function buildConstraintsFromResult(result) {
+    if (!result) return null;
+    return result.map((step) => {
+        if (!hasAnyUserDefined(step)) return null;
+        const constraint = { userDefined: { ...step.userDefined } };
+        if (step.userDefined.f) constraint.f = step.f;
+        if (step.userDefined.s) constraint.s = step.s;
+        if (step.userDefined.pos) {
+            constraint.p = step.p;
+            constraint.ext = step.ext;
+        }
+        return constraint;
+    });
+}
+
+function applyUserDefinedFlags(result, constraints) {
+    if (!constraints) return result;
+    return result.map((step, idx) => {
+        const constraint = constraints[idx];
+        if (!constraint || !constraint.userDefined) return step;
+        return { ...step, userDefined: { ...constraint.userDefined } };
+    });
+}
+
+function normalizeInputTokens(input) {
+    const flatToSharpMap = {
+        Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
+        cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
+        cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#',
+        cb2: 'h1', db2: 'c2#'
+    };
+    const sharpToNaturalMap = {
+        'E#': 'F', 'e#': 'f', 'e1#': 'f1', 'E1#': 'f1',
+        'H#': 'c', 'h#': 'c1'
+    };
+    return input.map((token) => {
+        let x = normalizeOctaveAccidentalSwap(token);
+        x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
+        const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
+        if (flat) return flat;
+        const sharp = sharpToNaturalMap[x] || sharpToNaturalMap[x.toLowerCase()];
+        if (sharp) return sharp;
+        return x;
+    });
+}
+
+function arraysEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    return a.every((val, idx) => val === b[idx]);
+}
+
+function saveLastFingeringState(state) {
+    if (!state || !state.input || !state.fingering) return;
+    localStorage.setItem(STORAGE_LAST_FINGERING, JSON.stringify(state));
+}
+
+function loadLastFingeringState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_LAST_FINGERING);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.input) || !Array.isArray(data.fingering)) return null;
+        if (data.input.length !== data.fingering.length) return null;
+        if (data.inputNormalized && data.inputNormalized.length !== data.input.length) return null;
+        return data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function matchesConstraint(option, constraint) {
+    if (!constraint) return true;
+    if (constraint.f !== undefined && option.f !== constraint.f) return false;
+    if (constraint.s !== undefined && option.s !== constraint.s) return false;
+    if (constraint.p !== undefined && option.p !== constraint.p) return false;
+    if (constraint.ext !== undefined && option.ext !== constraint.ext) return false;
+    return true;
 }
 
 /**
@@ -560,9 +661,20 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         if (step.ext === 1) {
             fingerText += '↑';
         }
+        if (hasAnyUserDefined(step)) {
+            fingerText += '!';
+        }
         const fingerAnnotation = new Annotation(fingerText);
         fingerAnnotation.setFont('Arial', 14, 'bold');
         fingerAnnotation.setStyle({ fillStyle: fingerColor });
+        if (typeof fingerAnnotation.setAttribute === 'function') {
+            try {
+                fingerAnnotation.setAttribute('data-finger-idx', String(idx));
+                fingerAnnotation.setAttribute('data-finger-role', 'finger');
+            } catch (e) {
+                // Ignorovat, pokud VexFlow atributy nepodporuje
+            }
+        }
         annotations.push(fingerAnnotation);
 
         // Poloha (nahoře) - pouze pokud je změna polohy, přidat jako druhou
@@ -620,11 +732,11 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     // Kontejner pro osnovu s horizontálním scrollováním
     const staffContainer = document.createElement('div');
-    staffContainer.className = 'overflow-x-auto md:mx-0 md:px-0';
+    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0';
     staffContainer.appendChild(staffDiv);
     container.appendChild(staffContainer);
 
-    if (opts.skipLegend) return;
+    if (opts.skipLegend) return staffDiv;
 
     // Legenda barev strun
     const legend = document.createElement('div');
@@ -646,6 +758,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     });
     legend.appendChild(legendItems);
     container.appendChild(legend);
+    return staffDiv;
 }
 
 // Inicializace sekce Nastavení
@@ -653,23 +766,29 @@ function initSettings() {
     const settingsSection = document.getElementById('settingsSection');
     const settingsToggle = document.getElementById('settingsToggle');
     const settingsContent = document.getElementById('settingsContent');
-    const settingsToggleIcon = document.getElementById('settingsToggleIcon');
 
     if (!settingsSection || !settingsToggle || !settingsContent) return;
 
     // Toggle skrývání/zobrazování nastavení
-    settingsToggle.addEventListener('click', () => {
+    const syncSettingsToggleLabel = () => {
         const isHidden = settingsContent.classList.contains('hidden');
+        settingsToggle.textContent = isHidden ? t('button.settingsOpen') : t('button.settingsClose');
+        settingsToggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+    };
+    settingsToggle.addEventListener('click', () => {
         settingsContent.classList.toggle('hidden');
-        settingsToggleIcon.textContent = isHidden ? '▲' : '▼';
+        syncSettingsToggleLabel();
     });
+    syncSettingsToggleLabel();
+    window.addEventListener('languageChange', syncSettingsToggleLabel);
 
     // Přepínání mezi režimy výstupu
     const radioButtons = document.querySelectorAll('input[name="outputFormat"]');
     radioButtons.forEach(radio => {
         radio.addEventListener('change', (e) => {
             currentOutputFormat = e.target.value;
-            if (lastResult && lastInputForSolve) runSolver(true);
+            if (currentOutputFormat !== 'staff') setEditMode(false);
+            if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
         });
     });
     const defaultFormat = document.querySelector('input[name="outputFormat"][value="staff"]');
@@ -687,7 +806,7 @@ function initSettings() {
         radio.addEventListener('change', (e) => {
             currentPositionLabelMode = e.target.value;
             localStorage.setItem('positionLabelMode', currentPositionLabelMode);
-            if (lastResult && lastInputForSolve) runSolver(true);
+            if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
         });
     });
 
@@ -698,7 +817,7 @@ function initSettings() {
     document.querySelectorAll('input[name="noteNaming"]').forEach((radio) => {
         radio.addEventListener('change', (e) => {
             setNoteNaming(e.target.value === 'B' ? 'B' : 'H');
-            if (lastResult && lastInputForSolve) runSolver(true);
+            if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
         });
     });
 }
@@ -707,34 +826,27 @@ const bToHMap = {
     B: 'H', Bb: 'Hb', b: 'h', bb: 'hb', b1: 'h1', bb1: 'hb1', B1: 'H1', Bb1: 'Hb1'
 };
 
-function runSolver(skipHideAbout = false) {
-    const inputVal = document.getElementById('melodyInput').value.trim();
+function runSolver(options = {}) {
+    const { skipHideAbout = false, preserveState = false } = options;
+    const inputEl = document.getElementById('melodyInput');
+    const inputVal = inputEl ? inputEl.value.trim() : '';
     const display = document.getElementById('pathDisplay');
     const wrapper = document.getElementById('resultsWrapper');
 
-    let result, inputForSolve, input = null;
+    let result = null;
+    let inputForSolve = null;
+    let input = null;
+
     if (inputVal) {
         input = inputVal.split(/\s+/);
-        const flatToSharpMap = {
-            Cb: 'H', Db: 'C#', Eb: 'D#', Fb: 'E', Gb: 'F#', Ab: 'G#', Hb: 'A#',
-            cb: 'h', db: 'c#', eb: 'd#', fb: 'e', gb: 'f#', ab: 'g#', bb: 'a#', hb: 'a#',
-            cb1: 'h1', db1: 'c1#', eb1: 'd1#', fb1: 'e1', gb1: 'f1#', ab1: 'g1#', hb1: 'a1#', bb1: 'a1#',
-            cb2: 'h1', db2: 'c2#'
-        };
-        const sharpToNaturalMap = {
-            'E#': 'F', 'e#': 'f', 'e1#': 'f1', 'E1#': 'f1',
-            'H#': 'c', 'h#': 'c1'
-        };
-        inputForSolve = input.map((token) => {
-            let x = normalizeOctaveAccidentalSwap(token);
-            x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
-            const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
-            if (flat) return flat;
-            const sharp = sharpToNaturalMap[x] || sharpToNaturalMap[x.toLowerCase()];
-            if (sharp) return sharp;
-            return x;
-        });
-        result = solve(inputForSolve);
+        const shouldReuse = preserveState && lastResult && lastInput && arraysEqual(input, lastInput);
+        if (shouldReuse) {
+            result = lastResult;
+            inputForSolve = lastInputForSolve;
+        } else {
+            inputForSolve = normalizeInputTokens(input);
+            result = solve(inputForSolve);
+        }
     } else {
         if (!lastResult || !lastInputForSolve) return;
         result = lastResult;
@@ -742,82 +854,876 @@ function runSolver(skipHideAbout = false) {
     }
 
     const inputForDisplay = input !== null ? input : (lastInput || lastInputForSolve);
+    renderResults({
+        result,
+        inputForSolve,
+        inputForDisplay,
+        inputOriginal: input,
+        skipHideAbout,
+        display,
+        wrapper
+    });
+}
+
+function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, skipHideAbout, display, wrapper }) {
+    if (!display) return;
     const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(t)));
 
     display.innerHTML = '';
     if (result === null || result === undefined) {
         display.innerHTML = `<p class="text-red-500 font-bold p-4 text-center w-full">${t('errors.outOfRange')}</p>`;
+        setEditMode(false);
+        updateEditButtonState();
+        return;
+    }
+
+    // Při spuštění solveru z uživatelského vstupu skryjeme celý main a uložíme stav
+    if (!skipHideAbout) {
+        const mainElement = document.querySelector('main');
+        if (mainElement && !mainElement.classList.contains('hidden')) {
+            mainElement.classList.add('hidden');
+            localStorage.setItem('aboutCollapsed', 'true');
+        }
+    }
+
+    // Barvy pro struny (z CSS proměnných) – preferuj hodnoty z body (dark-mode)
+    const bodyStyles = getComputedStyle(document.body);
+    const rootStyles = getComputedStyle(document.documentElement);
+    const stringColors = {
+        'C': bodyStyles.getPropertyValue('--cello-string-c').trim() || rootStyles.getPropertyValue('--cello-string-c').trim(),
+        'G': bodyStyles.getPropertyValue('--cello-string-g').trim() || rootStyles.getPropertyValue('--cello-string-g').trim(),
+        'D': bodyStyles.getPropertyValue('--cello-string-d').trim() || rootStyles.getPropertyValue('--cello-string-d').trim(),
+        'A': bodyStyles.getPropertyValue('--cello-string-a').trim() || rootStyles.getPropertyValue('--cello-string-a').trim()
+    };
+
+    const toPositionLabelFn = (p) => toPositionLabel(p, currentPositionLabelMode);
+
+    // Zjistit, kde se mění poloha (ignorovat prázdnou strunu - pozice 0)
+    const positionChanges = [];
+    let lastNonZeroPosition = null;
+
+    for (let i = 0; i < result.length; i++) {
+        const currentPos = result[i].p;
+        // Ignorovat prázdnou strunu (pozice 0)
+        if (currentPos > 0) {
+            if (lastNonZeroPosition === null || currentPos !== lastNonZeroPosition) {
+                positionChanges.push(i);
+                lastNonZeroPosition = currentPos;
+            }
+        }
+    }
+
+    // Vytvořit kontejner pro výstup
+    const container = document.createElement('div');
+    container.className = 'w-full space-y-4';
+
+    // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
+    let staffDiv = null;
+    if (currentOutputFormat === 'staff') {
+        staffDiv = renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
     } else {
-        // Při spuštění solveru z uživatelského vstupu skryjeme celý main a uložíme stav
-        if (!skipHideAbout) {
-            const mainElement = document.querySelector('main');
-            if (mainElement && !mainElement.classList.contains('hidden')) {
-                mainElement.classList.add('hidden');
-                localStorage.setItem('aboutCollapsed', 'true');
-            }
-        }
+        renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
+    }
 
-        // Barvy pro struny (z CSS proměnných) – preferuj hodnoty z body (dark-mode)
-        const bodyStyles = getComputedStyle(document.body);
-        const rootStyles = getComputedStyle(document.documentElement);
-        const stringColors = {
-            'C': bodyStyles.getPropertyValue('--cello-string-c').trim() || rootStyles.getPropertyValue('--cello-string-c').trim(),
-            'G': bodyStyles.getPropertyValue('--cello-string-g').trim() || rootStyles.getPropertyValue('--cello-string-g').trim(),
-            'D': bodyStyles.getPropertyValue('--cello-string-d').trim() || rootStyles.getPropertyValue('--cello-string-d').trim(),
-            'A': bodyStyles.getPropertyValue('--cello-string-a').trim() || rootStyles.getPropertyValue('--cello-string-a').trim()
-        };
+    display.appendChild(container);
 
-        const toPositionLabelFn = (p) => toPositionLabel(p, currentPositionLabelMode);
+    // Uložit výsledek pro pozdější překreslení (výstup zobrazuje původní vstup uživatele)
+    lastResult = result;
+    lastInputForSolve = inputForSolve;
+    if (inputOriginal !== null) lastInput = inputOriginal;
 
-        // Zjistit, kde se mění poloha (ignorovat prázdnou strunu - pozice 0)
-        const positionChanges = [];
-        let lastNonZeroPosition = null;
+    if (lastInput && lastInputForSolve && lastResult) {
+        saveLastFingeringState({
+            input: lastInput,
+            inputNormalized: lastInputForSolve,
+            fingering: lastResult
+        });
+    }
 
-        for (let i = 0; i < result.length; i++) {
-            const currentPos = result[i].p;
-            // Ignorovat prázdnou strunu (pozice 0)
-            if (currentPos > 0) {
-                if (lastNonZeroPosition === null || currentPos !== lastNonZeroPosition) {
-                    positionChanges.push(i);
-                    lastNonZeroPosition = currentPos;
-                }
-            }
-        }
+    // Vykreslit vizualizaci hmatníku na Canvas
+    drawFingerboard(result, displayTokens);
 
-        // Vytvořit kontejner pro výstup
-        const container = document.createElement('div');
-        container.className = 'w-full space-y-4';
+    // Zobrazit wrapper výsledků
+    if (wrapper) {
+        wrapper.classList.remove('hidden');
+    }
 
-        // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
-        if (currentOutputFormat === 'staff') {
-            renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
-        } else {
-            renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
-        }
+    const settingsSection = document.getElementById('settingsSection');
+    if (settingsSection) {
+        settingsSection.classList.remove('hidden');
+    }
 
-        display.appendChild(container);
+    if (currentOutputFormat === 'staff') {
+        setupFingeringEditor(staffDiv, result);
+    } else {
+        teardownFingeringEditor();
+    }
+    updateEditButtonState();
+}
 
-        // Uložit výsledek pro pozdější překreslení (výstup zobrazuje původní vstup uživatele)
-        lastResult = result;
-        lastInputForSolve = inputForSolve;
-        if (input !== null) lastInput = input;
+function updateEditButtonLabel() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    editButton.textContent = editModeEnabled ? t('button.editStop') : t('button.editStart');
+}
 
-        // Vykreslit vizualizaci hmatníku na Canvas
-        drawFingerboard(result, displayTokens);
-
-        // Zobrazit wrapper výsledků
-        if (wrapper) {
-            wrapper.classList.remove('hidden');
-        }
-
-        // Zobrazit sekci Nastavení
-        const settingsSection = document.getElementById('settingsSection');
-        if (settingsSection) {
-            settingsSection.classList.remove('hidden');
-        }
+function updateEditButtonState() {
+    const editButton = document.getElementById('editFingeringButton');
+    if (!editButton) return;
+    const disabled = currentOutputFormat !== 'staff' || !lastResult;
+    editButton.disabled = disabled;
+    editButton.classList.toggle('opacity-60', disabled);
+    editButton.classList.toggle('cursor-not-allowed', disabled);
+    editButton.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    if (disabled && editModeEnabled) {
+        setEditMode(false);
     }
 }
 
+function setEditMode(enabled, focusIndex = 0) {
+    if (!enabled) {
+        editModeEnabled = false;
+        activeNoteIndex = null;
+        pendingActiveNoteIndex = null;
+        closeModal();
+        clearActiveFingerHighlight();
+        blurEditKeyboardInput();
+        updateEditButtonLabel();
+        return;
+    }
+    if (!lastResult || currentOutputFormat !== 'staff') {
+        editModeEnabled = false;
+        updateEditButtonLabel();
+        return;
+    }
+    editModeEnabled = true;
+    pendingActiveNoteIndex = Math.min(focusIndex, lastResult.length - 1);
+    if (fingerTargets.length) {
+        setActiveNoteIndex(pendingActiveNoteIndex);
+    }
+    updateEditButtonLabel();
+    focusEditKeyboardInput();
+}
+
+function ensureModal() {
+    if (modalEl) return;
+    modalEl = document.createElement('div');
+    modalEl.id = 'fingeringModal';
+    modalEl.className = 'fingering-modal';
+    modalEl.setAttribute('role', 'dialog');
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.innerHTML = `
+        <div class="fingering-modal__error" data-role="error" aria-live="polite"></div>
+        <div class="fingering-modal__section" data-field="pos">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="s">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+        <div class="fingering-modal__section" data-field="f">
+            <div class="fingering-modal__label" data-role="label"></div>
+            <div class="fingering-modal__buttons" data-role="buttons"></div>
+        </div>
+    `;
+    modalEl.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-field]');
+        if (!button || button.disabled) return;
+        const field = button.dataset.field;
+        const isAuto = button.dataset.auto === 'true';
+        const value = button.dataset.value ?? null;
+        applyModalSelection(field, value, isAuto);
+    });
+    document.body.appendChild(modalEl);
+}
+
+function closeModal() {
+    if (!modalEl) return;
+    modalEl.classList.remove('is-open');
+    modalEl.setAttribute('aria-hidden', 'true');
+}
+
+function showModalError(message) {
+    if (!modalEl) return;
+    const errorEl = modalEl.querySelector('[data-role="error"]');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.classList.add('is-visible');
+    if (modalErrorTimeout) window.clearTimeout(modalErrorTimeout);
+    modalErrorTimeout = window.setTimeout(() => {
+        errorEl.textContent = '';
+        errorEl.classList.remove('is-visible');
+    }, 2000);
+}
+
+function hasMatchingOption(options, constraint) {
+    return options.some(opt => matchesConstraint(opt, constraint));
+}
+
+function renderModalButtons(container, field, items) {
+    container.innerHTML = '';
+    items.forEach((item) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'fingering-modal__btn';
+        if (item.active) button.classList.add('is-active');
+        if (item.isAuto) button.classList.add('is-auto');
+        if (item.disabled) button.classList.add('is-disabled');
+        button.disabled = !!item.disabled;
+        button.dataset.field = field;
+        if (item.isAuto) {
+            button.dataset.auto = 'true';
+        } else {
+            button.dataset.value = String(item.value);
+        }
+        button.textContent = item.label;
+        container.appendChild(button);
+    });
+}
+
+function renderModalContent() {
+    if (!modalEl || activeNoteIndex === null || !lastResult || !lastInputForSolve) return;
+    const step = lastResult[activeNoteIndex];
+    const noteKey = lastInputForSolve[activeNoteIndex];
+    if (!step || !noteKey) return;
+
+    const options = model[noteKey] || [];
+    const userDefined = step.userDefined || {};
+    const baseConstraint = {};
+    if (userDefined.f) baseConstraint.f = step.f;
+    if (userDefined.s) baseConstraint.s = step.s;
+    if (userDefined.pos) {
+        baseConstraint.p = step.p;
+        baseConstraint.ext = step.ext;
+    }
+
+    const sections = modalEl.querySelectorAll('.fingering-modal__section');
+    sections.forEach((section) => {
+        const field = section.getAttribute('data-field');
+        const label = section.querySelector('[data-role="label"]');
+        const buttonsWrap = section.querySelector('[data-role="buttons"]');
+        if (!label || !buttonsWrap) return;
+
+        if (field === 'f') {
+            label.textContent = t('modal.finger');
+            const autoConstraint = { ...baseConstraint };
+            delete autoConstraint.f;
+            const items = [
+                {
+                    label: t('modal.auto'),
+                    value: null,
+                    isAuto: true,
+                    disabled: !hasMatchingOption(options, autoConstraint),
+                    active: !userDefined.f
+                },
+                ...[0, 1, 2, 3, 4].map((f) => {
+                    const constraint = { ...baseConstraint, f };
+                    return {
+                        label: String(f),
+                        value: f,
+                        isAuto: false,
+                        disabled: !hasMatchingOption(options, constraint),
+                        active: userDefined.f && step.f === f
+                    };
+                })
+            ];
+            renderModalButtons(buttonsWrap, 'f', items);
+        }
+
+        if (field === 's') {
+            label.textContent = t('modal.string');
+            const autoConstraint = { ...baseConstraint };
+            delete autoConstraint.s;
+            const items = [
+                {
+                    label: t('modal.auto'),
+                    value: null,
+                    isAuto: true,
+                    disabled: !hasMatchingOption(options, autoConstraint),
+                    active: !userDefined.s
+                },
+                ...['C', 'G', 'D', 'A'].map((s) => {
+                    const constraint = { ...baseConstraint, s };
+                    return {
+                        label: s,
+                        value: s,
+                        isAuto: false,
+                        disabled: !hasMatchingOption(options, constraint),
+                        active: userDefined.s && step.s === s
+                    };
+                })
+            ];
+            renderModalButtons(buttonsWrap, 's', items);
+        }
+
+        if (field === 'pos') {
+            label.textContent = t('modal.position');
+            const autoConstraint = { ...baseConstraint };
+            delete autoConstraint.p;
+            delete autoConstraint.ext;
+
+            const uniquePositions = new Map();
+            options.forEach((opt) => {
+                if (opt.p > 0) {
+                    const key = `${opt.p}|${opt.ext}`;
+                    if (!uniquePositions.has(key)) {
+                        uniquePositions.set(key, { p: opt.p, ext: opt.ext });
+                    }
+                }
+            });
+
+            const positions = Array.from(uniquePositions.values())
+                .sort((a, b) => (a.p - b.p) || (a.ext - b.ext));
+
+            const items = [
+                {
+                    label: t('modal.auto'),
+                    value: null,
+                    isAuto: true,
+                    disabled: !hasMatchingOption(options, autoConstraint),
+                    active: !userDefined.pos
+                },
+                ...positions.map((pos) => {
+                    const constraint = { ...baseConstraint, p: pos.p, ext: pos.ext };
+                    const labelText = `${toPositionLabel(pos.p, currentPositionLabelMode)} ${pos.ext === 1 ? t('position.wide') : t('position.narrow')}`;
+                    return {
+                        label: labelText,
+                        value: `${pos.p}|${pos.ext}`,
+                        isAuto: false,
+                        disabled: !hasMatchingOption(options, constraint),
+                        active: userDefined.pos && step.p === pos.p && step.ext === pos.ext
+                    };
+                })
+            ];
+            renderModalButtons(buttonsWrap, 'pos', items);
+        }
+    });
+}
+
+function ensureHighlightDefs(svg) {
+    if (!svg) return;
+    if (svg.querySelector('#fingering-highlight-gradient-light') &&
+        svg.querySelector('#fingering-highlight-gradient-dark')) return;
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        svg.insertBefore(defs, svg.firstChild);
+    }
+    const createGradient = (id, innerColor, outerColor, outerOpacity = null) => {
+        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+        gradient.setAttribute('id', id);
+        gradient.setAttribute('cx', '50%');
+        gradient.setAttribute('cy', '50%');
+        gradient.setAttribute('r', '60%');
+
+        const stopInner = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stopInner.setAttribute('offset', '0%');
+        stopInner.setAttribute('stop-color', innerColor);
+        const stopOuter = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stopOuter.setAttribute('offset', '100%');
+        stopOuter.setAttribute('stop-color', outerColor);
+        if (outerOpacity !== null) stopOuter.setAttribute('stop-opacity', String(outerOpacity));
+        gradient.appendChild(stopInner);
+        gradient.appendChild(stopOuter);
+        defs.appendChild(gradient);
+    };
+
+    if (!svg.querySelector('#fingering-highlight-gradient-light')) {
+        createGradient('fingering-highlight-gradient-light', '#facc15', '#ffffff');
+    }
+    if (!svg.querySelector('#fingering-highlight-gradient-dark')) {
+        createGradient('fingering-highlight-gradient-dark', '#000000', '#000000', 0);
+    }
+}
+
+function ensureHighlightLayer(svg) {
+    if (!svg) return null;
+    let layer = svg.querySelector('g.fingering-highlight-layer');
+    if (!layer) {
+        layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        layer.setAttribute('class', 'fingering-highlight-layer');
+        const defs = svg.querySelector('defs');
+        if (defs && defs.nextSibling) {
+            svg.insertBefore(layer, defs.nextSibling);
+        } else if (defs) {
+            svg.appendChild(layer);
+        } else {
+            svg.insertBefore(layer, svg.firstChild);
+        }
+    }
+    return layer;
+}
+
+function clearActiveFingerHighlight() {
+    if (activeFingerHighlightEl && activeFingerHighlightEl.parentNode) {
+        activeFingerHighlightEl.parentNode.removeChild(activeFingerHighlightEl);
+    }
+    activeFingerHighlightEl = null;
+    activeFingerHighlightSvg = null;
+}
+
+function updateActiveFingerHighlight(anchorEl) {
+    if (!anchorEl) {
+        clearActiveFingerHighlight();
+        return;
+    }
+    const svg = anchorEl.ownerSVGElement;
+    if (!svg) return;
+    ensureHighlightDefs(svg);
+    const layer = ensureHighlightLayer(svg);
+    if (!layer) return;
+
+    if (activeFingerHighlightEl && activeFingerHighlightSvg !== svg) {
+        clearActiveFingerHighlight();
+    }
+    if (!activeFingerHighlightEl) {
+        activeFingerHighlightEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        activeFingerHighlightEl.classList.add('fingering-highlight');
+        activeFingerHighlightEl.setAttribute('rx', '8');
+        activeFingerHighlightEl.setAttribute('ry', '8');
+        activeFingerHighlightEl.setAttribute('pointer-events', 'none');
+        activeFingerHighlightEl.setAttribute('stroke', 'none');
+        activeFingerHighlightEl.setAttribute('stroke-width', '0');
+        activeFingerHighlightSvg = svg;
+    }
+    let box;
+    try {
+        box = anchorEl.getBBox();
+    } catch (e) {
+        return;
+    }
+    const padX = 8;
+    const padY = 6;
+    activeFingerHighlightEl.setAttribute('x', String(box.x - padX));
+    activeFingerHighlightEl.setAttribute('y', String(box.y - padY));
+    activeFingerHighlightEl.setAttribute('width', String(box.width + padX * 2));
+    activeFingerHighlightEl.setAttribute('height', String(box.height + padY * 2));
+
+    if (activeFingerHighlightEl.parentNode !== layer) {
+        layer.appendChild(activeFingerHighlightEl);
+    }
+}
+
+function ensureEditKeyboardInput() {
+    if (editKeyboardInputEl) return;
+    editKeyboardInputEl = document.createElement('input');
+    editKeyboardInputEl.type = 'text';
+    editKeyboardInputEl.inputMode = 'numeric';
+    editKeyboardInputEl.pattern = '[0-4]*';
+    editKeyboardInputEl.autocomplete = 'off';
+    editKeyboardInputEl.className = 'edit-keyboard-input';
+    editKeyboardInputEl.setAttribute('aria-label', t('aria.editKeyboard'));
+    editKeyboardInputEl.addEventListener('input', (e) => {
+        if (!editModeEnabled || currentOutputFormat !== 'staff') {
+            editKeyboardInputEl.value = '';
+            return;
+        }
+        const value = e.target.value || '';
+        const digits = value.match(/[0-4]/g);
+        if (digits) {
+            digits.forEach((digit) => applyModalSelection('f', digit, false));
+        }
+        editKeyboardInputEl.value = '';
+    });
+    document.body.appendChild(editKeyboardInputEl);
+}
+
+function focusEditKeyboardInput() {
+    if (!editKeyboardInputEl || !editModeEnabled || currentOutputFormat !== 'staff') return;
+    if (document.activeElement === editKeyboardInputEl) return;
+    try {
+        editKeyboardInputEl.focus({ preventScroll: true });
+    } catch (e) {
+        editKeyboardInputEl.focus();
+    }
+}
+
+function blurEditKeyboardInput() {
+    if (!editKeyboardInputEl) return;
+    if (document.activeElement === editKeyboardInputEl) {
+        editKeyboardInputEl.blur();
+    }
+}
+
+function ensureSaveTestModal() {
+    if (saveTestModalEl) return;
+    saveTestModalEl = document.createElement('div');
+    saveTestModalEl.className = 'save-test-modal';
+    saveTestModalEl.setAttribute('aria-hidden', 'true');
+    saveTestModalEl.innerHTML = `
+        <div class="save-test-modal__dialog" role="dialog" aria-modal="true">
+            <div class="save-test-modal__title" data-role="title"></div>
+            <label class="save-test-modal__label" data-role="label" for="saveTestNameInput"></label>
+            <div class="save-test-modal__input">
+                <input id="saveTestNameInput" type="text" autocomplete="off">
+                <button type="button" data-role="clear" aria-label=""></button>
+            </div>
+            <div class="save-test-modal__actions">
+                <button type="button" class="is-secondary" data-role="cancel"></button>
+                <button type="button" class="is-primary" data-role="save"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(saveTestModalEl);
+
+    saveTestNameInputEl = saveTestModalEl.querySelector('#saveTestNameInput');
+    const clearButton = saveTestModalEl.querySelector('[data-role="clear"]');
+    const cancelButton = saveTestModalEl.querySelector('[data-role="cancel"]');
+    const saveButton = saveTestModalEl.querySelector('[data-role="save"]');
+
+    if (clearButton && saveTestNameInputEl) {
+        clearButton.textContent = '×';
+        clearButton.addEventListener('click', () => {
+            saveTestNameInputEl.value = '';
+            saveTestNameInputEl.focus();
+        });
+    }
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => closeSaveTestModal());
+    }
+    if (saveButton) {
+        saveButton.addEventListener('click', () => handleSaveTestConfirm());
+    }
+    saveTestModalEl.addEventListener('click', (e) => {
+        if (e.target === saveTestModalEl) closeSaveTestModal();
+    });
+    if (saveTestNameInputEl) {
+        saveTestNameInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeSaveTestModal();
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSaveTestConfirm();
+            }
+        });
+    }
+    updateSaveTestModalTexts();
+}
+
+function updateSaveTestModalTexts() {
+    if (!saveTestModalEl) return;
+    const title = saveTestModalEl.querySelector('[data-role="title"]');
+    const label = saveTestModalEl.querySelector('[data-role="label"]');
+    const clearButton = saveTestModalEl.querySelector('[data-role="clear"]');
+    const cancelButton = saveTestModalEl.querySelector('[data-role="cancel"]');
+    const saveButton = saveTestModalEl.querySelector('[data-role="save"]');
+    if (title) title.textContent = t('modal.saveTestTitle');
+    if (label) label.textContent = t('modal.saveTestLabel');
+    if (cancelButton) cancelButton.textContent = t('button.cancel');
+    if (saveButton) saveButton.textContent = t('button.save');
+    if (clearButton) clearButton.setAttribute('aria-label', t('aria.clearTestName'));
+}
+
+function openSaveTestModal(defaultName) {
+    ensureSaveTestModal();
+    saveTestDefaultName = defaultName || '';
+    saveTestReturnFocusEl = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    saveTestModalEl.classList.add('is-open');
+    saveTestModalEl.setAttribute('aria-hidden', 'false');
+    if (saveTestNameInputEl) {
+        saveTestNameInputEl.value = saveTestDefaultName;
+        saveTestNameInputEl.focus();
+        saveTestNameInputEl.select();
+    }
+}
+
+function closeSaveTestModal() {
+    if (!saveTestModalEl) return;
+    if (saveTestReturnFocusEl && typeof saveTestReturnFocusEl.focus === 'function') {
+        saveTestReturnFocusEl.focus();
+    } else {
+        const saveTestButton = document.getElementById('saveTestButton');
+        if (saveTestButton && typeof saveTestButton.focus === 'function') {
+            saveTestButton.focus();
+        }
+    }
+    saveTestModalEl.classList.remove('is-open');
+    saveTestModalEl.setAttribute('aria-hidden', 'true');
+    saveTestReturnFocusEl = null;
+}
+
+function handleSaveTestConfirm() {
+    if (!lastResult || !lastInputForSolve) return;
+    const inputVal = saveTestNameInputEl ? saveTestNameInputEl.value.trim() : '';
+    const name = inputVal || saveTestDefaultName || 'Test';
+    const inputTokens = lastInput && lastInput.length
+        ? lastInput
+        : lastInputForSolve || [];
+    if (!inputTokens.length) return;
+    const expected = lastResult.map(step => ({
+        s: step.s,
+        p: step.p,
+        f: step.f,
+        ext: step.ext
+    }));
+    appendLocalTest({
+        id: `local-${Date.now()}`,
+        name,
+        description: '',
+        input: inputTokens,
+        expected,
+        createdAt: new Date().toISOString()
+    });
+    closeSaveTestModal();
+}
+
+function setActiveNoteIndex(index) {
+    if (!fingerTargets.length || !lastResult) return;
+    const clamped = Math.max(0, Math.min(index, lastResult.length - 1));
+    activeNoteIndex = clamped;
+    pendingActiveNoteIndex = null;
+
+    fingerTargets.forEach((target, idx) => {
+        if (target && target.hitboxEl) {
+            target.hitboxEl.classList.toggle('is-active', idx === clamped);
+        }
+    });
+
+    const target = fingerTargets[clamped];
+    if (!target || !target.anchorEl) return;
+    ensureModal();
+    updateActiveFingerHighlight(target.anchorEl);
+    renderModalContent();
+    modalEl.classList.add('is-open');
+    modalEl.setAttribute('aria-hidden', 'false');
+    scrollNoteIntoView(target.anchorEl);
+    positionModal(target.anchorEl);
+    window.setTimeout(() => positionModal(target.anchorEl), 200);
+}
+
+function positionModal(anchorEl) {
+    if (!modalEl || !anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const modalRect = modalEl.getBoundingClientRect();
+    const gap = 8;
+    const verticalOffset = -10;
+    let top = rect.top + window.scrollY - modalRect.height - gap + verticalOffset;
+    if (top < window.scrollY + gap) {
+        top = rect.bottom + window.scrollY + gap + verticalOffset;
+    }
+    let left = rect.left + window.scrollX + (rect.width / 2) - (modalRect.width / 2);
+    const minLeft = window.scrollX + gap;
+    const maxLeft = window.scrollX + window.innerWidth - modalRect.width - gap;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+    modalEl.style.left = `${left}px`;
+    modalEl.style.top = `${top}px`;
+}
+
+function findScrollableParent(el) {
+    let current = el;
+    while (current && current !== document.body) {
+        if (current.scrollWidth > current.clientWidth + 1) return current;
+        current = current.parentElement;
+    }
+    return null;
+}
+
+function scrollNoteIntoView(anchorEl) {
+    if (!anchorEl) return;
+    const containerCandidate = staffScrollContainer && staffScrollContainer.scrollWidth > staffScrollContainer.clientWidth + 1
+        ? staffScrollContainer
+        : findScrollableParent(anchorEl) || staffScrollContainer;
+    if (!containerCandidate) return;
+
+    const margin = 16;
+    const attemptScroll = () => {
+        const containerRect = containerCandidate.getBoundingClientRect();
+        const noteRect = anchorEl.getBoundingClientRect();
+        const noteCenter = noteRect.left + (noteRect.width / 2);
+        const containerCenter = containerRect.left + (containerRect.width / 2);
+        const centerDelta = noteCenter - containerCenter;
+        const centerThreshold = Math.min(24, containerRect.width * 0.1);
+        if (!containerRect.width || !noteRect.width) {
+            if (typeof anchorEl.scrollIntoView === 'function') {
+                anchorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            return;
+        }
+
+        if (Math.abs(centerDelta) <= centerThreshold) return;
+        const maxScroll = Math.max(0, containerCandidate.scrollWidth - containerCandidate.clientWidth);
+        const targetScroll = Math.min(
+            Math.max(containerCandidate.scrollLeft + centerDelta, 0),
+            maxScroll
+        );
+        containerCandidate.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    };
+    window.requestAnimationFrame(attemptScroll);
+    window.setTimeout(attemptScroll, 120);
+}
+
+function collectFingerElements(svg, expectedCount) {
+    const dataElements = Array.from(svg.querySelectorAll('[data-finger-idx]'));
+    if (dataElements.length) {
+        const mapped = [];
+        dataElements.forEach((el) => {
+            const idx = Number.parseInt(el.getAttribute('data-finger-idx'), 10);
+            if (!Number.isNaN(idx)) mapped[idx] = el;
+        });
+        if (mapped.filter(Boolean).length >= expectedCount) return mapped;
+    }
+
+    const textEls = Array.from(svg.querySelectorAll('text'));
+    const fingerRegex = /^[0-4](?:↑)?!?$/;
+    const fingerTexts = textEls.filter((el) => fingerRegex.test((el.textContent || '').trim()));
+    const sorted = fingerTexts.map((el) => {
+        let x = 0;
+        try { x = el.getBBox().x; } catch (e) { x = 0; }
+        return { el, x };
+    }).sort((a, b) => a.x - b.x).map(item => item.el);
+    return sorted.slice(0, expectedCount);
+}
+
+function createHitbox(svg, anchorEl, idx) {
+    let bbox;
+    try {
+        bbox = anchorEl.getBBox();
+    } catch (e) {
+        return null;
+    }
+    const size = 44;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', bbox.x + (bbox.width / 2) - (size / 2));
+    rect.setAttribute('y', bbox.y + (bbox.height / 2) - (size / 2));
+    rect.setAttribute('width', size);
+    rect.setAttribute('height', size);
+    rect.setAttribute('fill', 'transparent');
+    rect.setAttribute('class', 'fingering-hitbox');
+    rect.dataset.noteIndex = String(idx);
+    rect.style.cursor = 'pointer';
+    rect.style.pointerEvents = 'all';
+    rect.addEventListener('click', () => handleFingerClick(idx));
+    svg.appendChild(rect);
+    return rect;
+}
+
+function handleFingerClick(idx) {
+    if (!lastResult || currentOutputFormat !== 'staff') return;
+    if (!editModeEnabled) {
+        setEditMode(true, idx);
+        return;
+    }
+    setActiveNoteIndex(idx);
+}
+
+function setupFingeringEditor(staffDiv, result) {
+    fingerTargets = [];
+    staffScrollContainer = staffDiv ? staffDiv.parentElement : null;
+    if (!staffDiv || !result) return;
+    const svg = staffDiv.querySelector('svg');
+    if (!svg) return;
+
+    svg.querySelectorAll('.fingering-hitbox').forEach((el) => el.remove());
+    const anchors = collectFingerElements(svg, result.length);
+    if (!anchors || !anchors.length) return;
+
+    fingerTargets = anchors.map((anchorEl, idx) => {
+        if (!anchorEl) return null;
+        const hitboxEl = createHitbox(svg, anchorEl, idx);
+        return { anchorEl, hitboxEl };
+    });
+
+    if (editModeEnabled) {
+        const nextIndex = pendingActiveNoteIndex !== null ? pendingActiveNoteIndex : (activeNoteIndex ?? 0);
+        setActiveNoteIndex(nextIndex);
+    }
+}
+
+function teardownFingeringEditor() {
+    fingerTargets = [];
+    staffScrollContainer = null;
+    if (editModeEnabled) setEditMode(false);
+}
+
+function applyModalSelection(field, value, isAuto) {
+    if (activeNoteIndex === null || !lastResult || !lastInputForSolve) return;
+
+    const constraints = buildConstraintsFromResult(lastResult) || [];
+    const current = constraints[activeNoteIndex];
+    const nextConstraint = {
+        ...(current || {}),
+        userDefined: { ...(current && current.userDefined ? current.userDefined : {}) }
+    };
+
+    if (field === 'f') {
+        if (isAuto) {
+            delete nextConstraint.userDefined.f;
+            delete nextConstraint.f;
+        } else {
+            nextConstraint.userDefined.f = true;
+            nextConstraint.f = Number.parseInt(value, 10);
+        }
+    }
+
+    if (field === 's') {
+        if (isAuto) {
+            delete nextConstraint.userDefined.s;
+            delete nextConstraint.s;
+        } else {
+            nextConstraint.userDefined.s = true;
+            nextConstraint.s = value;
+        }
+    }
+
+    if (field === 'pos') {
+        if (isAuto) {
+            delete nextConstraint.userDefined.pos;
+            delete nextConstraint.p;
+            delete nextConstraint.ext;
+        } else if (value) {
+            const [pStr, extStr] = value.split('|');
+            nextConstraint.userDefined.pos = true;
+            nextConstraint.p = Number.parseInt(pStr, 10);
+            nextConstraint.ext = Number.parseInt(extStr, 10);
+        }
+    }
+
+    if (!nextConstraint.userDefined.f) delete nextConstraint.f;
+    if (!nextConstraint.userDefined.s) delete nextConstraint.s;
+    if (!nextConstraint.userDefined.pos) {
+        delete nextConstraint.p;
+        delete nextConstraint.ext;
+    }
+
+    if (!Object.keys(nextConstraint.userDefined).length) {
+        constraints[activeNoteIndex] = null;
+    } else {
+        constraints[activeNoteIndex] = nextConstraint;
+    }
+
+    const nextResult = solve(lastInputForSolve, constraints);
+    if (!nextResult) {
+        showModalError(t('errors.unplayableFinger'));
+        return;
+    }
+
+    const merged = applyUserDefinedFlags(nextResult, constraints);
+    const nextIndex = activeNoteIndex < merged.length - 1 ? activeNoteIndex + 1 : activeNoteIndex;
+    pendingActiveNoteIndex = nextIndex;
+
+    renderResults({
+        result: merged,
+        inputForSolve: lastInputForSolve,
+        inputForDisplay: lastInput || lastInputForSolve,
+        inputOriginal: null,
+        skipHideAbout: true,
+        display: document.getElementById('pathDisplay'),
+        wrapper: document.getElementById('resultsWrapper')
+    });
+    focusEditKeyboardInput();
+}
+
+function isTypingTarget(target) {
+    if (!target) return false;
+    const tag = target.tagName ? target.tagName.toLowerCase() : '';
+    return tag === 'input' || tag === 'textarea' || target.isContentEditable;
+}
 function drawFingerboard(path, input) {
     const canvas = document.getElementById('fretboardCanvas');
     if (!canvas || !path || path.length === 0) return;
@@ -842,6 +1748,8 @@ function drawFingerboard(path, input) {
     const fingerboardStroke = bodyStyles.getPropertyValue('--color-fingerboard-stroke').trim() || rootStyles.getPropertyValue('--color-fingerboard-stroke').trim() || '#e0e0e0';
 
     const strings = ['A', 'D', 'G', 'C'];
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const cStringTextColor = isDarkMode ? '#0f172a' : '#ffffff';
     const stringYPositions = {};
     const stringSpacing = height / (strings.length + 1);
     strings.forEach((str, idx) => { stringYPositions[str] = stringSpacing * (idx + 1); });
@@ -878,7 +1786,8 @@ function drawFingerboard(path, input) {
         ctx.moveTo(0, stringYPositions[str]);
         ctx.lineTo(width, stringYPositions[str]);
         ctx.stroke();
-        ctx.fillStyle = stringColors[str];
+        const labelColor = (str === 'C' && !isDarkMode) ? '#ffffff' : stringColors[str];
+        ctx.fillStyle = labelColor;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(str, stringLabelX, stringYPositions[str] + 5);
@@ -921,7 +1830,8 @@ function drawFingerboard(path, input) {
             ctx.strokeStyle = fingerboardStroke;
             ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.fillStyle = fingerboardStroke;
+            const openNumberColor = step.s === 'C' ? cStringTextColor : fingerboardStroke;
+            ctx.fillStyle = openNumberColor;
             ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('0', openStringX, y + 4);
@@ -974,7 +1884,8 @@ function drawFingerboard(path, input) {
         ctx.strokeStyle = fingerboardStroke;
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.fillStyle = fingerboardStroke;
+        const fingerNumberColor = step.s === 'C' ? cStringTextColor : fingerboardStroke;
+        ctx.fillStyle = fingerNumberColor;
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(step.f.toString(), x, y + 5);
@@ -994,7 +1905,7 @@ window.toggleJson = toggleJson;
 window.drawFingerboard = drawFingerboard;
 /** Překreslí výstup a hmatník (např. po změně tématu). Použije lastResult a lastInputForSolve. */
 window.redrawResults = function redrawResults() {
-    if (lastResult && lastInputForSolve) runSolver(true);
+    if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
 };
 Object.defineProperty(window, 'lastResult', {
     get: () => lastResult,
@@ -1017,6 +1928,15 @@ export function initUI() {
     const melodyInputEl = document.getElementById('melodyInput');
     if (sequenceParam && melodyInputEl) {
         melodyInputEl.value = decodeURIComponent(sequenceParam);
+    }
+    if (!sequenceParam && melodyInputEl) {
+        const savedState = loadLastFingeringState();
+        if (savedState) {
+            melodyInputEl.value = savedState.input.join(' ');
+            lastResult = savedState.fingering;
+            lastInput = savedState.input;
+            lastInputForSolve = savedState.inputNormalized || normalizeInputTokens(savedState.input);
+        }
     }
 
     const mainElement = document.querySelector('main');
@@ -1060,15 +1980,79 @@ export function initUI() {
     const solveButton = document.getElementById('solveButton');
     if (solveButton) solveButton.addEventListener('click', () => runSolver());
 
+    const editButton = document.getElementById('editFingeringButton');
+    if (editButton) {
+        editButton.addEventListener('click', () => {
+            if (editModeEnabled) {
+                setEditMode(false);
+                return;
+            }
+            if (!lastResult) runSolver();
+            if (lastResult) setEditMode(true, 0);
+        });
+    }
+
+    const saveTestButton = document.getElementById('saveTestButton');
+    if (saveTestButton) {
+        saveTestButton.addEventListener('click', () => {
+            if (!lastResult || !lastInputForSolve) {
+                runSolver();
+            }
+            if (!lastResult || !lastInputForSolve) return;
+            const inputVal = melodyInputEl ? melodyInputEl.value.trim() : '';
+            const defaultName = inputVal || (lastInput ? lastInput.join(' ') : lastInputForSolve.join(' '));
+            openSaveTestModal(defaultName);
+        });
+    }
+
     const toggleJsonButton = document.getElementById('toggleJsonButton');
     if (toggleJsonButton) toggleJsonButton.addEventListener('click', toggleJson);
 
     initSettings();
 
+    updateEditButtonLabel();
+    ensureEditKeyboardInput();
+
     window.addEventListener('languageChange', () => {
-        if (lastResult && lastInputForSolve) runSolver(true);
+        updateEditButtonLabel();
+        updateSaveTestModalTexts();
+        if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
     });
 
-    runSolver(true);
+    document.addEventListener('keydown', (e) => {
+        if (!editModeEnabled || currentOutputFormat !== 'staff') return;
+        if (e.key === 'Escape') {
+            setEditMode(false);
+            return;
+        }
+        if (isTypingTarget(e.target)) return;
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            const direction = e.key === 'ArrowLeft' ? -1 : 1;
+            const currentIndex = activeNoteIndex ?? 0;
+            setActiveNoteIndex(currentIndex + direction);
+            return;
+        }
+        if (!/^[0-4]$/.test(e.key)) return;
+        e.preventDefault();
+        applyModalSelection('f', e.key, false);
+    });
+
+    document.addEventListener('mousedown', (e) => {
+        if (!editModeEnabled) return;
+        if (modalEl && modalEl.contains(e.target)) return;
+        if (e.target.closest && e.target.closest('.fingering-hitbox')) return;
+        if (editButton && editButton.contains(e.target)) return;
+        setEditMode(false);
+    });
+
+    window.addEventListener('resize', () => {
+        if (editModeEnabled && activeNoteIndex !== null) {
+            const target = fingerTargets[activeNoteIndex];
+            if (target && target.anchorEl) positionModal(target.anchorEl);
+        }
+    });
+
+    runSolver({ skipHideAbout: true, preserveState: true });
 }
 
