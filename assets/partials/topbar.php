@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 if (!isset($base)) $base = '';
 if (!isset($pageTitle)) $pageTitle = 'Cello Fingering Assistant';
 if (!isset($pageTitleKey)) $pageTitleKey = 'header.pageTitle';

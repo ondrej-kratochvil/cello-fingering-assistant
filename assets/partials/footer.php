@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 if (!isset($base)) $base = '';
 ?>
 <footer class="app-footer bg-slate-100 border-t border-slate-200 py-6 text-center text-sm text-slate-600">
