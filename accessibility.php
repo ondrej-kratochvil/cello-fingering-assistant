@@ -42,9 +42,18 @@ $taglineFallback = 'Prohlášení o přístupnosti a klávesové zkratky';
 <?php require __DIR__ . '/assets/partials/footer.php'; ?>
     </div>
 
+<?php
+$jsDir = __DIR__ . '/assets/js';
+$JS_VERSIONS = [
+    'i18n' => filemtime($jsDir . '/i18n.js'),
+    'navigation' => filemtime($jsDir . '/navigation.js'),
+];
+?>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
     <script type="module">
-        import { initI18n } from './assets/js/i18n.js';
-        import { initNavigation } from './assets/js/navigation.js';
+        const V = window.__JS_VERSIONS__ || {};
+        const { initI18n } = await import('./assets/js/i18n.js' + (V.i18n ? '?v=' + V.i18n : ''));
+        const { initNavigation } = await import('./assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
 
         async function main() {
             if (document.readyState === 'loading') {

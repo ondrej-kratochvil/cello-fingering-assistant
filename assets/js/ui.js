@@ -1,7 +1,21 @@
 // --- UI FUNCTIONS ---
-import { solve, model } from './fingering.js';
-import { appendLocalTest } from './tests.js';
-import { t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations } from './i18n.js';
+// Dynamický import s cache-busting (verze z window.__JS_VERSIONS__ v PHP)
+const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
+const q = (path, k) => path + (V[k] ? '?v=' + V[k] : '');
+
+let solve, model, appendLocalTest, t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations;
+
+export const ready = Promise.all([
+  import(q('./fingering.js', 'fingering')).then((m) => { solve = m.solve; model = m.model; }),
+  import(q('./tests.js', 'tests')).then((m) => { appendLocalTest = m.appendLocalTest; }),
+  import(q('./i18n.js', 'i18n')).then((m) => {
+    t = m.t;
+    setNoteNaming = m.setNoteNaming;
+    getNoteNaming = m.getNoteNaming;
+    getNoteNamingCurrent = m.getNoteNamingCurrent;
+    applyTranslations = m.applyTranslations;
+  }),
+]);
 
 /**
  * Mapování tónů na MIDI čísla (ISO: C2=36, C3=48, C4=60)

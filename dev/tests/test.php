@@ -39,34 +39,45 @@ require __DIR__ . '/../../assets/partials/topbar.php';
 <?php require __DIR__ . '/../../assets/partials/footer.php'; ?>
     </div>
 
+<?php
+$jsDir = __DIR__ . '/../../assets/js';
+$JS_VERSIONS = [
+    'i18n' => filemtime($jsDir . '/i18n.js'),
+    'navigation' => filemtime($jsDir . '/navigation.js'),
+    'fingering' => filemtime($jsDir . '/fingering.js'),
+    'tests' => filemtime($jsDir . '/tests.js'),
+    'ui' => filemtime($jsDir . '/ui.js'),
+    'testRunner' => filemtime($jsDir . '/test-runner.js'),
+];
+?>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
     <script type="module">
-        import { initI18n } from '../../assets/js/i18n.js';
-        import { initNavigation, setCanvasRedrawCallback } from '../../assets/js/navigation.js';
-        import { runAllTests } from '../../assets/js/test-runner.js';
+        const V = window.__JS_VERSIONS__ || {};
+        const { initI18n } = await import('../../assets/js/i18n.js' + (V.i18n ? '?v=' + V.i18n : ''));
+        const { initNavigation, setCanvasRedrawCallback } = await import('../../assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
+        const testRunner = await import('../../assets/js/test-runner.js' + (V.testRunner ? '?v=' + V.testRunner : ''));
 
         async function main() {
             if (document.readyState === 'loading') {
                 await new Promise(r => document.addEventListener('DOMContentLoaded', r));
             }
+            await testRunner.ready;
             await initI18n();
-            // Překreslit osnovy při změně dark mode
             setCanvasRedrawCallback(() => {
-                // Překreslit všechny testy při změně dark mode
                 const testResults = document.getElementById('testResults');
                 if (testResults && testResults.children.length > 0) {
-                    runAllTests();
+                    testRunner.runAllTests();
                 }
             });
-            // Překreslit testy při změně jazyka
             window.addEventListener('languageChange', () => {
                 const testResults = document.getElementById('testResults');
                 if (testResults && testResults.children.length > 0) {
-                    runAllTests();
+                    testRunner.runAllTests();
                 }
             });
             await initNavigation();
-            runAllTests();
+            testRunner.runAllTests();
         }
         main();
     </script>
