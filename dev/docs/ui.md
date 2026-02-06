@@ -129,7 +129,7 @@ Aplikace obsahuje kompletní SEO meta tagy v `<head>`:
 Homepage obsahuje dvě hlavní sekce před vstupním formulářem, které jsou skrývatelné:
 
 ### Sekce "O aplikaci"
-Stručný popis účelu aplikace, algoritmu a jeho priorit (polohová stabilita, minimalizace posunů, preferencia nižších poloh). Třetí odstavec odkazuje na Prohlášení o přístupnosti v patičce a na klávesové zkratky (Enter pro návrh prstokladu).
+Stručný popis účelu aplikace, algoritmu a jeho priorit (polohová stabilita, minimalizace posunů, preferencia nižších poloh). Odkaz na přístupnost a klávesové zkratky je v kartě Technické vychytávky (Hlavní funkce).
 
 ### Sekce "Hlavní funkce"
 Grid se **4 kartami**:

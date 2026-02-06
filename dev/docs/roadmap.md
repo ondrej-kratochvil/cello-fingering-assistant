@@ -254,7 +254,7 @@
 
 ## 📝 Poznámky
 
-- **Únor 2026:** Doplněna stránka Přístupnost (`accessibility.php`), odkaz v patičce, cache-busting (CSS/JS), klávesové zkratky (dokumentace + tooltip u tlačítka Solve), třetí odstavec v O aplikaci (odkaz na přístupnost a zkratky). Dokumentace (`main.md`, `ui.md`) a audit aktualizovány.
+- **Únor 2026:** Doplněna stránka Přístupnost (`accessibility.php`), odkaz v patičce, cache-busting (CSS/JS), klávesové zkratky (dokumentace + tooltip u tlačítka Solve). Informace o přístupnosti a zkratkách jsou v kartě Hlavní funkce (features.tech.desc). Dokumentace (`main.md`, `ui.md`) a audit aktualizovány.
 - Projekt je **client-side** aplikace (PHP jen pro layout), takže PHP audit je omezený
 - **Tailwind CSS** přes CDN je záměrná volba (rychlý vývoj UI); .cursorrules preferuje sémantické CSS – design systém zůstává v `main.css`
 - **VexFlow** (CDN, CJS 4.2.5) pro vykreslení notové osnovy (basový klíč, celé noty, anotace polohy/prsty/tóny, posuvky před notou)

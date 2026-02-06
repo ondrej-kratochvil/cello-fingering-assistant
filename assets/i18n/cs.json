@@ -16,7 +16,6 @@
   "about.title": "O aplikaci",
   "about.p1": "<strong>Cello Fingering Assistant</strong> je nástroj pro návrh optimálního prstokladu pro violoncello. Analyzuje sekvenci tónů a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu a minimalizaci posunů.",
   "about.p2": "Algoritmus upřednostňuje zůstat v jedné poloze, minimalizuje počet posunů mezi polohami a preferuje nižší polohy. Podporuje enharmonické záměny pro správné zpracování všech stupnic. Formát výstupu (notová osnova / text) se mění v sekci <strong>Nastavení</strong> pod výsledky.",
-  "about.p3": "V patičce najdete odkaz na <strong>Prohlášení o přístupnosti</strong> a popis klávesových zkratek (např. <strong>Enter</strong> v poli pro tóny spustí návrh prstokladu).",
 
   "features.title": "Hlavní funkce",
   "features.algo.title": "🎯 Inteligentní algoritmus",

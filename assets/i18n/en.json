@@ -16,7 +16,6 @@
   "about.title": "About",
   "about.p1": "<strong>Cello Fingering Assistant</strong> is a tool for designing optimal cello fingering. It analyses a sequence of notes and recommends the most suitable fingering with regard to position stability and minimising shifts.",
   "about.p2": "The algorithm prefers staying in one position, minimises shifts between positions, and favours lower positions. It supports enharmonic equivalents for correct handling of all scales. Output format (staff / text) is changed in <strong>Settings</strong> below the results.",
-  "about.p3": "In the footer you will find a link to the <strong>Accessibility statement</strong> and a description of keyboard shortcuts (e.g. <strong>Enter</strong> in the note input field runs the fingering suggestion).",
 
   "features.title": "Main features",
   "features.algo.title": "🎯 Smart algorithm",
