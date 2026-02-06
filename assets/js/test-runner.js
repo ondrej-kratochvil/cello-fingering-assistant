@@ -241,5 +241,8 @@ export function runAllTests() {
     }
 }
 
-// Export na window pro onclick atribut
-window.runAllTests = runAllTests;
+// Export na window pro onclick atribut – wrapper čeká na načtení závislostí
+window.runAllTests = async function runAllTestsFromButton() {
+    await loadDeps;
+    runAllTests();
+};

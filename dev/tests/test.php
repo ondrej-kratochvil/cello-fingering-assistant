@@ -27,8 +27,8 @@ require __DIR__ . '/../../assets/partials/topbar.php';
                 <!-- Vyplní se dynamicky v runAllTests() -->
             </div>
 
-            <button onclick="runAllTests()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95 mb-6"
+            <button id="runAllTestsButton" onclick="runAllTests()" disabled
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95 mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
                     data-i18n="test.runAll">
                 Spustit všechny testy
             </button>
@@ -63,6 +63,8 @@ $JS_VERSIONS = [
                 await new Promise(r => document.addEventListener('DOMContentLoaded', r));
             }
             await testRunner.ready;
+            const runBtn = document.getElementById('runAllTestsButton');
+            if (runBtn) runBtn.disabled = false;
             await initI18n();
             setCanvasRedrawCallback(() => {
                 const testResults = document.getElementById('testResults');
