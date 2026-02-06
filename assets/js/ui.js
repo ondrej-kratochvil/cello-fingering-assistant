@@ -1907,14 +1907,22 @@ window.drawFingerboard = drawFingerboard;
 window.redrawResults = function redrawResults() {
     if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
 };
-Object.defineProperty(window, 'lastResult', {
-    get: () => lastResult,
-    set: (val) => { lastResult = val; }
-});
-Object.defineProperty(window, 'lastInputForSolve', {
-    get: () => lastInputForSolve,
-    set: (val) => { lastInputForSolve = val; }
-});
+if (!Object.getOwnPropertyDescriptor(window, 'lastResult')) {
+    Object.defineProperty(window, 'lastResult', {
+        configurable: true,
+        enumerable: true,
+        get: () => lastResult,
+        set: (val) => { lastResult = val; }
+    });
+}
+if (!Object.getOwnPropertyDescriptor(window, 'lastInputForSolve')) {
+    Object.defineProperty(window, 'lastInputForSolve', {
+        configurable: true,
+        enumerable: true,
+        get: () => lastInputForSolve,
+        set: (val) => { lastInputForSolve = val; }
+    });
+}
 
 /** Inicializace UI (pouze na hlavní stránce, ne na Testech). Volá se po initI18n. */
 export function initUI() {
@@ -2014,6 +2022,7 @@ export function initUI() {
     ensureEditKeyboardInput();
 
     window.addEventListener('languageChange', () => {
+        updateSaveTestModalTexts();
         updateEditButtonLabel();
         updateSaveTestModalTexts();
         if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });

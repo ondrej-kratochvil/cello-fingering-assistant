@@ -120,6 +120,10 @@ export function applyTranslations() {
         const key = el.getAttribute('data-i18n-aria-label');
         if (key) el.setAttribute('aria-label', t(key));
     });
+    document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-title');
+        if (key) el.setAttribute('title', t(key));
+    });
 }
 
 /**

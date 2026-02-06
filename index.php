@@ -1,3 +1,4 @@
+<?php declare(strict_types=1); ?>
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -23,7 +24,7 @@
     <meta name="twitter:description" content="Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí pokročilého algoritmu.">
 
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/main.css?v=<?= filemtime(__DIR__ . '/assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 p-4 md:p-8 font-sans text-slate-900">
@@ -89,7 +90,7 @@ require __DIR__ . '/assets/partials/topbar.php';
                     <div class="p-6 bg-purple-50 rounded-xl border border-purple-100">
                         <h3 class="text-lg font-bold text-purple-900 mb-2" data-i18n="features.tech.title">⚙️ Technické vychytávky</h3>
                         <p class="text-slate-700 text-sm" data-i18n="features.tech.desc" data-i18n-html>
-                            Světlé/tmavé téma (dle nastavení zařízení nebo manuálně v menu), vícejazyčnost (menu – vlajky), označení H/B v Nastavení. Testovací stránka pro ověření algoritmu.
+                            Světlé/tmavé téma (dle nastavení zařízení nebo manuálně v menu), vícejazyčnost (menu – vlajky), označení H/B v Nastavení. Testovací stránka pro ověření algoritmu. V patičce najdete odkaz na Prohlášení o přístupnosti a popis klávesových zkratek (např. Enter v poli pro tóny spustí návrh prstokladu).
                         </p>
                     </div>
                 </div>
@@ -150,7 +151,8 @@ require __DIR__ . '/assets/partials/topbar.php';
                 <div class="flex flex-col md:flex-row gap-4">
                     <button id="solveButton"
                             class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
-                            data-i18n="button.solve">
+                            data-i18n="button.solve"
+                            data-i18n-title="aria.solveShortcut">
                         Navrhnout prstoklad
                     </button>
                     <button id="editFingeringButton" type="button"
@@ -238,8 +240,8 @@ require __DIR__ . '/assets/partials/topbar.php';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
-    <script type="module" src="assets/js/fingering.js"></script>
-    <script type="module" src="assets/js/ui.js"></script>
+    <script type="module" src="assets/js/fingering.js?v=<?= filemtime(__DIR__ . '/assets/js/fingering.js') ?>"></script>
+    <script type="module" src="assets/js/ui.js?v=<?= filemtime(__DIR__ . '/assets/js/ui.js') ?>"></script>
     <script type="module">
         import { initI18n } from './assets/js/i18n.js';
         import { initNavigation, setCanvasRedrawCallback } from './assets/js/navigation.js';

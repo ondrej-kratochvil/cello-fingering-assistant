@@ -1,3 +1,4 @@
+<?php declare(strict_types=1); ?>
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -6,7 +7,7 @@
     <meta name="description" content="Testovací stránka pro ověření správnosti algoritmu prstokladu violoncella.">
     <title>Testy - Cello Fingering Assistant</title>
     <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
-    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/main.css?v=<?= filemtime(__DIR__ . '/../../assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 p-4 md:p-8 font-sans text-slate-900">

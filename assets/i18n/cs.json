@@ -2,6 +2,7 @@
   "nav.home": "Home",
   "nav.tests": "Testy",
   "nav.about": "O aplikaci",
+  "nav.accessibility": "Přístupnost",
   "header.pageTitle": "Cello Fingering Assistant",
   "header.tagline": "Pro zadané tóny doporučí vhodný prstoklad",
   "aria.darkMode": "Přepnout Dark Mode",
@@ -15,6 +16,7 @@
   "about.title": "O aplikaci",
   "about.p1": "<strong>Cello Fingering Assistant</strong> je nástroj pro návrh optimálního prstokladu pro violoncello. Analyzuje sekvenci tónů a doporučuje nejvhodnější prstoklad s ohledem na polohovou stabilitu a minimalizaci posunů.",
   "about.p2": "Algoritmus upřednostňuje zůstat v jedné poloze, minimalizuje počet posunů mezi polohami a preferuje nižší polohy. Podporuje enharmonické záměny pro správné zpracování všech stupnic. Formát výstupu (notová osnova / text) se mění v sekci <strong>Nastavení</strong> pod výsledky.",
+  "about.p3": "V patičce najdete odkaz na <strong>Prohlášení o přístupnosti</strong> a popis klávesových zkratek (např. <strong>Enter</strong> v poli pro tóny spustí návrh prstokladu).",
 
   "features.title": "Hlavní funkce",
   "features.algo.title": "🎯 Inteligentní algoritmus",
@@ -24,7 +26,7 @@
   "features.fingerboard.title": "🎨 Vizuální hmatník",
   "features.fingerboard.desc": "Realistická vizualizace hmatníku s <strong>černým pozadím</strong> (ve světlém i tmavém režimu), která zobrazuje doporučený prstoklad s barevným rozlišením strun a propojením pohybu ruky. Rozestupy mezi polohami jsou <strong>proporční</strong> (menší směrem k mostku), odpovídají skutečným vzdálenostem na violoncelle. Responzivní s horizontálním posuvem.",
   "features.tech.title": "⚙️ Technické vychytávky",
-  "features.tech.desc": "Světlé/tmavé téma (dle nastavení zařízení nebo manuálně v menu), vícejazyčnost (menu – vlajky), označení H/B v Nastavení. Testovací stránka pro ověření algoritmu.",
+  "features.tech.desc": "Světlé/tmavé téma (dle nastavení zařízení nebo manuálně v menu), vícejazyčnost (menu – vlajky), označení H/B v Nastavení. Testovací stránka pro ověření algoritmu. V patičce najdete odkaz na <strong>Prohlášení o přístupnosti</strong> a popis klávesových zkratek (např. <strong>Enter</strong> v poli pro tóny spustí návrh prstokladu).",
 
   "tones.title": "Tóny, prsty a polohy",
   "tones.intro": "Převodní tabulka označení poloh: diatonické (I, II↓, …) versus chromatické (I–XII, římsky). Tón uvádí nota na struně A s 1. prstem v dané poloze.",
@@ -150,5 +152,15 @@
   "test.scale.hesdur.name": "Hes dur",
   "test.scale.hesdur.desc": "Stupnice Hes dur",
   "test.scale.hdur.name": "H dur",
-  "test.scale.hdur.desc": "Stupnice H dur"
+  "test.scale.hdur.desc": "Stupnice H dur",
+
+  "accessibility.pageTitle": "Prohlášení o přístupnosti",
+  "accessibility.intro": "Aplikace Cello Fingering Assistant se snaží být přístupná v souladu s požadavky na přístupnost webového obsahu.",
+  "accessibility.compliance": "Úroveň souladu: Částečně v souladu s WCAG 2.1 (úroveň AA) – sémantické HTML, kontrast, popisky formulářů a tlačítek, podpora klávesnice. Některé interaktivní prvky (např. vizualizace hmatníku) mohou být plně využitelné především s myší nebo dotykem.",
+  "accessibility.contact": "Kontakt pro připomínky k přístupnosti: Sensio.cz s.r.o., https://www.sensio.cz/",
+  "accessibility.revised": "Datum poslední revize: únor 2026",
+  "accessibility.shortcutsTitle": "Klávesové zkratky",
+  "accessibility.shortcutEnter": "Enter – v poli pro zadání tónů spustí návrh prstokladu (tlačítko „Navrhnout prstoklad“)",
+  "accessibility.shortcutEscape": "Escape – zavře otevřený dialog (modal)",
+  "aria.solveShortcut": "Navrhnout prstoklad (Enter)"
 }

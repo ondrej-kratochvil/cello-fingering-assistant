@@ -104,9 +104,15 @@ Design systém podporuje automatické přepínání podle `prefers-color-scheme`
 
 - **Modul**: `assets/js/i18n.js` – vlastní lehký i18n bez závislostí.
 - **Překlady**: `assets/i18n/cs.json`, `assets/i18n/en.json`; snadné přidání dalších jazyků.
-- **Funkce**: `t(key)`, `t(key, { var: value })` pro interpolaci; `setLanguage(locale)`, `getLanguage()`; `setNoteNaming('H'|'B')`, `getNoteNaming()`; `applyTranslations()` pro `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]`.
+- **Funkce**: `t(key)`, `t(key, { var: value })` pro interpolaci; `setLanguage(locale)`, `getLanguage()`; `setNoteNaming('H'|'B')`, `getNoteNaming()`; `applyTranslations()` pro `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]` a `[data-i18n-title]` (atribut `title` pro tooltipy).
 - **Ukládání**: jazyk a H/B v `localStorage`; při načtení `initI18n()` načte locale, aplikuje překlady, nastaví `lang` na `<html>`.
-- **Bootstrap**: `index.php` a `dev/tests/test.php` volají `await initI18n()` před `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver({ skipHideAbout: true, preserveState: true })`).
+- **Bootstrap**: `index.php`, `accessibility.php` a `dev/tests/test.php` volají `await initI18n()`; index a test dále `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver({ skipHideAbout: true, preserveState: true })`).
+
+### Přístupnost a klávesové zkratky
+
+- **Stránka Přístupnost** (`accessibility.php`): Prohlášení o přístupnosti (úroveň souladu WCAG 2.1, kontakt Sensio.cz, datum revize) a sekce Klávesové zkratky (Enter, Escape). Odkaz v patičce na všech stránkách (`nav.accessibility`).
+- **Tooltip u hlavní akce**: Tlačítko „Navrhnout prstoklad“ má `data-i18n-title="aria.solveShortcut"` – zobrazí např. „Navrhnout prstoklad (Enter)“.
+- **Klávesové zkratky**: Enter v poli pro tóny spustí návrh prstokladu; Escape zavře otevřený dialog (modal).
 
 ## SEO a Meta tagy
 
@@ -123,7 +129,7 @@ Aplikace obsahuje kompletní SEO meta tagy v `<head>`:
 Homepage obsahuje dvě hlavní sekce před vstupním formulářem, které jsou skrývatelné:
 
 ### Sekce "O aplikaci"
-Stručný popis účelu aplikace, algoritmu a jeho priorit (polohová stabilita, minimalizace posunů, preferencia nižších poloh).
+Stručný popis účelu aplikace, algoritmu a jeho priorit (polohová stabilita, minimalizace posunů, preferencia nižších poloh). Třetí odstavec odkazuje na Prohlášení o přístupnosti v patičce a na klávesové zkratky (Enter pro návrh prstokladu).
 
 ### Sekce "Hlavní funkce"
 Grid se **4 kartami**:
@@ -145,8 +151,8 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
 
 - **Společný layout (PHP includes)**
   - `assets/partials/topbar.php` – header (logo, **jednotné menu**, h1, tagline). Očekává `$base`, `$pageTitle`, `$pageTitleKey`, `$taglineKey`, `$taglineFallback`. Nadpis má `data-i18n` atribut pro aktualizaci při změně jazyka.
-  - `assets/partials/footer.php` – patička.
-  - `index.php` a `dev/tests/test.php` nastaví proměnné a volají `require __DIR__ . '/…/topbar.php'` resp. `footer.php`. Hlavička a patička jsou v prvním HTML (SEO, bez JS).
+  - `assets/partials/footer.php` – patička (copyright Sensio.cz, odkaz Přístupnost). Očekává `$base` (prázdný v rootu, `../../` v dev/tests).
+  - `index.php`, `accessibility.php` a `dev/tests/test.php` nastaví proměnné a volají `require …/topbar.php` resp. `footer.php`. Hlavička a patička jsou v prvním HTML (SEO, bez JS).
 
 - **Header a jednotné menu**
   - **Jedno menu** (`#mainNav`), žádná duplikace desktop/mobil. Na desktopu viditelné v řádku (`.main-nav`), na mobilu skryté; hamburger (`#menuToggle`) přepíná `body.nav-open`, CSS zobrazí menu jako overlay.
@@ -194,7 +200,7 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
   - Tlačítko „Zobrazit JSON Model" přepíná viditelnost bloku s JSON reprezentací `model` z `assets/js/fingering.js`.
 
 - **Footer**
-  - Copyright: „© 2025 Sensio.cz s.r.o." s odkazem na https://www.sensio.cz
+  - Copyright: „© [aktuální rok] Sensio.cz s.r.o." s odkazem na https://www.sensio.cz
 
 - **Favicon**
   - SVG favicon (`assets/img/favicon.svg`) definovaný v `<head>`
