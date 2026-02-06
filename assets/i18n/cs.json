@@ -155,6 +155,7 @@
   "test.scale.hdur.desc": "Stupnice H dur",
 
   "accessibility.pageTitle": "Prohlášení o přístupnosti",
+  "accessibility.tagline": "Prohlášení o přístupnosti a klávesové zkratky",
   "accessibility.intro": "Aplikace Cello Fingering Assistant se snaží být přístupná v souladu s požadavky na přístupnost webového obsahu.",
   "accessibility.compliance": "Úroveň souladu: Částečně v souladu s WCAG 2.1 (úroveň AA) – sémantické HTML, kontrast, popisky formulářů a tlačítek, podpora klávesnice. Některé interaktivní prvky (např. vizualizace hmatníku) mohou být plně využitelné především s myší nebo dotykem.",
   "accessibility.contact": "Kontakt pro připomínky k přístupnosti: Sensio.cz s.r.o., https://www.sensio.cz/",

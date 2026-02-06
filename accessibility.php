@@ -2,7 +2,7 @@
 $base = '';
 $pageTitle = 'Přístupnost';
 $pageTitleKey = 'accessibility.pageTitle';
-$taglineKey = 'header.tagline';
+$taglineKey = 'accessibility.tagline';
 $taglineFallback = 'Prohlášení o přístupnosti a klávesové zkratky';
 ?>
 <!DOCTYPE html>

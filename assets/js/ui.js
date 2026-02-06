@@ -2024,7 +2024,6 @@ export function initUI() {
     window.addEventListener('languageChange', () => {
         updateSaveTestModalTexts();
         updateEditButtonLabel();
-        updateSaveTestModalTexts();
         if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
     });
 
