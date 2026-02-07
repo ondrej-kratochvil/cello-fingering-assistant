@@ -24,7 +24,7 @@ Tento projekt je klientská (HTML/JS) aplikace pro návrh violoncellového prsto
 - `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (notová osnova, i18n).
 - `dev/tests/test.php` – samostatná stránka pro běh a vizuální zobrazení testů v prohlížeči.
 - `assets/css/main.css` – centralizovaný design systém s CSS proměnnými a Light/Dark mode podporou.
-- **Cache-busting**: V `index.php`, `accessibility.php` a `dev/tests/test.php` se u CSS (a u JS v index.php) používá query parametr `?v=<?= filemtime(...) ?>` pro vynucení nového načtení po změně souboru.
+- **Cache-busting**: V `index.php`, `accessibility.php` a `dev/tests/test.php` se u CSS a JS používá query parametr `?v=<?= filemtime(...) ?>`. Načítání i18n JSON v `i18n.js` používá `window.__I18N_VERSION__` (větší z `filemtime(cs.json)` a `filemtime(en.json)`), aby prohlížeč po změně překladů načetl nové soubory.
 
 Projekt používá **PHP** pro layout (hlavička a patička v `assets/partials/`); logika a UI běží v prohlížeči, databáze není. Podporuje **multijazyčnost** (Čeština, English), **označení tónu H/B** (H/Hes vs. B/Bb) v Nastavení a **přístupnost** (prohlášení, klávesové zkratky, tooltip u hlavních akcí).
 

@@ -28,14 +28,14 @@
 #### 2.1 Barvy v inline stylech
 - **Status**: ✅ Hotovo
 - **Soubor**: `assets/css/main.css` vytvořen
-- **Implementace**: 
+- **Implementace**:
   - Všechny inline `<style>` tagy přesunuty do CSS souboru
   - Všechny hardcodované barvy převedeny na CSS proměnné
   - Barvy z JS (canvas) nyní používají CSS proměnné přes `getComputedStyle`
 
 #### 2.2 Design systém
 - **Status**: ✅ Hotovo
-- **Implementace**: 
+- **Implementace**:
   - Kompletní design systém s CSS proměnnými pro:
     - Barvy (primary, secondary, background, text, borders, status)
     - Spacing (8px base unit, xs až 3xl)
@@ -51,7 +51,7 @@
 
 #### 3.1 Přesun JS souborů
 - **Status**: ✅ Hotovo
-- **Soubory přesunuty**: 
+- **Soubory přesunuty**:
   - `js/fingering.js` → `assets/js/fingering.js`
   - `js/ui.js` → `assets/js/ui.js`
   - `js/tests.js` → `assets/js/tests.js`

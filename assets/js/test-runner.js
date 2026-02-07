@@ -5,7 +5,7 @@ const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
 const q = (path, k) => path + (V[k] ? '?v=' + V[k] : '');
 
 let solve, compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites;
-let renderStaffOutput, toPositionLabel, t;
+let renderStaffOutput, toPositionLabel, getClefPerNote, t;
 
 const loadDeps = (async () => {
   const [fingeringMod, testsMod, uiMod, i18nMod] = await Promise.all([
@@ -22,6 +22,7 @@ const loadDeps = (async () => {
   getLocalTestSuites = testsMod.getLocalTestSuites;
   renderStaffOutput = uiMod.renderStaffOutput;
   toPositionLabel = uiMod.toPositionLabel;
+  getClefPerNote = uiMod.getClefPerNote;
   t = i18nMod.t;
   await uiMod.ready;
 })();
@@ -83,9 +84,14 @@ export function runAllTests() {
         const inputForSolve = prepareInputForSolve(suite.input);
         const result = solve(inputForSolve);
         const isSuccessOnly = !!suite.successOnly;
-        const isPass = isSuccessOnly
+        let isPass = isSuccessOnly
             ? (result != null && result.length === suite.input.length)
             : compareFingering(result, suite.expected);
+        if (isPass && Array.isArray(suite.expectedClefs)) {
+            const actualClefs = getClefPerNote(suite.input);
+            isPass = actualClefs.length === suite.expectedClefs.length &&
+                actualClefs.every((c, i) => c === suite.expectedClefs[i]);
+        }
 
         if (isPass) {
             passed++;

@@ -124,6 +124,8 @@
   "test.openD.desc": "Preferuje otevřenou strunu D",
   "test.long.name": "Dlouhá sekvence g a h c1 d1 e1 f1# g1",
   "test.long.desc": "Jen 2 polohy",
+  "test.clefSwitch.name": "Střídání klíčů a1 a1# h1 e1 f1 eb1 d1",
+  "test.clefSwitch.desc": "Bas → houslový po a1#, zpět na bas u d1",
   "test.scale.cdur.name": "C dur",
   "test.scale.cdur.desc": "Stupnice C dur",
   "test.scale.cisdur.name": "Cis dur",

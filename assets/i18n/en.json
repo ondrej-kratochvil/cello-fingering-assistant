@@ -124,6 +124,8 @@
   "test.openD.desc": "Prefers the open D string",
   "test.long.name": "Long sequence g a h c1 d1 e1 f1# g1",
   "test.long.desc": "Only 2 positions",
+  "test.clefSwitch.name": "Clef switching a1 a1# h1 e1 f1 eb1 d1",
+  "test.clefSwitch.desc": "Bass → treble after a1#, back to bass at d1",
   "test.scale.cdur.name": "C major",
   "test.scale.cdur.desc": "C major scale",
   "test.scale.cisdur.name": "C♯ major",

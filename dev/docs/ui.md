@@ -60,14 +60,6 @@ Aplikace používá centralizovaný design systém založený na CSS proměnnýc
 - `--color-fingerboard-text`: #b0b0b0 (text na hmatníku)
 - `--color-fingerboard-stroke`: #e0e0e0 (obrysy bodů)
 
-### Multijazyčnost (i18n)
-
-- **Modul**: `assets/js/i18n.js` – vlastní lehký i18n bez závislostí.
-- **Překlady**: `assets/i18n/cs.json`, `assets/i18n/en.json`; snadné přidání dalších jazyků.
-- **Funkce**: `t(key)`, `t(key, { var: value })` pro interpolaci; `setLanguage(locale)`, `getLanguage()`; `setNoteNaming('H'|'B')`, `getNoteNaming()`; `applyTranslations()` pro `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]`.
-- **Ukládání**: jazyk a H/B v `localStorage`; při načtení `initI18n()` načte locale, aplikuje překlady, nastaví `lang` na `<html>`.
-- **Bootstrap**: `index.php` a `dev/tests/test.php` volají `await initI18n()` před `initUI()` resp. `runAllTests()`. Při změně jazyka se překreslí UI a výstup (`runSolver({ skipHideAbout: true, preserveState: true })`).
-
 #### Spacing (8px base unit)
 - `--spacing-xs`: 0.25rem (4px)
 - `--spacing-sm`: 0.5rem (8px)
@@ -187,7 +179,7 @@ Stránka `index.php` je hlavním vstupním bodem aplikace **Cello Fingering Assi
 - **Výstupní oblast**
   - `#resultsWrapper` (na začátku skrytý) obsahuje:
     - `#pathDisplay` – vizualizaci prstokladu podle vybraného formátu (**Nastavení → Formát výstupu**):
-      - **Notová osnova (výchozí)**: VexFlow SVG – basový klíč (výchozí), celé noty (whole notes), polohy nad notami (římské číslice při změně), prsty a tóny jako anotace, barevné struny. Pro noty vyšší než `a1` (MIDI 69) se automaticky přidá houslový klíč (treble clef) před první takovou notou. Kontejner `.staff-output`, horizontální scroll s pozadím na mobilních zařízeních.
+      - **Notová osnova (výchozí)**: VexFlow SVG – basový klíč (výchozí), celé noty (whole notes), polohy nad notami (římské číslice při změně), prsty a tóny jako anotace, barevné struny. **Střídání klíčů**: nota > a1 (MIDI 69) → houslový klíč; v houslovém klíči zůstáváme pro e1–a1, zpět na basový až při notě d1 a nižší (MIDI ≤ 62). Logika v `getClefPerNote(input)` (export z `ui.js`). Kontejner `.staff-output`, horizontální scroll s pozadím na mobilních zařízeních.
       - **Textový výstup**: tři řádky – polohy (římské, při změně), prsty (barevně podle struny, `↑` pro širokou), tóny.
     - `<canvas id="fretboardCanvas">` – vizualizace hmatníku ve 2D (4 struny, polohy 1–12) s **černým pozadím** (ve světlém i tmavém režimu).
       Proporční rozestupy mezi polohami (menší směrem k mostku) odpovídají skutečným vzdálenostem na violoncelle.
@@ -225,7 +217,7 @@ Zodpovídá za:
    - Při editaci se volá `solve(inputForSolve, constraints)` s omezeními z uživatelských úprav.
 
 5. Vykreslení výstupu podle `currentOutputFormat`:
-   - **Notová osnova**: `renderStaffOutput()` – VexFlow (basový klíč, celé noty, anotace polohy/prsty/tóny, barvy strun). Barvy z `--color-staff-ink`, `--color-staff-bg`; kontext `setFillStyle` / `setStrokeStyle` před kreslením.
+   - **Notová osnova**: `renderStaffOutput()` – VexFlow (basový/houslový klíč dle `getClefPerNote()`), celé noty, anotace polohy/prsty/tóny, barvy strun. Barvy z `--color-staff-ink`, `--color-staff-bg`; kontext `setFillStyle` / `setStrokeStyle` před kreslením.
    - **Textový výstup**: `renderTextOutput()` – tři řádky (poloha, prst, tón), barvy prstů z `--cello-string-*`.
 
 6. Vykreslení hmatníku na Canvas:
@@ -250,8 +242,8 @@ Zodpovídá za:
 
 Vykreslí notovou osnovu pomocí **VexFlow** (SVG backend). Používá se, když je `currentOutputFormat === 'staff'`.
 
-- Vytvoří kontejner `.staff-output` (bez borderu), VexFlow `Renderer` + `Stave` (basový klíč výchozí), `StaveNote` (celé noty - whole notes) a `Annotation` pro polohy, prsty a tóny.
-- **Dynamická změna klíče**: Pro noty vyšší než `a1` (MIDI 69) se automaticky přidá `ClefNote('treble')` před první takovou notou. Noty pod `a1` používají basový klíč, noty nad `a1` houslový klíč.
+- Vytvoří kontejner `.staff-output` (bez borderu), VexFlow `Renderer` + `Stave` (počáteční klíč z `getClefPerNote(input)[0]`), `StaveNote` (celé noty - whole notes) a `Annotation` pro polohy, prsty a tóny.
+- **Střídání klíčů**: Funkce `getClefPerNote(input)` vrací pro každou notu `'bass'` nebo `'treble'`. Pravidlo: nota > a1 (MIDI 69) → treble; v treble zpět na bass až při notě d1 a nižší (MIDI ≤ 62). Před každou notou, u které se klíč změní, se vloží `ClefNote(clef)`. Export `getClefPerNote` slouží i testům (ověření `expectedClefs`).
 - **Posuvky před notou**: Explicitně přidává `Accidental` modifikátory (`#` nebo `b`) k notám, aby byly vždy zobrazeny.
 - **Bez enharmonických záměn**: Noty se zobrazují přesně tak, jak je uživatel zadal (např. `e#` zůstane jako E#, ne F).
 - **Menší odsazení shora**: Osnova má menší top padding (50px místo 100px) pro kompaktnější zobrazení.

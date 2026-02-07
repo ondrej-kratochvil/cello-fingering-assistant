@@ -307,6 +307,15 @@ const testSuites = [
         description: 'Jen 2 polohy'
     },
     {
+        name: 'Střídání klíčů a1 a1# h1 e1 f1 eb1 d1',
+        nameKey: 'test.clefSwitch.name',
+        descriptionKey: 'test.clefSwitch.desc',
+        input: ['a1', 'a1#', 'h1', 'e1', 'f1', 'eb1', 'd1'],
+        successOnly: true,
+        expectedClefs: ['bass', 'treble', 'treble', 'treble', 'treble', 'treble', 'bass'],
+        description: 'Bas → houslový po a1#, zpět na bas u d1'
+    },
+    {
         name: 'C dur',
         nameKey: 'test.scale.cdur.name',
         descriptionKey: 'test.scale.cdur.desc',
