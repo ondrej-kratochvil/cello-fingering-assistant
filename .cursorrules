@@ -326,6 +326,14 @@ git add assets/js/ui.js; git commit -m "fix: popis"; git push
 - Uvnitř `-m "..."` se vyhni vnořeným uvozovkám a znakům, které láme PowerShell (např. `'` v českém textu).
 - Preferuj **krátký ASCII text** bez diakritiky, např. `fix(i18n): renderTextOutput legend uses t(legend.strings)`.
 
+**Kódování (PowerShell, Git, GitHub CLI):**
+- Všechny zdrojové soubory a dokumentace v repozitáři jsou v **UTF-8** (bez BOM u textových souborů).
+- Při použití **GitHub CLI** (`gh pr create`, `gh pr edit`) s **českým nebo jiným ne-ASCII textem** neposílej popis přímo v příkazové řádce – PowerShell může znaky zkreslit a na GitHubu se zobrazí špatně (mojibake). Místo toho:
+  - Napiš popis do souboru uloženého v **UTF-8** (např. `dev/pr-body.md`).
+  - Použij `gh pr create --body-file dev/pr-body.md` resp. `gh pr edit <číslo> --body-file dev/pr-body.md`.
+  - **Po použití soubor smaž** (není součástí repozitáře).
+- U delších commit zpráv s diakritikou lze stejně použít `git commit -F soubor.txt` (soubor v UTF-8).
+
 **Typický workflow:**
 ```powershell
 git status
