@@ -44,12 +44,14 @@ $taglineFallback = 'Prohlášení o přístupnosti a klávesové zkratky';
 
 <?php
 $jsDir = __DIR__ . '/assets/js';
+$i18nDir = __DIR__ . '/assets/i18n';
 $JS_VERSIONS = [
     'i18n' => filemtime($jsDir . '/i18n.js'),
     'navigation' => filemtime($jsDir . '/navigation.js'),
 ];
+$I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
-    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
         const { initI18n } = await import('./assets/js/i18n.js' + (V.i18n ? '?v=' + V.i18n : ''));
