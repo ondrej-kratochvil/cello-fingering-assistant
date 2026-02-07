@@ -1,7 +1,7 @@
 // --- UI FUNCTIONS ---
 // Dynamický import s cache-busting (verze z window.__JS_VERSIONS__ v PHP)
 const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
-const q = (path, k) => path + (V[k] ? '?v=' + V[k] : '');
+const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
 
 let solve, model, appendLocalTest, t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations;
 

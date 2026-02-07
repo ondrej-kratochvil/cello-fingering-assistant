@@ -27,8 +27,8 @@ const I18N_BASE = new URL('../i18n/', import.meta.url).href;
  */
 export async function loadLocale(locale) {
     if (messages[locale]) return messages[locale];
-    const version = typeof window !== 'undefined' && window.__I18N_VERSION__;
-    const url = `${I18N_BASE}${locale}.json${version ? '?v=' + version : ''}`;
+    const version = typeof window !== 'undefined' ? window.__I18N_VERSION__ : undefined;
+    const url = `${I18N_BASE}${locale}.json${version != null ? '?v=' + version : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`i18n: Failed to load ${url}`);
     const data = await res.json();

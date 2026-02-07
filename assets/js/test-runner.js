@@ -2,7 +2,7 @@
 // UI logika pro test runner v prohlížeči (dynamický import s cache-busting)
 
 const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
-const q = (path, k) => path + (V[k] ? '?v=' + V[k] : '');
+const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
 
 let solve, compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites;
 let renderStaffOutput, toPositionLabel, getClefPerNote, t;
