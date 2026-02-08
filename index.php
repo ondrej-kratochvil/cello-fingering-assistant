@@ -253,13 +253,14 @@ $JS_VERSIONS = [
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
+    <script>window.__I18N_SCRIPT__ = './assets/js/i18n.js' + (window.__JS_VERSIONS__ && window.__JS_VERSIONS__.i18n != null ? '?v=' + window.__JS_VERSIONS__.i18n : '');</script>
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
 
-        const { initI18n } = await import('./assets/js/i18n.js' + (V.i18n ? '?v=' + V.i18n : ''));
-        const { initNavigation, setCanvasRedrawCallback } = await import('./assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
-        const ui = await import('./assets/js/ui.js' + (V.ui ? '?v=' + V.ui : ''));
+        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initNavigation, setCanvasRedrawCallback } = await import('./assets/js/navigation.js' + (V.navigation != null ? '?v=' + V.navigation : ''));
+        const ui = await import('./assets/js/ui.js' + (V.ui != null ? '?v=' + V.ui : ''));
 
         async function main() {
             if (document.readyState === 'loading') {

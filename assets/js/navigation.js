@@ -84,7 +84,7 @@ export function initDarkMode(options = {}) {
  */
 export async function initLanguageSwitcher() {
     const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
-    const i18nUrl = './i18n.js' + (V.i18n != null ? '?v=' + V.i18n : '');
+    const i18nUrl = (typeof window !== 'undefined' && window.__I18N_SCRIPT__) || ('./i18n.js' + (V.i18n != null ? '?v=' + V.i18n : ''));
     const { setLanguage, getLanguage } = await import(i18nUrl);
     const flags = document.querySelectorAll('.lang-flag[data-lang]');
     if (!flags.length) return;
