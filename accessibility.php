@@ -52,7 +52,7 @@ $JS_VERSIONS = [
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
-    <script>window.__I18N_SCRIPT__ = './assets/js/i18n.js' + (window.__JS_VERSIONS__ && window.__JS_VERSIONS__.i18n != null ? '?v=' + window.__JS_VERSIONS__.i18n : '');</script>
+    <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__ && window.__JS_VERSIONS__.i18n != null ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
         const { initI18n } = await import(window.__I18N_SCRIPT__);
