@@ -162,7 +162,7 @@
   "accessibility.contact": "Contact for accessibility feedback: Sensio.cz s.r.o., https://www.sensio.cz/",
   "accessibility.revised": "Last revised: February 2026",
   "accessibility.shortcutsTitle": "Keyboard shortcuts",
-  "accessibility.shortcutEnter": "Enter – in the note input field, runs the fingering suggestion („Suggest fingering“ button)",
+  "accessibility.shortcutEnter": "Enter – in the note input field, runs the fingering suggestion (\"Suggest fingering\" button)",
   "accessibility.shortcutEscape": "Escape – closes the open dialog (modal)",
   "aria.solveShortcut": "Suggest fingering (Enter)"
 }

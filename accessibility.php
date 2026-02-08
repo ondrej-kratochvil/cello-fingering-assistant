@@ -24,17 +24,17 @@ $taglineFallback = 'Prohlášení o přístupnosti a klávesové zkratky';
             <h1 class="text-2xl font-bold text-slate-800 mb-6" data-i18n="accessibility.pageTitle">Prohlášení o přístupnosti</h1>
 
             <section class="space-y-4 text-slate-700 leading-relaxed mb-8">
-                <p data-i18n="accessibility.intro" data-i18n-html></p>
-                <p data-i18n="accessibility.compliance" data-i18n-html></p>
-                <p data-i18n="accessibility.contact" data-i18n-html></p>
-                <p data-i18n="accessibility.revised"></p>
+                <p data-i18n="accessibility.intro" data-i18n-html>Aplikace Cello Fingering Assistant se snaží být přístupná v souladu s požadavky na přístupnost webového obsahu.</p>
+                <p data-i18n="accessibility.compliance" data-i18n-html>Úroveň souladu: Částečně v souladu s WCAG 2.1 (úroveň AA) – sémantické HTML, kontrast, popisky formulářů a tlačítek, podpora klávesnice. Některé interaktivní prvky (např. vizualizace hmatníku) mohou být plně využitelné především s myší nebo dotykem.</p>
+                <p data-i18n="accessibility.contact" data-i18n-html>Kontakt pro připomínky k přístupnosti: Sensio.cz s.r.o., https://www.sensio.cz/</p>
+                <p data-i18n="accessibility.revised">Datum poslední revize: únor 2026</p>
             </section>
 
             <section class="mb-8">
                 <h2 class="text-xl font-bold text-slate-800 mb-3" data-i18n="accessibility.shortcutsTitle">Klávesové zkratky</h2>
                 <ul class="list-disc list-inside space-y-2 text-slate-700">
-                    <li data-i18n="accessibility.shortcutEnter"></li>
-                    <li data-i18n="accessibility.shortcutEscape"></li>
+                    <li data-i18n="accessibility.shortcutEnter">Enter – v poli pro zadání tónů spustí návrh prstokladu (tlačítko „Navrhnout prstoklad“)</li>
+                    <li data-i18n="accessibility.shortcutEscape">Escape – zavře otevřený dialog (modal)</li>
                 </ul>
             </section>
         </main>
