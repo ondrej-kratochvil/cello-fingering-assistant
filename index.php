@@ -1,3 +1,4 @@
+<?php declare(strict_types=1); ?>
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -23,7 +24,7 @@
     <meta name="twitter:description" content="Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí pokročilého algoritmu.">
 
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/main.css?v=<?= filemtime(__DIR__ . '/assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 p-4 md:p-8 font-sans text-slate-900">
@@ -89,7 +90,7 @@ require __DIR__ . '/assets/partials/topbar.php';
                     <div class="p-6 bg-purple-50 rounded-xl border border-purple-100">
                         <h3 class="text-lg font-bold text-purple-900 mb-2" data-i18n="features.tech.title">⚙️ Technické vychytávky</h3>
                         <p class="text-slate-700 text-sm" data-i18n="features.tech.desc" data-i18n-html>
-                            Světlé/tmavé téma (dle nastavení zařízení nebo manuálně v menu), vícejazyčnost (menu – vlajky), označení H/B v Nastavení. Testovací stránka pro ověření algoritmu.
+                            Světlé/tmavé téma (dle nastavení zařízení nebo manuálně v menu), vícejazyčnost (menu – vlajky), označení H/B v Nastavení. Testovací stránka pro ověření algoritmu. V patičce najdete odkaz na Prohlášení o přístupnosti a popis klávesových zkratek (např. Enter v poli pro tóny spustí návrh prstokladu).
                         </p>
                     </div>
                 </div>
@@ -150,7 +151,8 @@ require __DIR__ . '/assets/partials/topbar.php';
                 <div class="flex flex-col md:flex-row gap-4">
                     <button id="solveButton"
                             class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95"
-                            data-i18n="button.solve">
+                            data-i18n="button.solve"
+                            data-i18n-title="aria.solveShortcut">
                         Navrhnout prstoklad
                     </button>
                     <button id="editFingeringButton" type="button"
@@ -237,24 +239,40 @@ require __DIR__ . '/assets/partials/topbar.php';
 <?php require __DIR__ . '/assets/partials/footer.php'; ?>
     </div>
 
+<?php
+$jsDir = __DIR__ . '/assets/js';
+$i18nDir = __DIR__ . '/assets/i18n';
+$JS_VERSIONS = [
+    'i18n' => filemtime($jsDir . '/i18n.js'),
+    'navigation' => filemtime($jsDir . '/navigation.js'),
+    'fingering' => filemtime($jsDir . '/fingering.js'),
+    'tests' => filemtime($jsDir . '/tests.js'),
+    'ui' => filemtime($jsDir . '/ui.js'),
+    'testRunner' => filemtime($jsDir . '/test-runner.js'),
+];
+$I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
+?>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
+    <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__ && window.__JS_VERSIONS__.i18n != null ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
-    <script type="module" src="assets/js/fingering.js"></script>
-    <script type="module" src="assets/js/ui.js"></script>
     <script type="module">
-        import { initI18n } from './assets/js/i18n.js';
-        import { initNavigation, setCanvasRedrawCallback } from './assets/js/navigation.js';
-        import { initUI } from './assets/js/ui.js';
+        const V = window.__JS_VERSIONS__ || {};
+
+        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initNavigation, setCanvasRedrawCallback } = await import('./assets/js/navigation.js' + (V.navigation != null ? '?v=' + V.navigation : ''));
+        const ui = await import('./assets/js/ui.js' + (V.ui != null ? '?v=' + V.ui : ''));
 
         async function main() {
             if (document.readyState === 'loading') {
                 await new Promise(r => document.addEventListener('DOMContentLoaded', r));
             }
+            await ui.ready;
             await initI18n();
             setCanvasRedrawCallback(() => {
                 if (typeof window.redrawResults === 'function') window.redrawResults();
             });
             await initNavigation();
-            initUI();
+            ui.initUI();
         }
         main();
     </script>

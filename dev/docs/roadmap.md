@@ -28,14 +28,14 @@
 #### 2.1 Barvy v inline stylech
 - **Status**: ✅ Hotovo
 - **Soubor**: `assets/css/main.css` vytvořen
-- **Implementace**: 
+- **Implementace**:
   - Všechny inline `<style>` tagy přesunuty do CSS souboru
   - Všechny hardcodované barvy převedeny na CSS proměnné
   - Barvy z JS (canvas) nyní používají CSS proměnné přes `getComputedStyle`
 
 #### 2.2 Design systém
 - **Status**: ✅ Hotovo
-- **Implementace**: 
+- **Implementace**:
   - Kompletní design systém s CSS proměnnými pro:
     - Barvy (primary, secondary, background, text, borders, status)
     - Spacing (8px base unit, xs až 3xl)
@@ -51,7 +51,7 @@
 
 #### 3.1 Přesun JS souborů
 - **Status**: ✅ Hotovo
-- **Soubory přesunuty**: 
+- **Soubory přesunuty**:
   - `js/fingering.js` → `assets/js/fingering.js`
   - `js/ui.js` → `assets/js/ui.js`
   - `js/tests.js` → `assets/js/tests.js`
@@ -211,6 +211,18 @@
 - Při změně prstokladu poslat **celý JSON** se `userDefined`.
 - Načítání posledního stavu **ze serveru** (místo `localStorage`).
 
+### 11. Refaktoring ui.js (délka souborů, .cursorrules)
+- **Status**: 🔴 Nezahájeno
+- **Důvod**: Soubor `assets/js/ui.js` má přes 2000 řádků; předpis .cursorrules uvádí soft limit **max. 600 řádků** na JS soubor a doporučuje rozdělení podle Single Responsibility.
+- **Cíl**: Rozdělit logiku do více modulů, každý soubor do cca 600 řádků, zachovat funkčnost a projít testy.
+- **Návrh rozdělení** (orientační):
+  - **ui-results.js** – vykreslení výsledků (path display, notová osnova VexFlow, legend), překreslení při změně tématu/jazyka.
+  - **ui-fingerboard.js** – vykreslení hmatníku (Canvas), proporční pozice, barvy strun, interakce s editací.
+  - **ui-modals.js** – modaly (Uložit jako test, editace prstu/struny/polohy), otevření/zavření, validace.
+  - **ui-settings.js** – sekce Nastavení (formát výstupu, označení poloh, H/B), napojení na localStorage a překreslení výstupu.
+  - **ui.js** – inicializace (`initUI`), napojení událostí (tlačítka, input, menu), volání solveru, sdílený stav (`lastResult`, `lastInput`, režim editace), import a sestavení výše uvedených modulů.
+- **Postup**: Refaktorovat po částech (jeden modul po druhém), po každém kroku spustit testy a ověřit chování na hlavní stránce. Aktualizovat `index.php` (případně další script tagy pro nové moduly nebo jeden entry point).
+
 ## 📋 Priorita úkolů
 
 ### Fáze 1 - Kritické (musí být hotovo) ✅ DOKONČENO
@@ -237,10 +249,14 @@
 16. ✅ Sekce Nastavení: skrývatelná, Formát výstupu (Notová osnova / Textový výstup)
 17. ✅ Notová osnova bez borderu; pozadí a barvy dle tématu (`--color-staff-bg`, `--color-staff-ink`)
 
+### Fáze 4 - Technický dluh (plán)
+18. **Refaktoring ui.js** – rozdělení do modulů (cílově max. 600 řádků/soubor), viz bod 11 v Doplňkových úkolech.
+
 ## 📝 Poznámky
 
-- Projekt je **client-side** aplikace (žádný PHP), takže PHP audit není relevantní
-- Používá se **Tailwind CSS** přes CDN + vlastní **CSS proměnné** v `main.css` pro design systém
+- **Únor 2026:** Doplněna stránka Přístupnost (`accessibility.php`), odkaz v patičce, cache-busting (CSS/JS), klávesové zkratky (dokumentace + tooltip u tlačítka Solve). Informace o přístupnosti a zkratkách jsou v kartě Hlavní funkce (features.tech.desc). Dokumentace (`main.md`, `ui.md`) a audit aktualizovány.
+- Projekt je **client-side** aplikace (PHP jen pro layout), takže PHP audit je omezený
+- **Tailwind CSS** přes CDN je záměrná volba (rychlý vývoj UI); .cursorrules preferuje sémantické CSS – design systém zůstává v `main.css`
 - **VexFlow** (CDN, CJS 4.2.5) pro vykreslení notové osnovy (basový klíč, celé noty, anotace polohy/prsty/tóny, posuvky před notou)
 - **Nastavení**: skrývatelná sekce pod výstupem, Formát výstupu (Notová osnova / Textový výstup)
 - **Překreslení při změně tématu**: `runSolver` při prázdném vstupu překreslí z `lastResult`/`lastInput`; notová osnova i hmatník respektují světlé/tmavé téma

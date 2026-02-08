@@ -27,7 +27,8 @@ const I18N_BASE = new URL('../i18n/', import.meta.url).href;
  */
 export async function loadLocale(locale) {
     if (messages[locale]) return messages[locale];
-    const url = `${I18N_BASE}${locale}.json`;
+    const version = typeof window !== 'undefined' ? window.__I18N_VERSION__ : undefined;
+    const url = `${I18N_BASE}${locale}.json${version != null ? '?v=' + version : ''}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`i18n: Failed to load ${url}`);
     const data = await res.json();
@@ -119,6 +120,10 @@ export function applyTranslations() {
     document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
         const key = el.getAttribute('data-i18n-aria-label');
         if (key) el.setAttribute('aria-label', t(key));
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-title');
+        if (key) el.setAttribute('title', t(key));
     });
 }
 

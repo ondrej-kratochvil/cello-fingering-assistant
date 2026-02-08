@@ -9,34 +9,37 @@ Tento projekt je klientská (HTML/JS) aplikace pro návrh violoncellového prsto
 - [Uživatelské rozhraní](./ui.md)
 - [Testování](./testing.md)
 - [Manuální testy](./manual_tests.md)
-- [Roadmapa](./roadmap.md) - Seznam úkolů k opravě podle .cursorrules
+- [Roadmapa](./roadmap.md) – úkoly a plán podle .cursorrules
+- [Audit](./audit.md) – kontrola projektu vůči .cursorrules (stav k únoru 2026)
 
 ## Stručný přehled projektu
 
-- `index.php` – hlavní stránka aplikace **Cello Fingering Assistant**, input sekvence tónů, vizualizace prstokladu a hmatníku (Canvas). PHP includuje topbar a footer.
+- `index.php` – hlavní stránka aplikace **Cello Fingering Assistant**, input sekvence tónů, vizualizace prstokladu a hmatníku (Canvas). PHP includuje topbar a footer. Sekce O aplikaci je skrývatelná (preference v `localStorage`).
+- `accessibility.php` – stránka **Prohlášení o přístupnosti** (úroveň souladu WCAG 2.1, kontakt, datum revize) a **klávesové zkratky** (Enter, Escape). Odkaz v patičce na všech stránkách.
 - `assets/js/fingering.js` – model hmatníku a hlavní algoritmus `solve(sequence)`.
 - `assets/js/ui.js` – napojení UI na algoritmus, vykreslení prstokladu a vizualizace hmatníku.
-- `assets/js/i18n.js` – vlastní i18n modul: načítání JSON z `assets/i18n/`, `t(key)`, jazyk a H/B v `localStorage`, `applyTranslations()`.
-- `assets/i18n/cs.json`, `assets/i18n/en.json` – překlady UI, O aplikaci, Hlavní funkce, Tóny/prsty/polohy, testů; snadné přidání dalších jazyků.
+- `assets/js/i18n.js` – vlastní i18n modul: načítání JSON z `assets/i18n/`, `t(key)`, jazyk a H/B v `localStorage`, `applyTranslations()`; podpora `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]`, `[data-i18n-title]` (tooltipy).
+- `assets/i18n/cs.json`, `assets/i18n/en.json` – překlady UI, O aplikaci, Hlavní funkce, Přístupnost, testů; snadné přidání dalších jazyků.
 - `assets/js/tests.js` – sada testů nad algoritmem a pomocný test runner.
 - `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (notová osnova, i18n).
 - `dev/tests/test.php` – samostatná stránka pro běh a vizuální zobrazení testů v prohlížeči.
 - `assets/css/main.css` – centralizovaný design systém s CSS proměnnými a Light/Dark mode podporou.
+- **Cache-busting**: V `index.php`, `accessibility.php` a `dev/tests/test.php` se u CSS a JS používá query parametr `?v=<?= filemtime(...) ?>`. Načítání i18n JSON v `i18n.js` používá `window.__I18N_VERSION__` (větší z `filemtime(cs.json)` a `filemtime(en.json)`), aby prohlížeč po změně překladů načetl nové soubory.
 
-Projekt používá **PHP** pro layout (hlavička a patička v `assets/partials/`); logika a UI běží v prohlížeči, databáze není. Podporuje **multijazyčnost** (Čeština, English) a **označení tónu H/B** (H/Hes vs. B/Bb) v Nastavení.
+Projekt používá **PHP** pro layout (hlavička a patička v `assets/partials/`); logika a UI běží v prohlížeči, databáze není. Podporuje **multijazyčnost** (Čeština, English), **označení tónu H/B** (H/Hes vs. B/Bb) v Nastavení a **přístupnost** (prohlášení, klávesové zkratky, tooltip u hlavních akcí).
 
 ## Jak pokračovat v budoucím vývoji
 
 ### Technický stack
-- **Frontend**: HTML5, CSS3 (design systém s CSS proměnnými), Vanilla JavaScript (ES6+ moduly)
+- **Frontend**: HTML5, CSS3 (design systém s CSS proměnnými v `main.css`), Vanilla JavaScript (ES6+ moduly)
 - **Build tools**: Žádné (čistý vanilla stack)
-- **Dependencies**: Pouze Tailwind CSS přes CDN (pro rychlý vývoj UI)
+- **Dependencies**: Tailwind CSS přes CDN (záměrně pro rychlý vývoj UI; předpis .cursorrules preferuje sémantické CSS – design systém a barvy zůstávají v `main.css`, Tailwind slouží pro layout a utility)
 
 ### Architektura
-- **Struktura**: Root obsahuje `index.php`, `.htaccess`, `.gitignore`, `README.md`, `.cursorrules`
-- **Assets**: `/assets/css`, `/assets/js`, `/assets/img`, `/assets/i18n` (cs.json, en.json); VexFlow (CDN, CJS build)
+- **Struktura**: Root obsahuje `index.php`, `accessibility.php`, `.htaccess`, `.gitignore`, `README.md`, `.env.example`, `.cursorrules`
+- **Assets**: `/assets/css`, `/assets/js`, `/assets/img`, `/assets/i18n` (cs.json, en.json), `/assets/partials` (topbar, footer); VexFlow (CDN, CJS build)
 - **Dokumentace a testy**: `/dev/docs`, `/dev/tests` (nenasazuje se na produkci)
-- **i18n**: Vlastní modul `i18n.js`, překlady v JSON; jazyk a H/B ukládány do `localStorage`
+- **i18n**: Vlastní modul `i18n.js`, překlady v JSON; jazyk a H/B ukládány do `localStorage`; `applyTranslations()` obsluhuje i `[data-i18n-title]` pro tooltipy
 
 ### Rozšíření funkcionality
 

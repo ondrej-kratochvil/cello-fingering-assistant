@@ -1,7 +1,21 @@
 // --- UI FUNCTIONS ---
-import { solve, model } from './fingering.js';
-import { appendLocalTest } from './tests.js';
-import { t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations } from './i18n.js';
+// Dynamický import s cache-busting (verze z window.__JS_VERSIONS__ v PHP)
+const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
+const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
+
+let solve, model, appendLocalTest, t, setNoteNaming, getNoteNaming, getNoteNamingCurrent, applyTranslations;
+
+export const ready = Promise.all([
+  import(q('./fingering.js', 'fingering')).then((m) => { solve = m.solve; model = m.model; }),
+  import(q('./tests.js', 'tests')).then((m) => { appendLocalTest = m.appendLocalTest; }),
+  import(q('./i18n.js', 'i18n')).then((m) => {
+    t = m.t;
+    setNoteNaming = m.setNoteNaming;
+    getNoteNaming = m.getNoteNaming;
+    getNoteNamingCurrent = m.getNoteNamingCurrent;
+    applyTranslations = m.applyTranslations;
+  }),
+]);
 
 /**
  * Mapování tónů na MIDI čísla (ISO: C2=36, C3=48, C4=60)
@@ -22,6 +36,31 @@ function getMidiNumber(noteName) {
         'c2': 72, 'c2#': 73, 'db2': 73,
     };
     return noteMap[n] || noteMap[n.toLowerCase()] || 60;
+}
+
+/** Prahy pro výběr klíče (notová osnova): nad a1 → houslový; v houslovém zpět na basový až od d1 a nižší */
+const A1_MIDI_CLEF = 69;
+const D1_MIDI_CLEF = 62;
+
+/**
+ * Vrátí pole klíčů ('bass' | 'treble') pro každou notu v pořadí.
+ * Pravidlo: nota > a1 → treble; v treble zpět na bass až při notě d1 a nižší (MIDI ≤ 62).
+ * @param {string[]} input - pole názvů tónů (např. ['a1','a1#','h1','e1','f1','eb1','d1'])
+ * @returns {('bass'|'treble')[]}
+ */
+export function getClefPerNote(input) {
+    const clefPerNote = [];
+    let currentClef = 'bass';
+    for (let i = 0; i < input.length; i++) {
+        const midi = getMidiNumber(input[i]);
+        if (midi > A1_MIDI_CLEF) {
+            currentClef = 'treble';
+        } else if (currentClef === 'treble' && midi <= D1_MIDI_CLEF) {
+            currentClef = 'bass';
+        }
+        clefPerNote.push(currentClef);
+    }
+    return clefPerNote;
 }
 
 /**
@@ -598,15 +637,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     // Zmenšená výška - menší odsazení shora
     const totalHeight = 200;
 
-    // Zjistit index první noty vyšší než a1 (MIDI 69)
-    let firstHighNoteIndex = -1;
-    for (let i = 0; i < input.length; i++) {
-        const midi = getMidiNumber(input[i]);
-        if (midi > 69) {
-            firstHighNoteIndex = i;
-            break;
-        }
-    }
+    const clefPerNote = getClefPerNote(input);
 
     // Vytvořit div pro VexFlow renderer
     const staffDiv = document.createElement('div');
@@ -622,21 +653,19 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     const bodyStyles = getComputedStyle(document.body);
     const staffInk = bodyStyles.getPropertyValue('--color-staff-ink').trim() || bodyStyles.getPropertyValue('--color-text-primary').trim() || '#0f172a';
 
-    // Počáteční klíč: pokud jsou všechny noty vyšší než a1, použít houslový klíč (bez zbytečné změny uprostřed)
-    const initialClef = firstHighNoteIndex === 0 ? 'treble' : 'bass';
+    // Počáteční klíč dle stavové logiky (clefPerNote[0])
+    const initialClef = clefPerNote[0] || 'bass';
     const stave = new Stave(0, 50, totalWidth);
     stave.addClef(initialClef);
     context.setFillStyle(staffInk);
     context.setStrokeStyle(staffInk);
     stave.setContext(context).draw();
 
-    // Převést noty na VexFlow formát a vytvořit StaveNote objekty s anotacemi
+    // Převést noty na VexFlow formát a vytvořit StaveNote objekty s anotacemi (klíč dle clefPerNote)
     const notes = input.map((noteName, idx) => {
         const step = result[idx];
         const vexFlowNote = noteToVexFlow(noteName);
-        const midi = getMidiNumber(noteName);
-        // Pro noty vyšší než a1 použít treble clef, jinak bass
-        const noteClef = midi > 69 ? 'treble' : 'bass';
+        const noteClef = clefPerNote[idx];
 
         // Použít whole note ('w') - celá nota bez nožičky
         const note = new StaveNote({
@@ -699,26 +728,16 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         return note;
     });
 
-    // Vytvořit Voice a přidat noty (s případnou změnou klíče uprostřed)
-    let voice;
-
-    if (firstHighNoteIndex === 0) {
-        // Všechny noty jsou v houslovém klíči – osnova už má treble, žádná ClefNote
-        voice = new Voice({ num_beats: notes.length, beat_value: 1 });
-        voice.addTickables(notes);
-    } else if (firstHighNoteIndex > 0) {
-        // Smíšené: nejdřív basové noty, pak změna klíče, pak houslové noty
-        const tickables = [];
-        for (let i = 0; i < firstHighNoteIndex; i++) tickables.push(notes[i]);
-        tickables.push(new ClefNote('treble'));
-        for (let i = firstHighNoteIndex; i < notes.length; i++) tickables.push(notes[i]);
-        voice = new Voice({ num_beats: notes.length, beat_value: 1 });
-        voice.addTickables(tickables);
-    } else {
-        // Žádné vysoké noty – pouze basový klíč
-        voice = new Voice({ num_beats: notes.length, beat_value: 1 });
-        voice.addTickables(notes);
+    // Vytvořit Voice a přidat noty; vložit ClefNote vždy, když se klíč změní oproti předchozí notě
+    const tickables = [];
+    for (let i = 0; i < notes.length; i++) {
+        if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
+            tickables.push(new ClefNote(clefPerNote[i]));
+        }
+        tickables.push(notes[i]);
     }
+    const voice = new Voice({ num_beats: notes.length, beat_value: 1 });
+    voice.addTickables(tickables);
 
     // Formátovat noty s pevnou šířkou
     const formatter = new Formatter();
@@ -1907,14 +1926,22 @@ window.drawFingerboard = drawFingerboard;
 window.redrawResults = function redrawResults() {
     if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
 };
-Object.defineProperty(window, 'lastResult', {
-    get: () => lastResult,
-    set: (val) => { lastResult = val; }
-});
-Object.defineProperty(window, 'lastInputForSolve', {
-    get: () => lastInputForSolve,
-    set: (val) => { lastInputForSolve = val; }
-});
+if (!Object.getOwnPropertyDescriptor(window, 'lastResult')) {
+    Object.defineProperty(window, 'lastResult', {
+        configurable: true,
+        enumerable: true,
+        get: () => lastResult,
+        set: (val) => { lastResult = val; }
+    });
+}
+if (!Object.getOwnPropertyDescriptor(window, 'lastInputForSolve')) {
+    Object.defineProperty(window, 'lastInputForSolve', {
+        configurable: true,
+        enumerable: true,
+        get: () => lastInputForSolve,
+        set: (val) => { lastInputForSolve = val; }
+    });
+}
 
 /** Inicializace UI (pouze na hlavní stránce, ne na Testech). Volá se po initI18n. */
 export function initUI() {
@@ -2014,8 +2041,8 @@ export function initUI() {
     ensureEditKeyboardInput();
 
     window.addEventListener('languageChange', () => {
-        updateEditButtonLabel();
         updateSaveTestModalTexts();
+        updateEditButtonLabel();
         if (lastResult && lastInputForSolve) runSolver({ skipHideAbout: true, preserveState: true });
     });
 

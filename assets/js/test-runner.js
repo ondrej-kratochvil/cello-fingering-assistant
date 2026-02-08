@@ -1,10 +1,33 @@
 // --- TEST RUNNER UI ---
-// UI logika pro test runner v prohlížeči
+// UI logika pro test runner v prohlížeči (dynamický import s cache-busting)
 
-import { solve } from './fingering.js';
-import { compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites } from './tests.js';
-import { renderStaffOutput, toPositionLabel } from './ui.js';
-import { t } from './i18n.js';
+const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
+const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
+
+let solve, compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites;
+let renderStaffOutput, toPositionLabel, getClefPerNote, t;
+
+const loadDeps = (async () => {
+  const [fingeringMod, testsMod, uiMod, i18nMod] = await Promise.all([
+    import(q('./fingering.js', 'fingering')),
+    import(q('./tests.js', 'tests')),
+    import(q('./ui.js', 'ui')),
+    import(q('./i18n.js', 'i18n')),
+  ]);
+  solve = fingeringMod.solve;
+  compareFingering = testsMod.compareFingering;
+  formatFingering = testsMod.formatFingering;
+  prepareInputForSolve = testsMod.prepareInputForSolve;
+  testSuites = testsMod.testSuites;
+  getLocalTestSuites = testsMod.getLocalTestSuites;
+  renderStaffOutput = uiMod.renderStaffOutput;
+  toPositionLabel = uiMod.toPositionLabel;
+  getClefPerNote = uiMod.getClefPerNote;
+  t = i18nMod.t;
+  await uiMod.ready;
+})();
+
+export const ready = loadDeps;
 
 function getStringColors() {
     const body = getComputedStyle(document.body);
@@ -61,9 +84,14 @@ export function runAllTests() {
         const inputForSolve = prepareInputForSolve(suite.input);
         const result = solve(inputForSolve);
         const isSuccessOnly = !!suite.successOnly;
-        const isPass = isSuccessOnly
+        let isPass = isSuccessOnly
             ? (result != null && result.length === suite.input.length)
             : compareFingering(result, suite.expected);
+        if (isPass && Array.isArray(suite.expectedClefs)) {
+            const actualClefs = getClefPerNote(suite.input);
+            isPass = actualClefs.length === suite.expectedClefs.length &&
+                actualClefs.every((c, i) => c === suite.expectedClefs[i]);
+        }
 
         if (isPass) {
             passed++;
@@ -219,5 +247,8 @@ export function runAllTests() {
     }
 }
 
-// Export na window pro onclick atribut
-window.runAllTests = runAllTests;
+// Export na window pro onclick atribut – wrapper čeká na načtení závislostí
+window.runAllTests = async function runAllTestsFromButton() {
+    await loadDeps;
+    runAllTests();
+};

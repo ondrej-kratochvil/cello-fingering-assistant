@@ -2,7 +2,7 @@
 
 ## Automatizované testy (JS)
 
-Testy jsou definovány v `assets/js/tests.js` a spouštějí se především **přes `dev/tests/test.php`** v prohlížeči. Stránka volá `await initI18n()` a pak `runAllTests()` z `test-runner.js`; UI i názvy/popisy testů se překládají dle zvoleného jazyka.
+Testy jsou definovány v `assets/js/tests.js` a spouštějí se především **přes `dev/tests/test.php`** v prohlížeči. Stránka volá `await initI18n()` a pak čeká na `testRunner.ready` (dynamické načtení závislostí v `test-runner.js`); tlačítko „Spustit všechny testy“ je do té doby disabled. `runAllTests()` je async wrapper: nejdřív `await loadDeps`, pak spustí testy. UI i názvy/popisy testů se překládají dle zvoleného jazyka.
 
 ### Testovací framework
 
@@ -42,18 +42,22 @@ Každý test má:
 - `nameKey`, `descriptionKey` – i18n klíče pro překlad názvu a popisu (např. `test.basic.name`, `test.scale.cdur.desc`),
 - `input` – sekvenci tónů,
 - `expected` – očekávaný prstoklad (pole `{s, p, f, ext}`); u všech sad včetně stupnic,
+- volitelně **`expectedClefs`** – pole `'bass' | 'treble'` pro každou notu; runner ověří `getClefPerNote(suite.input)` vůči tomuto poli,
+- **`successOnly`** – pokud true, stačí že algoritmus vrátí řešení o správné délce (bez porovnání `expected`),
 - `description` – textový komentář (fallback).
 - `prepareInputForSolve` aplikuje B→H, enharmonické záměny a `normalizeOctaveAccidentalSwap`.
+
+**Test střídání klíčů** (např. `test.clefSwitch`): sekvence `a1 a1# h1 e1 f1 eb1 d1` – basový klíč u a1, přechod na houslový po a1#, zpět na bas u d1. V sadě je `expectedClefs: ['bass','treble','treble','treble','treble','treble','bass']`; runner po kontrole prstokladu ověří shodu s `getClefPerNote(suite.input)`.
 
 ### `test.php` – vizuální runner
 
 Stránka `test.php`:
 
-- Načítá `js/fingering.js` a `js/tests.js`.
-- Funkce `runAllTests()`:
+- Načítá `test-runner.js` (ES modul); ten dynamicky importuje `fingering.js`, `tests.js`, `ui.js`, `i18n.js` (s cache-bustingem z `__JS_VERSIONS__`). Tlačítko „Spustit všechny testy“ se odblokuje po `await testRunner.ready`.
+- Funkce `runAllTests()` (volaná po načtení závislostí):
   - projde `testSuites` + lokální testy z `localStorage`,
   - pro každý test zavolá `solve()`,
-  - použije `compareFingering()` k vyhodnocení,
+  - vyhodnotí: `compareFingering()` (nebo u `successOnly` jen shoda délky); pokud je definováno `expectedClefs`, ověří `getClefPerNote(suite.input)` vůči `suite.expectedClefs`,
   - vykreslí:
     - vstup,
     - **Pro selhané testy s očekávaným výsledkem**: Notové osnovy pro očekávaný i skutečný výsledek s popisky "Očekáváno" a "Skutečnost" nad každou osnovou,

@@ -1,3 +1,4 @@
+<?php declare(strict_types=1); ?>
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -6,7 +7,7 @@
     <meta name="description" content="Testovací stránka pro ověření správnosti algoritmu prstokladu violoncella.">
     <title>Testy - Cello Fingering Assistant</title>
     <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
-    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/main.css?v=<?= filemtime(__DIR__ . '/../../assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 p-4 md:p-8 font-sans text-slate-900">
@@ -26,8 +27,8 @@ require __DIR__ . '/../../assets/partials/topbar.php';
                 <!-- Vyplní se dynamicky v runAllTests() -->
             </div>
 
-            <button onclick="runAllTests()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95 mb-6"
+            <button id="runAllTestsButton" onclick="runAllTests()" disabled
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-10 rounded-2xl transition-all shadow-lg active:scale-95 mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
                     data-i18n="test.runAll">
                 Spustit všechny testy
             </button>
@@ -38,34 +39,50 @@ require __DIR__ . '/../../assets/partials/topbar.php';
 <?php require __DIR__ . '/../../assets/partials/footer.php'; ?>
     </div>
 
+<?php
+$jsDir = __DIR__ . '/../../assets/js';
+$i18nDir = __DIR__ . '/../../assets/i18n';
+$JS_VERSIONS = [
+    'i18n' => filemtime($jsDir . '/i18n.js'),
+    'navigation' => filemtime($jsDir . '/navigation.js'),
+    'fingering' => filemtime($jsDir . '/fingering.js'),
+    'tests' => filemtime($jsDir . '/tests.js'),
+    'ui' => filemtime($jsDir . '/ui.js'),
+    'testRunner' => filemtime($jsDir . '/test-runner.js'),
+];
+$I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
+?>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
+    <script>window.__I18N_SCRIPT__ = new URL('../../assets/js/i18n.js' + (window.__JS_VERSIONS__ && window.__JS_VERSIONS__.i18n != null ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
     <script type="module">
-        import { initI18n } from '../../assets/js/i18n.js';
-        import { initNavigation, setCanvasRedrawCallback } from '../../assets/js/navigation.js';
-        import { runAllTests } from '../../assets/js/test-runner.js';
+        const V = window.__JS_VERSIONS__ || {};
+        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initNavigation, setCanvasRedrawCallback } = await import('../../assets/js/navigation.js' + (V.navigation != null ? '?v=' + V.navigation : ''));
+        const testRunner = await import('../../assets/js/test-runner.js' + (V.testRunner != null ? '?v=' + V.testRunner : ''));
 
         async function main() {
             if (document.readyState === 'loading') {
                 await new Promise(r => document.addEventListener('DOMContentLoaded', r));
             }
+            await testRunner.ready;
+            const runBtn = document.getElementById('runAllTestsButton');
+            if (runBtn) runBtn.disabled = false;
             await initI18n();
-            // Překreslit osnovy při změně dark mode
             setCanvasRedrawCallback(() => {
-                // Překreslit všechny testy při změně dark mode
                 const testResults = document.getElementById('testResults');
                 if (testResults && testResults.children.length > 0) {
-                    runAllTests();
+                    testRunner.runAllTests();
                 }
             });
-            // Překreslit testy při změně jazyka
             window.addEventListener('languageChange', () => {
                 const testResults = document.getElementById('testResults');
                 if (testResults && testResults.children.length > 0) {
-                    runAllTests();
+                    testRunner.runAllTests();
                 }
             });
             await initNavigation();
-            runAllTests();
+            testRunner.runAllTests();
         }
         main();
     </script>

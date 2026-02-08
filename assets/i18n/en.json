@@ -2,6 +2,7 @@
   "nav.home": "Home",
   "nav.tests": "Tests",
   "nav.about": "About",
+  "nav.accessibility": "Accessibility",
   "header.pageTitle": "Cello Fingering Assistant",
   "header.tagline": "Recommends suitable fingering for the given notes",
   "aria.darkMode": "Toggle Dark Mode",
@@ -24,7 +25,7 @@
   "features.fingerboard.title": "🎨 Visual fingerboard",
   "features.fingerboard.desc": "Realistic fingerboard visualisation with a <strong>black background</strong> (in both light and dark mode), showing the recommended fingering with coloured strings and hand-motion links. <strong>Proportional</strong> spacing between positions (smaller towards the bridge) matches real cello distances. Responsive with horizontal scroll.",
   "features.tech.title": "⚙️ Technical features",
-  "features.tech.desc": "Light/dark theme (device setting or manual toggle in menu), multilingual (menu – flags), H/B note naming in Settings. Test page for algorithm verification.",
+  "features.tech.desc": "Light/dark theme (device setting or manual toggle in menu), multilingual (menu – flags), H/B note naming in Settings. Test page for algorithm verification. In the footer you will find a link to the <strong>Accessibility statement</strong> and a description of keyboard shortcuts (e.g. <strong>Enter</strong> in the note input field runs the fingering suggestion).",
 
   "tones.title": "Tones, fingers and positions",
   "tones.intro": "Position label conversion table: diatonic (I, II↓, …) vs chromatic (I–XII, Roman numerals). The note is the tone on the A string with 1st finger in that position.",
@@ -123,6 +124,8 @@
   "test.openD.desc": "Prefers the open D string",
   "test.long.name": "Long sequence g a h c1 d1 e1 f1# g1",
   "test.long.desc": "Only 2 positions",
+  "test.clefSwitch.name": "Clef switching a1 a1# h1 e1 f1 eb1 d1",
+  "test.clefSwitch.desc": "Bass → treble after a1#, back to bass at d1",
   "test.scale.cdur.name": "C major",
   "test.scale.cdur.desc": "C major scale",
   "test.scale.cisdur.name": "C♯ major",
@@ -150,5 +153,16 @@
   "test.scale.hesdur.name": "B♭ major",
   "test.scale.hesdur.desc": "B♭ major scale",
   "test.scale.hdur.name": "B major",
-  "test.scale.hdur.desc": "B major scale"
+  "test.scale.hdur.desc": "B major scale",
+
+  "accessibility.pageTitle": "Accessibility statement",
+  "accessibility.tagline": "Accessibility statement and keyboard shortcuts",
+  "accessibility.intro": "The Cello Fingering Assistant application aims to be accessible in line with web content accessibility requirements.",
+  "accessibility.compliance": "Compliance level: Partially compliant with WCAG 2.1 (Level AA) – semantic HTML, contrast, form and button labels, keyboard support. Some interactive elements (e.g. fingerboard visualisation) may be fully usable mainly with mouse or touch.",
+  "accessibility.contact": "Contact for accessibility feedback: Sensio.cz s.r.o., https://www.sensio.cz/",
+  "accessibility.revised": "Last revised: February 2026",
+  "accessibility.shortcutsTitle": "Keyboard shortcuts",
+  "accessibility.shortcutEnter": "Enter – in the note input field, runs the fingering suggestion (\"Suggest fingering\" button)",
+  "accessibility.shortcutEscape": "Escape – closes the open dialog (modal)",
+  "aria.solveShortcut": "Suggest fingering (Enter)"
 }

@@ -79,9 +79,13 @@ export function initDarkMode(options = {}) {
 
 /**
  * Inicializuje přepínač jazyka (vlajky .lang-flag[data-lang] v menu)
+ * Načítá i18n se stejným cache-busting parametrem jako ui.js a test-runner.js,
+ * aby všichni sdíleli jednu instanci modulu (správná reakce na změnu jazyka).
  */
 export async function initLanguageSwitcher() {
-    const { setLanguage, getLanguage } = await import('./i18n.js');
+    const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
+    const i18nUrl = (typeof window !== 'undefined' && window.__I18N_SCRIPT__) || ('./i18n.js' + (V.i18n != null ? '?v=' + V.i18n : ''));
+    const { setLanguage, getLanguage } = await import(i18nUrl);
     const flags = document.querySelectorAll('.lang-flag[data-lang]');
     if (!flags.length) return;
 
