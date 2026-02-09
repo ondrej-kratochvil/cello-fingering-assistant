@@ -1,6 +1,6 @@
 <?php
 if (!isset($base)) $base = '';
-if (!isset($pageTitle)) $pageTitle = 'Cello Fingering Assistant';
+if (!isset($pageTitle)) $pageTitle = 'Cello App Kit';
 if (!isset($pageTitleKey)) $pageTitleKey = 'header.pageTitle';
 if (!isset($taglineKey)) $taglineKey = 'header.tagline';
 if (!isset($taglineFallback)) $taglineFallback = '';
@@ -9,11 +9,12 @@ $t = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
 $ptk = htmlspecialchars($pageTitleKey, ENT_QUOTES, 'UTF-8');
 $tk = htmlspecialchars($taglineKey, ENT_QUOTES, 'UTF-8');
 $tf = htmlspecialchars($taglineFallback, ENT_QUOTES, 'UTF-8');
+require __DIR__ . '/../php/tools_config.php';
 ?>
 <header class="app-header bg-indigo-950 p-8 text-white relative">
     <div class="flex items-center justify-between gap-4 mb-4">
         <a href="<?= $b ?>index.php" class="flex items-center gap-3 hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
-            <img src="<?= $b ?>assets/img/logo.svg" alt="Cello Fingering Assistant Logo" class="w-12 h-12 flex-shrink-0">
+            <img src="<?= $b ?>assets/img/logo.svg" alt="Cello App Kit" class="w-12 h-12 flex-shrink-0">
             <h1 id="pageTitle" class="text-3xl font-black tracking-tight italic truncate" data-i18n="<?= $ptk ?>"><?= $t ?></h1>
         </a>
         <div class="flex items-center gap-4 flex-shrink-0">
@@ -24,8 +25,27 @@ $tf = htmlspecialchars($taglineFallback, ENT_QUOTES, 'UTF-8');
             </button>
             <nav id="mainNav" class="main-nav md:ml-auto" aria-label="Hlavní">
             <a href="<?= $b ?>index.php" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.home">Home</a>
-            <a href="<?= $b ?>dev/tests/test.php" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.tests">Testy</a>
+            <details class="nav-details inline-block md:relative" id="navToolsDetails">
+                <summary class="nav-link cursor-pointer list-none font-medium text-indigo-200 hover:text-white transition-colors [&::-webkit-details-marker]:hidden" data-i18n="nav.tools">Nástroje</summary>
+                <div class="nav-dropdown-menu absolute left-0 mt-1 py-2 bg-indigo-950 rounded-lg shadow-xl border border-indigo-800 min-w-[10rem] z-50">
+<?php foreach ($TOOLS_ORDER as $num => $tool): ?>
+<?php if (!empty($tool['submenu'])): ?>
+                    <div class="nav-tool-with-submenu group relative">
+                        <a href="<?= htmlspecialchars($tool['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors"><?= $num ?>. <span data-i18n="<?= $tool['navKey'] ?>"></span></a>
+                        <div class="nav-submenu absolute left-0 top-full mt-0 py-2 bg-indigo-900 rounded-lg border border-indigo-800 min-w-[8rem] z-50 opacity-0 invisible md:group-hover:opacity-100 md:group-hover:visible transition-opacity">
+<?php foreach ($tool['submenu'] as $sub): ?>
+                            <a href="<?= htmlspecialchars($sub['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 pl-6 text-indigo-200 hover:bg-indigo-800 hover:text-white transition-colors" data-i18n="<?= $sub['navKey'] ?>">Testy</a>
+<?php endforeach; ?>
+                        </div>
+                    </div>
+<?php else: ?>
+                    <a href="<?= htmlspecialchars($tool['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors"><?= $num ?>. <span data-i18n="<?= $tool['navKey'] ?>"></span></a>
+<?php endif; ?>
+<?php endforeach; ?>
+                </div>
+            </details>
             <a href="<?= $b ?>index.php" id="menuAboutLink" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.about">O aplikaci</a>
+            <a href="https://violoncello.ondrejkratochvil.eu" target="_blank" rel="noopener noreferrer" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.portal">Portál o violoncelle</a>
             <button type="button" class="dark-mode-toggle text-indigo-200 hover:text-white transition-colors touch-target p-1 nav-link" aria-label="Přepnout Dark Mode" data-i18n-aria-label="aria.darkMode">
                 <svg class="dark-mode-icon w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>

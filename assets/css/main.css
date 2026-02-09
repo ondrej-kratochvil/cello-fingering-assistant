@@ -596,6 +596,30 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
     min-width: 2.75rem;
 }
 
+/* Dropdown Nástroje v menu */
+.nav-details {
+    position: relative;
+}
+.nav-details .nav-dropdown-menu {
+    position: absolute;
+    left: 0;
+    top: 100%;
+}
+@media (max-width: 767px) {
+    .nav-details .nav-dropdown-menu {
+        position: static;
+        margin-top: 0.5rem;
+        margin-left: 0.5rem;
+    }
+    .nav-tool-with-submenu .nav-submenu {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        margin-left: 0.5rem;
+        margin-top: 0.25rem;
+    }
+}
+
 /* Jednotné menu (main-nav): desktop inline, mobil rozbalovací */
 .main-nav {
     display: flex;

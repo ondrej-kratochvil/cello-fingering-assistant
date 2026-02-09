@@ -23,7 +23,7 @@ export const ready = Promise.all([
  * Kontra oktáva (C1–B1): MIDI 24–35. Velké Ces = kontra H = H1 = MIDI 35.
  */
 function getMidiNumber(noteName) {
-    const n = normalizeOctaveAccidentalSwap(noteName);
+    const n = normalizeOctaveAccidentalSwap(germanToCanonical(noteName));
     const noteMap = {
         'Hb1': 34, 'Cb': 35, 'H1': 35,
         'C': 36, 'C#': 37, 'D': 38, 'D#': 39, 'E': 40, 'Fb': 40, 'E#': 41, 'F': 41, 'F#': 42,
@@ -372,6 +372,11 @@ let editKeyboardInputEl = null;
 // Aktuální režim výstupu: 'staff' (notová osnova) nebo 'text' (textový výstup)
 let currentOutputFormat = 'staff';
 
+/** Přehrávání: zvýraznění aktuální noty na osnově */
+let currentSetStaffHighlight = null;
+/** Stav přehrávání: bpm, playing, currentIndex, timeoutId, audioContext */
+let playbackState = { bpm: 480, playing: false, currentIndex: 0, timeoutId: null, audioContext: null };
+
 /** Režim označení poloh: 'diatonic' (I, II↓, …) nebo 'chromatic' (I–XIV, římsky). Výchozí diatonické. */
 let currentPositionLabelMode = 'diatonic';
 
@@ -438,7 +443,8 @@ function normalizeInputTokens(input) {
         'H#': 'c', 'h#': 'c1'
     };
     return input.map((token) => {
-        let x = normalizeOctaveAccidentalSwap(token);
+        let x = germanToCanonical(token);
+        x = normalizeOctaveAccidentalSwap(x);
         x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
         const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
         if (flat) return flat;
@@ -452,6 +458,75 @@ function arraysEqual(a, b) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
     return a.every((val, idx) => val === b[idx]);
+}
+
+/**
+ * Přehrání jedné noty přes Web Audio API (frekvence z MIDI).
+ * @param {AudioContext} ctx
+ * @param {number} midi - MIDI číslo noty
+ * @param {number} durationSeconds - délka tónu v sekundách
+ */
+function playNote(ctx, midi, durationSeconds) {
+    if (!ctx) return;
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + durationSeconds);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + durationSeconds);
+}
+
+/**
+ * Zastaví přehrávání a vynuluje stav.
+ */
+function stopPlayback() {
+    if (playbackState.timeoutId != null) {
+        clearTimeout(playbackState.timeoutId);
+        playbackState.timeoutId = null;
+    }
+    playbackState.playing = false;
+    if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
+}
+
+/**
+ * Spustí nebo pokračuje v přehrávání sekvence.
+ * @param {string[]} noteTokens - normalizované tokeny not (pro getMidiNumber)
+ * @param {number} bpm - tempo (celé noty = 4 doby, 2 celé za sekundu při 480 BPM)
+ */
+function startPlayback(noteTokens, bpm) {
+    if (!noteTokens || noteTokens.length === 0) return;
+    if (playbackState.playing) return;
+    playbackState.playing = true;
+    if (playbackState.currentIndex === undefined || playbackState.currentIndex >= noteTokens.length) {
+        playbackState.currentIndex = 0;
+    }
+    playbackState.bpm = bpm;
+    const durationSec = (4 * 60) / bpm; // celá nota v sekundách
+    if (!playbackState.audioContext) {
+        playbackState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = playbackState.audioContext;
+
+    function scheduleNext() {
+        if (!playbackState.playing || playbackState.currentIndex >= noteTokens.length) {
+            playbackState.playing = false;
+            if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
+            return;
+        }
+        const idx = playbackState.currentIndex;
+        if (currentSetStaffHighlight) currentSetStaffHighlight(idx);
+        const midi = getMidiNumber(noteTokens[idx]);
+        playNote(ctx, midi, durationSec * 0.9);
+        playbackState.currentIndex += 1;
+        playbackState.timeoutId = setTimeout(scheduleNext, durationSec * 1000);
+    }
+
+    scheduleNext();
 }
 
 function saveLastFingeringState(state) {
@@ -562,6 +637,36 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     container.appendChild(legend);
 }
 
+/**
+ * Německá notace -is/-es na křížek/béčko.
+ * cis→c#, ces→cb, cis1→c1#, c1is→c1#, es→eb, as→ab, hes→hb.
+ */
+function germanToCanonical(token) {
+    if (!token || typeof token !== 'string') return token;
+    const t = token.trim();
+    if (t === 'es') return 'eb';
+    if (t === 'as') return 'ab';
+    // (písmeno)(volitelně číslo)(is|es)  např. cis1, ces, dis
+    let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
+    if (m) {
+        const letter = m[1];
+        const digit = m[2] || '';
+        const acc = m[3] === 'is' ? '#' : 'b';
+        const out = letter + digit + acc;
+        return digit ? letter.toLowerCase() + digit + acc : out;
+    }
+    // (písmeno)(is|es)(volitelně číslo)  např. c1is, Cis1
+    m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
+    if (m) {
+        const letter = m[1];
+        const acc = m[2] === 'is' ? '#' : 'b';
+        const digit = m[3] || '';
+        if (digit) return letter.toLowerCase() + digit + acc;
+        return letter + acc;
+    }
+    return token;
+}
+
 /** c#1 → c1#, d1b → db1, c#2 → c2#, d2b → db2 (přehození oktávy a posuvky pro alternativní zadání) */
 function normalizeOctaveAccidentalSwap(token) {
     const m1 = token.match(/^([a-g])(#)(1)$/i);
@@ -597,7 +702,7 @@ function toDisplayNote(token) {
  * Velké Ces = kontra H = H1 → Cb/1 resp. B/1 (ISO B1, MIDI 35)
  */
 function noteToVexFlow(noteName) {
-    const n = normalizeOctaveAccidentalSwap(noteName);
+    const n = normalizeOctaveAccidentalSwap(germanToCanonical(noteName));
     const noteMap = {
         'Hb1': 'Bb/1', 'Cb': 'Cb/1', 'H1': 'B/1',
         'C': 'C/2', 'C#': 'C#/2', 'D': 'D/2', 'D#': 'D#/2', 'E': 'E/2', 'Fb': 'Fb/2', 'E#': 'E#/2', 'F': 'F/2', 'F#': 'F#/2',
@@ -751,11 +856,34 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     // Kontejner pro osnovu s horizontálním scrollováním
     const staffContainer = document.createElement('div');
-    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0';
+    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0 relative';
     staffContainer.appendChild(staffDiv);
+
+    let setHighlight = null;
+    if (opts.enableHighlight && result.length > 0) {
+        const highlightEl = document.createElement('div');
+        highlightEl.className = 'staff-note-highlight';
+        highlightEl.setAttribute('aria-hidden', 'true');
+        highlightEl.style.cssText = 'position:absolute;top:50px;left:0;width:44px;height:150px;pointer-events:none;border-radius:6px;transition:left 0.05s linear;';
+        const bodyStyles = getComputedStyle(document.body);
+        const highlightColor = bodyStyles.getPropertyValue('--color-primary').trim() || 'rgba(99,102,241,0.25)';
+        highlightEl.style.backgroundColor = highlightColor;
+        highlightEl.style.left = (clefOffset + 0 * noteSpacing) + 'px';
+        staffContainer.appendChild(highlightEl);
+        setHighlight = (index) => {
+            if (index >= 0 && index < result.length) {
+                highlightEl.style.left = (clefOffset + index * noteSpacing) + 'px';
+                highlightEl.style.display = 'block';
+            } else {
+                highlightEl.style.display = 'none';
+            }
+        };
+        setHighlight(-1);
+    }
+
     container.appendChild(staffContainer);
 
-    if (opts.skipLegend) return staffDiv;
+    if (opts.skipLegend) return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
 
     // Legenda barev strun
     const legend = document.createElement('div');
@@ -777,7 +905,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     });
     legend.appendChild(legendItems);
     container.appendChild(legend);
-    return staffDiv;
+    return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
 }
 
 // Inicializace sekce Nastavení
@@ -886,7 +1014,7 @@ function runSolver(options = {}) {
 
 function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, skipHideAbout, display, wrapper }) {
     if (!display) return;
-    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(t)));
+    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(germanToCanonical(t))));
 
     display.innerHTML = '';
     if (result === null || result === undefined) {
@@ -896,11 +1024,18 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
         return;
     }
 
-    // Při spuštění solveru z uživatelského vstupu skryjeme celý main a uložíme stav
+    // Při spuštění solveru skryjeme blok O aplikaci na stránce Prstoklad (pokud existuje)
     if (!skipHideAbout) {
-        const mainElement = document.querySelector('main');
-        if (mainElement && !mainElement.classList.contains('hidden')) {
-            mainElement.classList.add('hidden');
+        const aboutBlock = document.getElementById('fingeringAboutBlock');
+        const aboutContent = document.getElementById('fingeringAboutContent');
+        if (aboutBlock && aboutContent && !aboutContent.classList.contains('hidden')) {
+            aboutContent.classList.add('hidden');
+            const toggleBtn = document.getElementById('fingeringAboutToggle');
+            const toggleText = document.getElementById('fingeringAboutToggleText');
+            const chevron = document.getElementById('fingeringAboutChevron');
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+            if (toggleText) toggleText.textContent = t('fingering.toggleAbout');
+            if (chevron) chevron.style.transform = 'rotate(-90deg)';
             localStorage.setItem('aboutCollapsed', 'true');
         }
     }
@@ -936,10 +1071,71 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
     const container = document.createElement('div');
     container.className = 'w-full space-y-4';
 
+    // Zastavit přehrávání při novém vykreslení
+    stopPlayback();
+    currentSetStaffHighlight = null;
+
     // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
     let staffDiv = null;
     if (currentOutputFormat === 'staff') {
-        staffDiv = renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
+        const staffResult = renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn, { enableHighlight: true });
+        staffDiv = staffResult && staffResult.staffDiv ? staffResult.staffDiv : staffResult;
+        if (staffResult && typeof staffResult.setHighlight === 'function') currentSetStaffHighlight = staffResult.setHighlight;
+
+        // Pás přehrávání: BPM, Start, Pauza, Na začátek
+        const playbackBar = document.createElement('div');
+        playbackBar.className = 'playback-bar flex flex-wrap items-center gap-3 py-2';
+        const bpmLabel = document.createElement('label');
+        bpmLabel.className = 'text-sm font-bold text-slate-700';
+        bpmLabel.textContent = t('playback.bpm');
+        bpmLabel.htmlFor = 'playbackBpm';
+        const bpmInput = document.createElement('input');
+        bpmInput.type = 'number';
+        bpmInput.id = 'playbackBpm';
+        bpmInput.min = 60;
+        bpmInput.max = 600;
+        bpmInput.value = playbackState.bpm;
+        bpmInput.className = 'w-20 px-2 py-1 border border-slate-300 rounded font-mono text-sm';
+        const playBtn = document.createElement('button');
+        playBtn.type = 'button';
+        playBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg';
+        playBtn.textContent = t('playback.play');
+        const pauseBtn = document.createElement('button');
+        pauseBtn.type = 'button';
+        pauseBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg';
+        pauseBtn.textContent = t('playback.pause');
+        const restartBtn = document.createElement('button');
+        restartBtn.type = 'button';
+        restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg';
+        restartBtn.textContent = t('playback.restart');
+
+        bpmInput.addEventListener('change', () => {
+            const v = Number(bpmInput.value, 10);
+            if (!Number.isNaN(v) && v >= 60 && v <= 600) playbackState.bpm = v;
+        });
+        playBtn.addEventListener('click', () => {
+            if (!playbackState.playing) {
+                const bpm = Number(bpmInput.value, 10);
+                if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
+                startPlayback(inputForSolve, playbackState.bpm);
+            }
+        });
+        pauseBtn.addEventListener('click', stopPlayback);
+        restartBtn.addEventListener('click', () => {
+            stopPlayback();
+            playbackState.currentIndex = 0;
+            if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
+            const bpm = Number(bpmInput.value, 10);
+            if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
+            startPlayback(inputForSolve, playbackState.bpm);
+        });
+
+        playbackBar.appendChild(bpmLabel);
+        playbackBar.appendChild(bpmInput);
+        playbackBar.appendChild(playBtn);
+        playbackBar.appendChild(pauseBtn);
+        playbackBar.appendChild(restartBtn);
+        container.appendChild(playbackBar);
     } else {
         renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
     }
@@ -1966,31 +2162,41 @@ export function initUI() {
         }
     }
 
-    const mainElement = document.querySelector('main');
-    const aboutSection = document.getElementById('aboutSection');
-    const menuAboutLink = document.getElementById('menuAboutLink');
+    const fingeringAboutBlock = document.getElementById('fingeringAboutBlock');
+    const fingeringAboutContent = document.getElementById('fingeringAboutContent');
+    const fingeringAboutToggle = document.getElementById('fingeringAboutToggle');
+    const fingeringAboutToggleText = document.getElementById('fingeringAboutToggleText');
+    const fingeringAboutChevron = document.getElementById('fingeringAboutChevron');
 
-    function toggleAboutSection() {
-        if (mainElement) {
-            const isCurrentlyHidden = mainElement.classList.contains('hidden');
-            if (isCurrentlyHidden) {
-                mainElement.classList.remove('hidden');
-                localStorage.setItem('aboutCollapsed', 'false');
-            } else {
-                mainElement.classList.add('hidden');
-                localStorage.setItem('aboutCollapsed', 'true');
-            }
+    if (fingeringAboutBlock && fingeringAboutContent) {
+        const collapsed = localStorage.getItem('aboutCollapsed') === 'true';
+        fingeringAboutContent.classList.toggle('hidden', collapsed);
+        if (fingeringAboutToggle) fingeringAboutToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (fingeringAboutToggleText) fingeringAboutToggleText.textContent = t(collapsed ? 'fingering.toggleAbout' : 'fingering.toggleAboutClose');
+        if (fingeringAboutChevron) fingeringAboutChevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
+        if (fingeringAboutToggle) {
+            fingeringAboutToggle.addEventListener('click', () => {
+                const isHidden = fingeringAboutContent.classList.toggle('hidden');
+                fingeringAboutToggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+                if (fingeringAboutToggleText) fingeringAboutToggleText.textContent = t(isHidden ? 'fingering.toggleAbout' : 'fingering.toggleAboutClose');
+                if (fingeringAboutChevron) fingeringAboutChevron.style.transform = isHidden ? 'rotate(-90deg)' : '';
+                localStorage.setItem('aboutCollapsed', isHidden ? 'true' : 'false');
+            });
         }
-        document.body.classList.remove('nav-open');
     }
 
-    if (mainElement && aboutSection) {
-        const collapsed = localStorage.getItem('aboutCollapsed') === 'true';
-        mainElement.classList.toggle('hidden', collapsed);
-        if (menuAboutLink) menuAboutLink.addEventListener('click', (e) => { e.preventDefault(); toggleAboutSection(); });
+    function resizeMelodyTextarea() {
+        if (!melodyInputEl || melodyInputEl.nodeName !== 'TEXTAREA') return;
+        melodyInputEl.style.height = 'auto';
+        melodyInputEl.style.height = Math.max(melodyInputEl.scrollHeight, 48) + 'px';
     }
 
     if (melodyInputEl) {
+        if (melodyInputEl.nodeName === 'TEXTAREA') {
+            melodyInputEl.addEventListener('input', resizeMelodyTextarea);
+            melodyInputEl.addEventListener('change', resizeMelodyTextarea);
+            resizeMelodyTextarea();
+        }
         melodyInputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); runSolver(); }
         });
@@ -2000,6 +2206,7 @@ export function initUI() {
     if (clearInputButton && melodyInputEl) {
         clearInputButton.addEventListener('click', () => {
             melodyInputEl.value = '';
+            if (melodyInputEl.nodeName === 'TEXTAREA') resizeMelodyTextarea();
             melodyInputEl.focus();
         });
     }
