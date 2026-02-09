@@ -502,7 +502,9 @@ function startPlayback(noteTokens, bpm) {
     if (!noteTokens || noteTokens.length === 0) return;
     if (playbackState.playing) return;
     playbackState.playing = true;
-    playbackState.currentIndex = 0;
+    if (playbackState.currentIndex === undefined || playbackState.currentIndex >= noteTokens.length) {
+        playbackState.currentIndex = 0;
+    }
     playbackState.bpm = bpm;
     const durationSec = (4 * 60) / bpm; // celá nota v sekundách
     if (!playbackState.audioContext) {
@@ -645,7 +647,7 @@ function germanToCanonical(token) {
     if (t === 'es') return 'eb';
     if (t === 'as') return 'ab';
     // (písmeno)(volitelně číslo)(is|es)  např. cis1, ces, dis
-    let m = t.match(/^([a-gA-G])(\d?)(is|es)$/i);
+    let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
     if (m) {
         const letter = m[1];
         const digit = m[2] || '';
@@ -654,7 +656,7 @@ function germanToCanonical(token) {
         return digit ? letter.toLowerCase() + digit + acc : out;
     }
     // (písmeno)(is|es)(volitelně číslo)  např. c1is, Cis1
-    m = t.match(/^([a-gA-G])(is|es)(\d?)$/i);
+    m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
     if (m) {
         const letter = m[1];
         const acc = m[2] === 'is' ? '#' : 'b';
