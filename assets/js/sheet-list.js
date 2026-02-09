@@ -81,6 +81,7 @@
 
         form?.addEventListener('submit', (e) => {
             e.preventDefault();
+            if (typeof window.markToolUsed === 'function') window.markToolUsed();
             const url = document.getElementById('sheetUrl')?.value?.trim() || '';
             const title = document.getElementById('sheetTitle')?.value?.trim();
             const author = document.getElementById('sheetAuthor')?.value?.trim() || '';

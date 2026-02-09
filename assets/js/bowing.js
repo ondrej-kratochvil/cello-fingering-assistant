@@ -161,7 +161,10 @@
             renderStaff(staffContainer, state.input, slurRanges);
         }
 
-        patternSelect.addEventListener('change', updateStaff);
+        patternSelect.addEventListener('change', () => {
+            if (typeof window.markToolUsed === 'function') window.markToolUsed();
+            updateStaff();
+        });
         updateStaff();
     }
 

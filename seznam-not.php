@@ -18,10 +18,14 @@ $pageTitle = 'Cello App Kit';
 $taglineKey = 'sheetList.tagline';
 $taglineFallback = 'Seznam not';
 require __DIR__ . '/assets/partials/topbar.php';
+require __DIR__ . '/assets/php/tools_config.php';
+$currentToolKey = 'sheetList';
+$toolKey = 'sheetList';
+$introKey = 'sheetList.intro';
 ?>
         <main class="p-8 bg-white">
             <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="sheetList.title">Seznam not</h2>
-            <p class="text-slate-600 mb-6" data-i18n="sheetList.intro">Přidejte odkaz na noty s názvem skladby, autorem a obtížností (1–10). Seznam lze řadit a filtrovat.</p>
+<?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl">
                 <div>
@@ -65,22 +69,25 @@ require __DIR__ . '/assets/partials/topbar.php';
                     <tbody id="sheetTableBody"></tbody>
                 </table>
             </div>
+<?php require __DIR__ . '/assets/partials/tool_next_bar.php'; ?>
         </main>
 <?php require __DIR__ . '/assets/partials/footer.php'; ?>
     </div>
 <?php
 $jsDir = __DIR__ . '/assets/js';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
     <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__?.i18n ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
-        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initI18n, t } = await import(window.__I18N_SCRIPT__);
         const { initNavigation } = await import('./assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
+        const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
         await initI18n();
         await initNavigation();
+        initToolPage(t);
     </script>
     <script type="module" src="assets/js/sheet-list.js?v=<?= filemtime(__DIR__ . '/assets/js/sheet-list.js') ?>"></script>
 </body>

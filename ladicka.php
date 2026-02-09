@@ -19,10 +19,14 @@ $pageTitleKey = 'header.pageTitle';
 $taglineKey = 'tuner.tagline';
 $taglineFallback = 'Ladička – otevřené struny C, G, d, a';
 require __DIR__ . '/assets/partials/topbar.php';
+require __DIR__ . '/assets/php/tools_config.php';
+$currentToolKey = 'tuner';
+$toolKey = 'tuner';
+$introKey = 'tuner.intro';
 ?>
         <main class="p-8 bg-white">
             <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="tuner.title">Ladička</h2>
-            <p class="text-slate-600 mb-6" data-i18n="tuner.intro">Povolte přístup k mikrofonu. Vyberte referenční ladění a zda použít temperované nebo čisté kvinty.</p>
+<?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <div class="space-y-6 max-w-md">
                 <div>
@@ -81,24 +85,27 @@ require __DIR__ . '/assets/partials/topbar.php';
                     <p class="tuner-freq text-xs text-slate-500 text-center mt-1">— Hz</p>
                 </div>
             </div>
+<?php require __DIR__ . '/assets/partials/tool_next_bar.php'; ?>
         </main>
 <?php require __DIR__ . '/assets/partials/footer.php'; ?>
     </div>
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
     <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__?.i18n ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
-        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initI18n, t } = await import(window.__I18N_SCRIPT__);
         const { initNavigation } = await import('./assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
+        const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
         await initI18n();
         await initNavigation();
+        initToolPage(t);
     </script>
     <script type="module" src="assets/js/tuner.js?v=<?= filemtime(__DIR__ . '/assets/js/tuner.js') ?>"></script>
 </body>

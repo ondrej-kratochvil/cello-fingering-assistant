@@ -9,6 +9,7 @@ $t = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
 $ptk = htmlspecialchars($pageTitleKey, ENT_QUOTES, 'UTF-8');
 $tk = htmlspecialchars($taglineKey, ENT_QUOTES, 'UTF-8');
 $tf = htmlspecialchars($taglineFallback, ENT_QUOTES, 'UTF-8');
+require __DIR__ . '/../php/tools_config.php';
 ?>
 <header class="app-header bg-indigo-950 p-8 text-white relative">
     <div class="flex items-center justify-between gap-4 mb-4">
@@ -27,16 +28,22 @@ $tf = htmlspecialchars($taglineFallback, ENT_QUOTES, 'UTF-8');
             <details class="nav-details inline-block md:relative" id="navToolsDetails">
                 <summary class="nav-link cursor-pointer list-none font-medium text-indigo-200 hover:text-white transition-colors [&::-webkit-details-marker]:hidden" data-i18n="nav.tools">Nástroje</summary>
                 <div class="nav-dropdown-menu absolute left-0 mt-1 py-2 bg-indigo-950 rounded-lg shadow-xl border border-indigo-800 min-w-[10rem] z-50">
-                    <a href="<?= $b ?>prstoklad.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.fingering">Prstoklad</a>
-                    <a href="<?= $b ?>ladicka.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.tuner">Ladička</a>
-                    <a href="<?= $b ?>metronom.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.metronome">Metronom</a>
-                    <a href="<?= $b ?>odpocet.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.countdown">Odpočet</a>
-                    <a href="<?= $b ?>rytmy.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.rhythms">Rytmy</a>
-                    <a href="<?= $b ?>smyky.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.bowing">Smyky</a>
-                    <a href="<?= $b ?>seznam-not.php" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors" data-i18n="nav.sheetList">Seznam not</a>
+<?php foreach ($TOOLS_ORDER as $num => $tool): ?>
+<?php if (!empty($tool['submenu'])): ?>
+                    <div class="nav-tool-with-submenu group relative">
+                        <a href="<?= htmlspecialchars($tool['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors"><?= $num ?>. <span data-i18n="<?= $tool['navKey'] ?>"><?= $tool['navKey'] ?></span></a>
+                        <div class="nav-submenu absolute left-0 top-full mt-0 py-2 bg-indigo-900 rounded-lg border border-indigo-800 min-w-[8rem] z-50 opacity-0 invisible md:group-hover:opacity-100 md:group-hover:visible transition-opacity">
+<?php foreach ($tool['submenu'] as $sub): ?>
+                            <a href="<?= htmlspecialchars($sub['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 pl-6 text-indigo-200 hover:bg-indigo-800 hover:text-white transition-colors" data-i18n="<?= $sub['navKey'] ?>">Testy</a>
+<?php endforeach; ?>
+                        </div>
+                    </div>
+<?php else: ?>
+                    <a href="<?= htmlspecialchars($tool['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors"><?= $num ?>. <span data-i18n="<?= $tool['navKey'] ?>"></span></a>
+<?php endif; ?>
+<?php endforeach; ?>
                 </div>
             </details>
-            <a href="<?= $b ?>dev/tests/test.php" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.tests">Testy</a>
             <a href="<?= $b ?>index.php" id="menuAboutLink" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.about">O aplikaci</a>
             <a href="https://violoncello.ondrejkratochvil.eu" target="_blank" rel="noopener noreferrer" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.portal">Portál o violoncelle</a>
             <button type="button" class="dark-mode-toggle text-indigo-200 hover:text-white transition-colors touch-target p-1 nav-link" aria-label="Přepnout Dark Mode" data-i18n-aria-label="aria.darkMode">

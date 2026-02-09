@@ -881,9 +881,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     container.appendChild(staffContainer);
 
-    if (opts.skipLegend && !opts.enableHighlight) return staffDiv;
-    if (opts.enableHighlight && setHighlight) return { staffDiv, setHighlight };
-    if (opts.skipLegend) return staffDiv;
+    if (opts.skipLegend) return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
 
     // Legenda barev strun
     const legend = document.createElement('div');
@@ -1024,12 +1022,18 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
         return;
     }
 
-    // Při spuštění solveru skryjeme sekci O aplikaci (pouze pokud na stránce existuje)
+    // Při spuštění solveru skryjeme blok O aplikaci na stránce Prstoklad (pokud existuje)
     if (!skipHideAbout) {
-        const mainElement = document.querySelector('main');
-        const aboutSection = document.getElementById('aboutSection');
-        if (mainElement && aboutSection && !mainElement.classList.contains('hidden')) {
-            mainElement.classList.add('hidden');
+        const aboutBlock = document.getElementById('fingeringAboutBlock');
+        const aboutContent = document.getElementById('fingeringAboutContent');
+        if (aboutBlock && aboutContent && !aboutContent.classList.contains('hidden')) {
+            aboutContent.classList.add('hidden');
+            const toggleBtn = document.getElementById('fingeringAboutToggle');
+            const toggleText = document.getElementById('fingeringAboutToggleText');
+            const chevron = document.getElementById('fingeringAboutChevron');
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+            if (toggleText) toggleText.textContent = t('fingering.toggleAbout');
+            if (chevron) chevron.style.transform = 'rotate(-90deg)';
             localStorage.setItem('aboutCollapsed', 'true');
         }
     }
@@ -2154,28 +2158,27 @@ export function initUI() {
         }
     }
 
-    const mainElement = document.querySelector('main');
-    const aboutSection = document.getElementById('aboutSection');
-    const menuAboutLink = document.getElementById('menuAboutLink');
+    const fingeringAboutBlock = document.getElementById('fingeringAboutBlock');
+    const fingeringAboutContent = document.getElementById('fingeringAboutContent');
+    const fingeringAboutToggle = document.getElementById('fingeringAboutToggle');
+    const fingeringAboutToggleText = document.getElementById('fingeringAboutToggleText');
+    const fingeringAboutChevron = document.getElementById('fingeringAboutChevron');
 
-    function toggleAboutSection() {
-        if (mainElement) {
-            const isCurrentlyHidden = mainElement.classList.contains('hidden');
-            if (isCurrentlyHidden) {
-                mainElement.classList.remove('hidden');
-                localStorage.setItem('aboutCollapsed', 'false');
-            } else {
-                mainElement.classList.add('hidden');
-                localStorage.setItem('aboutCollapsed', 'true');
-            }
-        }
-        document.body.classList.remove('nav-open');
-    }
-
-    if (mainElement && aboutSection) {
+    if (fingeringAboutBlock && fingeringAboutContent) {
         const collapsed = localStorage.getItem('aboutCollapsed') === 'true';
-        mainElement.classList.toggle('hidden', collapsed);
-        if (menuAboutLink) menuAboutLink.addEventListener('click', (e) => { e.preventDefault(); toggleAboutSection(); });
+        fingeringAboutContent.classList.toggle('hidden', collapsed);
+        if (fingeringAboutToggle) fingeringAboutToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (fingeringAboutToggleText) fingeringAboutToggleText.textContent = t(collapsed ? 'fingering.toggleAbout' : 'fingering.toggleAboutClose');
+        if (fingeringAboutChevron) fingeringAboutChevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
+        if (fingeringAboutToggle) {
+            fingeringAboutToggle.addEventListener('click', () => {
+                const isHidden = fingeringAboutContent.classList.toggle('hidden');
+                fingeringAboutToggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+                if (fingeringAboutToggleText) fingeringAboutToggleText.textContent = t(isHidden ? 'fingering.toggleAbout' : 'fingering.toggleAboutClose');
+                if (fingeringAboutChevron) fingeringAboutChevron.style.transform = isHidden ? 'rotate(-90deg)' : '';
+                localStorage.setItem('aboutCollapsed', isHidden ? 'true' : 'false');
+            });
+        }
     }
 
     function resizeMelodyTextarea() {

@@ -69,6 +69,7 @@
     }
 
     function start() {
+        if (typeof window.markToolUsed === 'function') window.markToolUsed();
         const startBtn = document.getElementById('countdownStart');
         const pauseBtn = document.getElementById('countdownPause');
         if (startBtn?.dataset?.running === 'true') return;

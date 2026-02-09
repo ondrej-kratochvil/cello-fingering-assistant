@@ -19,9 +19,73 @@ $pageTitleKey = 'header.pageTitle';
 $taglineKey = 'header.tagline';
 $taglineFallback = 'Prstoklad – pro zadané tóny doporučí vhodný prstoklad';
 require __DIR__ . '/assets/partials/topbar.php';
+require __DIR__ . '/assets/php/tools_config.php';
+$currentToolKey = 'fingering';
 ?>
         <main class="p-8 bg-white">
             <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="guide.stepFingering">Prstoklad</h2>
+
+            <section id="fingeringAboutBlock" class="mb-8">
+                <button type="button" id="fingeringAboutToggle" class="flex items-center gap-2 text-left w-full text-lg font-bold text-slate-800 py-2 hover:text-indigo-600 transition-colors" aria-expanded="true" data-i18n-expanded="fingering.toggleAboutClose" data-i18n-collapsed="fingering.toggleAbout">
+                    <span id="fingeringAboutToggleText" data-i18n="fingering.toggleAboutClose">Skrýt popis</span>
+                    <svg id="fingeringAboutChevron" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="fingeringAboutContent" class="mt-4 space-y-6">
+                    <div class="prose prose-slate max-w-none">
+                        <p class="text-slate-700" data-i18n-html="about.p1"></p>
+                        <p class="text-slate-700" data-i18n-html="about.p2"></p>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800" data-i18n="features.title">Hlavní funkce</h3>
+                    <ul class="space-y-3 list-none pl-0 text-slate-700">
+                        <li><strong data-i18n="features.algo.title"></strong> <span data-i18n="features.algo.desc"></span></li>
+                        <li><strong data-i18n="features.staff.title"></strong> <span data-i18n="features.staff.desc"></span></li>
+                        <li><strong data-i18n="features.fingerboard.title"></strong> <span data-i18n="features.fingerboard.desc"></span></li>
+                        <li><strong data-i18n="features.tech.title"></strong> <span data-i18n="features.tech.desc"></span></li>
+                    </ul>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2" data-i18n="tones.title">Tóny, prsty a polohy</h3>
+                        <p class="text-slate-600 text-sm mb-3" data-i18n="tones.intro"></p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border border-slate-200 rounded-lg text-sm">
+                                <thead class="bg-slate-100">
+                                    <tr>
+                                        <th class="text-left py-2 px-3" data-i18n="tones.thDiatonic">Diatonicky</th>
+                                        <th class="text-left py-2 px-3" data-i18n="tones.thAbbr">Zkratka</th>
+                                        <th class="text-left py-2 px-3" data-i18n="tones.thChromatic">Chromaticky</th>
+                                        <th class="text-left py-2 px-3" data-i18n="tones.thTone">Tón (struna A, 1. prst)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+<?php
+$positionRows = [
+    [ 'rowKey' => 'tones.row1',  'abbr' => 'I↓',  'chromatic' => 'I',  'tone' => 'g#' ],
+    [ 'rowKey' => 'tones.row2',  'abbr' => 'I',   'chromatic' => 'II',  'tone' => 'a' ],
+    [ 'rowKey' => 'tones.row3',  'abbr' => 'II↓', 'chromatic' => 'III', 'tone' => 'a#' ],
+    [ 'rowKey' => 'tones.row4',  'abbr' => 'II↑', 'chromatic' => 'IV',  'tone' => 'h' ],
+    [ 'rowKey' => 'tones.row5',  'abbr' => 'III', 'chromatic' => 'V',   'tone' => 'c1' ],
+    [ 'rowKey' => 'tones.row6',  'abbr' => 'III↑','chromatic' => 'VI',  'tone' => 'c1#' ],
+    [ 'rowKey' => 'tones.row7',  'abbr' => 'IV',  'chromatic' => 'VII', 'tone' => 'd1' ],
+    [ 'rowKey' => 'tones.row8',  'abbr' => 'IV↑', 'chromatic' => 'VIII','tone' => 'd1#' ],
+    [ 'rowKey' => 'tones.row9',  'abbr' => 'V',   'chromatic' => 'IX',  'tone' => 'e1' ],
+    [ 'rowKey' => 'tones.row10', 'abbr' => 'VI',  'chromatic' => 'X',   'tone' => 'f1' ],
+    [ 'rowKey' => 'tones.row11', 'abbr' => 'VII↓','chromatic' => 'XI',  'tone' => 'f1#' ],
+    [ 'rowKey' => 'tones.row12', 'abbr' => 'VII', 'chromatic' => 'XII', 'tone' => 'g1' ],
+];
+foreach ($positionRows as $r):
+?>
+                                    <tr class="border-t border-slate-200">
+                                        <td class="py-2 px-3" data-i18n="<?= $r['rowKey'] ?>"></td>
+                                        <td class="py-2 px-3 font-mono"><?= htmlspecialchars($r['abbr'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td class="py-2 px-3 font-mono"><?= htmlspecialchars($r['chromatic'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td class="py-2 px-3 font-mono"><?= htmlspecialchars($r['tone'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    </tr>
+<?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <div class="p-8 border-b border-slate-100 bg-slate-50">
@@ -117,6 +181,10 @@ require __DIR__ . '/assets/partials/topbar.php';
             </div>
         </div>
 
+        <div class="p-8 bg-white">
+<?php require __DIR__ . '/assets/partials/tool_next_bar.php'; ?>
+        </div>
+
 <?php require __DIR__ . '/assets/partials/footer.php'; ?>
     </div>
 <?php
@@ -128,6 +196,7 @@ $JS_VERSIONS = [
     'fingering' => filemtime($jsDir . '/fingering.js'),
     'tests' => filemtime($jsDir . '/tests.js'),
     'ui' => filemtime($jsDir . '/ui.js'),
+    'toolPage' => filemtime($jsDir . '/tool-page.js'),
 ];
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
@@ -135,8 +204,9 @@ $JS_VERSIONS = [
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
-        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initI18n, t } = await import(window.__I18N_SCRIPT__);
         const { initNavigation, setCanvasRedrawCallback } = await import('./assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
+        const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         const ui = await import('./assets/js/ui.js' + (V.ui ? '?v=' + V.ui : ''));
         async function main() {
             if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
@@ -145,6 +215,7 @@ $JS_VERSIONS = [
             setCanvasRedrawCallback(() => { if (typeof window.redrawResults === 'function') window.redrawResults(); });
             await initNavigation();
             ui.initUI();
+            initToolPage(t);
         }
         main();
     </script>

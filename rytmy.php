@@ -18,10 +18,14 @@ $pageTitle = 'Cello App Kit';
 $taglineKey = 'rhythms.tagline';
 $taglineFallback = 'Rytmy';
 require __DIR__ . '/assets/partials/topbar.php';
+require __DIR__ . '/assets/php/tools_config.php';
+$currentToolKey = 'rhythms';
+$toolKey = 'rhythms';
+$introKey = 'rhythms.intro';
 ?>
         <main class="p-8 bg-white">
             <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="rhythms.title">Rytmy</h2>
-            <p class="text-slate-600 mb-6" data-i18n="rhythms.intro">Načte sekvenci z nástroje Prstoklad a aplikuje na ni zvolený rytmický pattern (čtvrťové a osminové noty).</p>
+<?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <div id="rhythmsNoData" class="hidden p-6 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
                 <p data-i18n="rhythms.noData">Nejdříve vytvořte prstoklad na stránce Prstoklad.</p>
@@ -35,23 +39,26 @@ require __DIR__ . '/assets/partials/topbar.php';
                 </div>
                 <div id="rhythmsStaff" class="overflow-x-auto"></div>
             </div>
+<?php require __DIR__ . '/assets/partials/tool_next_bar.php'; ?>
         </main>
 <?php require __DIR__ . '/assets/partials/footer.php'; ?>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
 <?php
 $jsDir = __DIR__ . '/assets/js';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
     <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__?.i18n ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
-        const { initI18n } = await import(window.__I18N_SCRIPT__);
+        const { initI18n, t } = await import(window.__I18N_SCRIPT__);
         const { initNavigation } = await import('./assets/js/navigation.js' + (V.navigation ? '?v=' + V.navigation : ''));
+        const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
         await initI18n();
         await initNavigation();
+        initToolPage(t);
     </script>
     <script type="module" src="assets/js/rhythms.js?v=<?= filemtime(__DIR__ . '/assets/js/rhythms.js') ?>"></script>
 </body>

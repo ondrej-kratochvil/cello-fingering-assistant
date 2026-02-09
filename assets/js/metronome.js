@@ -64,6 +64,7 @@
         }
 
         function start() {
+            if (typeof window.markToolUsed === 'function') window.markToolUsed();
             if (startBtn?.dataset?.running === 'true') return;
             beatIndex = 0;
             nextTickTime = performance.now();

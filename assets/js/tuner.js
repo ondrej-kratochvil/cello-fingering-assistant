@@ -210,6 +210,7 @@
         }
 
         function startMic() {
+            if (typeof window.markToolUsed === 'function') window.markToolUsed();
             const ref = getReferenceA();
             const pure = usePureFifths();
             updateTargets();
