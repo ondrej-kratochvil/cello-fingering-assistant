@@ -1123,7 +1123,9 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
             stopPlayback();
             playbackState.currentIndex = 0;
             if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
-            startPlayback(inputForSolve, Number(bpmInput.value) || playbackState.bpm);
+            const bpm = Number(bpmInput.value, 10);
+            if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
+            startPlayback(inputForSolve, playbackState.bpm);
         });
 
         playbackBar.appendChild(bpmLabel);
