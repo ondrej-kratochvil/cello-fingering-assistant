@@ -55,7 +55,7 @@
   "tones.row11": "VII position low",
   "tones.row12": "VII position",
 
-  "input.label": "Enter notes with octave and accidentals, space-separated, e.g. C c c1 c1# gb",
+  "input.label": "Enter notes with octave and accidentals, space-separated, e.g. C c c1 c1# gb or cis1 des",
   "button.solve": "Suggest fingering",
   "button.editStart": "Edit fingering",
   "button.editStop": "Stop editing",

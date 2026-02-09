@@ -55,7 +55,7 @@
   "tones.row11": "VII poloha nízká",
   "tones.row12": "VII poloha",
 
-  "input.label": "Zadejte tóny včetně rozlišení oktáv a posuvek oddělené mezerami, např. C c c1 c1# gb",
+  "input.label": "Zadejte tóny včetně rozlišení oktáv a posuvek oddělené mezerami, např. C c c1 c1# gb nebo cis1 des",
   "button.solve": "Navrhnout prstoklad",
   "button.editStart": "Editovat prstoklad",
   "button.editStop": "Ukončit editaci",
