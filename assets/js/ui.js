@@ -502,6 +502,7 @@ function startPlayback(noteTokens, bpm) {
     if (!noteTokens || noteTokens.length === 0) return;
     if (playbackState.playing) return;
     playbackState.playing = true;
+    playbackState.currentIndex = 0;
     playbackState.bpm = bpm;
     const durationSec = (4 * 60) / bpm; // celá nota v sekundách
     if (!playbackState.audioContext) {
@@ -1013,7 +1014,7 @@ function runSolver(options = {}) {
 
 function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, skipHideAbout, display, wrapper }) {
     if (!display) return;
-    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(t)));
+    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(germanToCanonical(t))));
 
     display.innerHTML = '';
     if (result === null || result === undefined) {
