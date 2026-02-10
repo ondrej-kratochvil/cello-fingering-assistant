@@ -148,7 +148,7 @@ const noteParsingTests = [
 
 function prepareInputForSolve(input) {
     return input.map((token) => {
-        let x = normalizeOctaveAccidentalSwap(token);
+        let x = normalizeOctaveAccidentalSwap(germanToCanonical(token));
         x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
         const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
         if (flat) return flat;
