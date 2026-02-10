@@ -23,12 +23,12 @@ const MIDI_MAP = {
 };
 
 export function noteToVexKey(name) {
-    const n = (name || '').trim().replace(/(\d)(#|b)$/, '$2$1');
+    const n = (name || '').trim();
     return NOTE_MAP[n] || NOTE_MAP[n.toLowerCase()] || 'C/4';
 }
 
 export function getMidi(name) {
-    const n = (name || '').trim().replace(/(\d)(#|b)$/, '$2$1');
+    const n = (name || '').trim();
     return MIDI_MAP[n] || MIDI_MAP[n.toLowerCase()] || 60;
 }
 
