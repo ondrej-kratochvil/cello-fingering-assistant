@@ -236,6 +236,10 @@
                     tick();
                 })
                 .catch((err) => {
+                    if (micBtn) {
+                        micBtn.dataset.active = 'false';
+                        micBtn.textContent = typeof t === 'function' ? t('tuner.micStart') : 'Zapnout mikrofon';
+                    }
                     if (micStatus) micStatus.textContent = (typeof t === 'function' ? t('tuner.micError') : 'Chyba: ') + (err.message || '');
                 });
         }
