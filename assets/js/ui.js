@@ -724,7 +724,8 @@ function noteToVexFlow(noteName) {
  * @param {Object} [opts] - Volitelné: { skipLegend: true } pro vynechání legendy (např. na stránce testů)
  */
 export { toPositionLabel };
-export function renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman, opts = {}) {
+export function renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman, opts) {
+    opts = opts || {};
     // Zkontrolovat, jestli je VexFlow načten
     if (typeof Vex === 'undefined' || !Vex.Flow) {
         console.error('VexFlow není načten. Použijte textový výstup nebo načtěte VexFlow z CDN.');
