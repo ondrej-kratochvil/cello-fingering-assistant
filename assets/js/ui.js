@@ -511,6 +511,9 @@ function startPlayback(noteTokens, bpm) {
         playbackState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     const ctx = playbackState.audioContext;
+    ctx.resume().then(() => {
+        scheduleNext();
+    }).catch(() => {});
 
     function scheduleNext() {
         if (!playbackState.playing || playbackState.currentIndex >= noteTokens.length) {
@@ -526,7 +529,6 @@ function startPlayback(noteTokens, bpm) {
         playbackState.timeoutId = setTimeout(scheduleNext, durationSec * 1000);
     }
 
-    scheduleNext();
 }
 
 function saveLastFingeringState(state) {
@@ -855,10 +857,14 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     context.setStrokeStyle(staffInk);
     voice.draw(context, stave);
 
-    // Kontejner pro osnovu s horizontálním scrollováním
+    // Kontejner pro osnovu s horizontálním scrollováním; vnitřní wrapper scrolluje i s highlightem
     const staffContainer = document.createElement('div');
-    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0 relative';
-    staffContainer.appendChild(staffDiv);
+    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0';
+    const staffInner = document.createElement('div');
+    staffInner.className = 'relative';
+    staffInner.style.width = totalWidth + 'px';
+    staffInner.style.minHeight = totalHeight + 'px';
+    staffInner.appendChild(staffDiv);
 
     let setHighlight = null;
     if (opts.enableHighlight && result.length > 0) {
@@ -870,7 +876,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         const highlightColor = bodyStyles.getPropertyValue('--color-primary').trim() || 'rgba(99,102,241,0.25)';
         highlightEl.style.backgroundColor = highlightColor;
         highlightEl.style.left = (clefOffset + 0 * noteSpacing) + 'px';
-        staffContainer.appendChild(highlightEl);
+        staffInner.appendChild(highlightEl);
         setHighlight = (index) => {
             if (index >= 0 && index < result.length) {
                 highlightEl.style.left = (clefOffset + index * noteSpacing) + 'px';
@@ -882,6 +888,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         setHighlight(-1);
     }
 
+    staffContainer.appendChild(staffInner);
     container.appendChild(staffContainer);
 
     if (opts.skipLegend) return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;

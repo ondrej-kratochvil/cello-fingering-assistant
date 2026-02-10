@@ -66,14 +66,16 @@
         function start() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             if (startBtn?.dataset?.running === 'true') return;
-            beatIndex = 0;
-            nextTickTime = performance.now();
-            startBtn.dataset.running = 'true';
-            if (beatDisplay) beatDisplay.textContent = '1';
-            playTick(true);
-            beatIndex = 1;
-            nextTickTime += (60 * 1000) / getBpm();
-            scheduleNext();
+            getCtx().resume().then(() => {
+                beatIndex = 0;
+                nextTickTime = performance.now();
+                startBtn.dataset.running = 'true';
+                if (beatDisplay) beatDisplay.textContent = '1';
+                playTick(true);
+                beatIndex = 1;
+                nextTickTime += (60 * 1000) / getBpm();
+                scheduleNext();
+            }).catch(() => {});
         }
 
         function stop() {
