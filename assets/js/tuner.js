@@ -142,7 +142,7 @@
         const dataArray = new Float32Array(bufferLength);
 
         function getReferenceA() {
-            return Number(refSelect?.value || 440, 10) || 440;
+            return parseInt(refSelect?.value || 440, 10) || 440;
         }
         function usePureFifths() {
             return document.querySelector('input[name="tunerMode"]:checked')?.value === 'pure';

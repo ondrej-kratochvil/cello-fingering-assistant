@@ -1110,12 +1110,12 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
         restartBtn.textContent = t('playback.restart');
 
         bpmInput.addEventListener('change', () => {
-            const v = Number(bpmInput.value, 10);
+            const v = parseInt(bpmInput.value, 10);
             if (!Number.isNaN(v) && v >= 60 && v <= 600) playbackState.bpm = v;
         });
         playBtn.addEventListener('click', () => {
             if (!playbackState.playing) {
-                const bpm = Number(bpmInput.value, 10);
+                const bpm = parseInt(bpmInput.value, 10);
                 if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
                 startPlayback(inputForSolve, playbackState.bpm);
             }
@@ -1125,7 +1125,7 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
             stopPlayback();
             playbackState.currentIndex = 0;
             if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
-            const bpm = Number(bpmInput.value, 10);
+            const bpm = parseInt(bpmInput.value, 10);
             if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
             startPlayback(inputForSolve, playbackState.bpm);
         });

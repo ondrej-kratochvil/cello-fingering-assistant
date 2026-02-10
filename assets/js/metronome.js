@@ -38,12 +38,12 @@
         const beatDisplay = document.getElementById('metronomeBeat');
 
         function getBpm() {
-            const v = Number(bpmInput?.value, 10);
+            const v = parseInt(bpmInput?.value, 10);
             return (Number.isFinite(v) && v >= 40 && v <= 240) ? v : 72;
         }
         function getBeats() {
             const r = document.querySelector('input[name="metronomeBeats"]:checked');
-            return Number(r?.value, 10) || 4;
+            return parseInt(r?.value, 10) || 4;
         }
 
         function scheduleNext() {
