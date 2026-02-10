@@ -113,6 +113,7 @@
   "test.someFailed": "Some tests failed ⚠️",
   "test.solverNoResult": "Solver returned no result.",
   "test.countMismatch": "Note count: {{n}} (expected {{expected}})",
+  "test.noteParsingTitle": "Note name parsing",
   "legend.strings.short": "String legend:",
 
   "test.basic.name": "Basic sequence e f# g#",

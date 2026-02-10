@@ -113,6 +113,7 @@
   "test.someFailed": "Některé testy selhaly ⚠️",
   "test.solverNoResult": "Solver nevrátil výsledek.",
   "test.countMismatch": "Počet tónů: {{n}} (očekáváno {{expected}})",
+  "test.noteParsingTitle": "Parsování zápisu tónů",
   "legend.strings.short": "Legenda strun:",
 
   "test.basic.name": "Základní sekvence e f# g#",
