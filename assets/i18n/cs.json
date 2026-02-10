@@ -113,6 +113,7 @@
   "test.someFailed": "Některé testy selhaly ⚠️",
   "test.solverNoResult": "Solver nevrátil výsledek.",
   "test.countMismatch": "Počet tónů: {{n}} (očekáváno {{expected}})",
+  "test.expectedNote": " (očekáváno \"{{expected}}\")",
   "test.noteParsingTitle": "Parsování zápisu tónů",
   "legend.strings.short": "Legenda strun:",
 
@@ -245,6 +246,7 @@
   "rhythms.intro": "Načte sekvenci z nástroje Prstoklad a aplikuje na ni zvolený rytmický pattern (čtvrťové a osminové noty).",
   "rhythms.noData": "Nejdříve vytvořte prstoklad na stránce Prstoklad.",
   "rhythms.pattern": "Rytmický pattern:",
+  "rhythms.difficultyLabel": " (obtížnost {{n}})",
   "bowing.tagline": "Smyky",
   "bowing.title": "Smyky",
   "bowing.intro": "Načte sekvenci z nástroje Prstoklad a aplikuje na ni zvolený smykový pattern (legato = oblouček, samostatně = bez úpravy).",
@@ -260,6 +262,7 @@
   "sheetList.add": "Přidat",
   "sheetList.filter": "Filtr obtížnosti:",
   "sheetList.filterApply": "Použít",
+  "sheetList.delete": "Smazat",
   "home.intro": "Cello App Kit je sada nástrojů pro violoncellisty: odpočet na cvičení, ladička, prstoklad, rytmy, smyky, metronom a seznam not. Níže najdete přehled nástrojů v doporučeném pořadí.",
   "home.aboutTitle": "O aplikaci",
   "home.tool1Desc": "Minutka (odpočet) – nastavte délku cvičení v minutách, spusťte odpočet. Na konci zazvoní. Ideální první krok před cvičením.",

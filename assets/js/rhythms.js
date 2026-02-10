@@ -113,7 +113,8 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
         RHYTHM_PATTERNS.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
-            opt.textContent = p.name + ' (obtížnost ' + p.difficulty + ')';
+            const diffLabel = (typeof window.t === 'function' ? window.t('rhythms.difficultyLabel', { n: p.difficulty }) : ' (obtížnost ' + p.difficulty + ')');
+            opt.textContent = p.name + diffLabel;
             patternSelect.appendChild(opt);
         });
 

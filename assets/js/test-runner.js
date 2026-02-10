@@ -87,7 +87,7 @@ export function runAllTests() {
             if (isPass) passed++; else failed++;
             const div = document.createElement('div');
             div.className = 'py-1 px-2 rounded ' + (isPass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
-            div.textContent = `"${input}" → "${actual}"` + (isPass ? '' : ` (očekáváno "${expected}")`);
+            div.textContent = `"${input}" → "${actual}"` + (isPass ? '' : (typeof t === 'function' ? t('test.expectedNote', { expected }) : ` (očekáváno "${expected}")`));
             resultsDiv.appendChild(div);
         });
     }

@@ -50,7 +50,7 @@
                 <td class="py-2 px-2">${escapeHtml(s.author || '')}</td>
                 <td class="py-2 px-2">${escapeHtml(String(s.difficulty))}</td>
                 <td class="py-2 px-2"><a href="${escapeAttr(s.url || '#')}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
-                <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">Smazat</button></td>
+                <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">${typeof window.t === 'function' ? escapeHtml(window.t('sheetList.delete')) : 'Smazat'}</button></td>
             </tr>
         `).join('');
         tbody.querySelectorAll('.sheet-delete').forEach(btn => {

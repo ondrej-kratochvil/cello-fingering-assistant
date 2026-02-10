@@ -113,6 +113,7 @@
   "test.someFailed": "Some tests failed ⚠️",
   "test.solverNoResult": "Solver returned no result.",
   "test.countMismatch": "Note count: {{n}} (expected {{expected}})",
+  "test.expectedNote": " (expected \"{{expected}}\")",
   "test.noteParsingTitle": "Note name parsing",
   "legend.strings.short": "String legend:",
 
@@ -245,6 +246,7 @@
   "rhythms.intro": "Loads the sequence from the Fingering tool and applies the selected rhythm pattern (quarter and eighth notes).",
   "rhythms.noData": "Create a fingering on the Fingering page first.",
   "rhythms.pattern": "Rhythm pattern:",
+  "rhythms.difficultyLabel": " (difficulty {{n}})",
   "bowing.tagline": "Bowing",
   "bowing.title": "Bowing",
   "bowing.intro": "Loads the sequence from the Fingering tool and applies the selected bowing pattern (legato = slur, separate = no change).",
@@ -260,6 +262,7 @@
   "sheetList.add": "Add",
   "sheetList.filter": "Difficulty filter:",
   "sheetList.filterApply": "Apply",
+  "sheetList.delete": "Delete",
   "home.intro": "Cello App Kit is a set of tools for cellists: countdown, tuner, fingering, rhythms, bowing, metronome and sheet list. Below is an overview of the tools in the recommended order.",
   "home.aboutTitle": "About",
   "home.tool1Desc": "Countdown timer – set your practice length in minutes and start the countdown. It rings at the end. Ideal first step before practising.",
