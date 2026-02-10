@@ -194,6 +194,8 @@
   "tuner.inTune": "In tune",
   "tuner.tooLow": "Too low",
   "tuner.tooHigh": "Too high",
+  "tuner.micListening": "Listening…",
+  "tuner.micError": "Error: ",
   "metronome.tagline": "Metronome",
   "metronome.title": "Metronome",
   "metronome.intro": "Set tempo (BPM) and beats per bar. Start the metronome before you begin playing.",

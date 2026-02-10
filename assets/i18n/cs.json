@@ -194,6 +194,8 @@
   "tuner.inTune": "Správně",
   "tuner.tooLow": "Nízko",
   "tuner.tooHigh": "Vysoko",
+  "tuner.micListening": "Poslouchám…",
+  "tuner.micError": "Chyba: ",
   "metronome.tagline": "Metronom",
   "metronome.title": "Metronom",
   "metronome.intro": "Nastavte tempo (BPM) a počet dob v taktu. Spusťte metronom před začátkem hraní.",
