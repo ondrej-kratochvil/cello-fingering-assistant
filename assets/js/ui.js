@@ -644,14 +644,14 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
 function germanToCanonical(token) {
     if (!token || typeof token !== 'string') return token;
     const t = token.trim();
-    if (t === 'es') return 'eb';
-    if (t === 'as') return 'ab';
+    if (t.toLowerCase() === 'es') return 'eb';
+    if (t.toLowerCase() === 'as') return 'ab';
     // (písmeno)(volitelně číslo)(is|es)  např. cis1, ces, dis
     let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
     if (m) {
         const letter = m[1];
         const digit = m[2] || '';
-        const acc = m[3] === 'is' ? '#' : 'b';
+        const acc = m[3].toLowerCase() === 'is' ? '#' : 'b';
         const out = letter + digit + acc;
         return digit ? letter.toLowerCase() + digit + acc : out;
     }
@@ -659,7 +659,7 @@ function germanToCanonical(token) {
     m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
     if (m) {
         const letter = m[1];
-        const acc = m[2] === 'is' ? '#' : 'b';
+        const acc = m[2].toLowerCase() === 'is' ? '#' : 'b';
         const digit = m[3] || '';
         if (digit) return letter.toLowerCase() + digit + acc;
         return letter + acc;
