@@ -58,9 +58,10 @@ $JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filem
         const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
         await initI18n();
+        window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/countdown.js?v=<?= filemtime(__DIR__ . '/assets/js/countdown.js') ?>');
     </script>
-    <script type="module" src="assets/js/countdown.js?v=<?= filemtime(__DIR__ . '/assets/js/countdown.js') ?>"></script>
 </body>
 </html>

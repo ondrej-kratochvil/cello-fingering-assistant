@@ -66,9 +66,10 @@ $JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filem
         const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
         await initI18n();
+        window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/metronome.js?v=<?= filemtime(__DIR__ . '/assets/js/metronome.js') ?>');
     </script>
-    <script type="module" src="assets/js/metronome.js?v=<?= filemtime(__DIR__ . '/assets/js/metronome.js') ?>"></script>
 </body>
 </html>

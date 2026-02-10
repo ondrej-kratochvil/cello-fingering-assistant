@@ -89,7 +89,7 @@ $JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filem
         window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/sheet-list.js?v=<?= filemtime(__DIR__ . '/assets/js/sheet-list.js') ?>');
     </script>
-    <script type="module" src="assets/js/sheet-list.js?v=<?= filemtime(__DIR__ . '/assets/js/sheet-list.js') ?>"></script>
 </body>
 </html>

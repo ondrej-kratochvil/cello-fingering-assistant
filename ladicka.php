@@ -104,9 +104,10 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         const { initToolPage } = await import('./assets/js/tool-page.js' + (V.toolPage ? '?v=' + V.toolPage : ''));
         if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
         await initI18n();
+        window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/tuner.js?v=<?= filemtime(__DIR__ . '/assets/js/tuner.js') ?>');
     </script>
-    <script type="module" src="assets/js/tuner.js?v=<?= filemtime(__DIR__ . '/assets/js/tuner.js') ?>"></script>
 </body>
 </html>

@@ -1079,8 +1079,9 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
     const container = document.createElement('div');
     container.className = 'w-full space-y-4';
 
-    // Zastavit přehrávání při novém vykreslení
+    // Zastavit přehrávání při novém vykreslení a resetovat pozici
     stopPlayback();
+    playbackState.currentIndex = 0;
     currentSetStaffHighlight = null;
 
     // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)

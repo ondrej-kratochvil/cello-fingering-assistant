@@ -60,7 +60,7 @@ $JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filem
         window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/rhythms.js?v=<?= filemtime(__DIR__ . '/assets/js/rhythms.js') ?>');
     </script>
-    <script type="module" src="assets/js/rhythms.js?v=<?= filemtime(__DIR__ . '/assets/js/rhythms.js') ?>"></script>
 </body>
 </html>
