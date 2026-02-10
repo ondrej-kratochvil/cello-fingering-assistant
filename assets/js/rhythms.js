@@ -21,14 +21,7 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
         const p = pattern.pattern;
         const out = [];
         for (let i = 0; i < length; i++) {
-            if (i < p.length) out.push(p[i]);
-            else out.push(p[i % p.length]);
-        }
-        if (length > 0 && length % p.length !== 0) {
-            const remainder = length % p.length;
-            for (let i = length - remainder; i < length; i++) {
-                out[i] = p[i - (length - remainder)];
-            }
+            out.push(p[i % p.length]);
         }
         return out;
     }
