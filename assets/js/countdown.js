@@ -55,7 +55,7 @@
     }
 
     function tick() {
-        remainingSeconds = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+        remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
         updateDisplay(remainingSeconds);
         if (remainingSeconds <= 0) {
             if (timerId != null) clearInterval(timerId);
