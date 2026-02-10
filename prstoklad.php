@@ -58,18 +58,18 @@ $currentToolKey = 'fingering';
                                 <tbody>
 <?php
 $positionRows = [
-    [ 'rowKey' => 'tones.row1',  'abbr' => 'I↓',  'chromatic' => 'I',  'tone' => 'g#' ],
-    [ 'rowKey' => 'tones.row2',  'abbr' => 'I',   'chromatic' => 'II',  'tone' => 'a' ],
-    [ 'rowKey' => 'tones.row3',  'abbr' => 'II↓', 'chromatic' => 'III', 'tone' => 'a#' ],
-    [ 'rowKey' => 'tones.row4',  'abbr' => 'II↑', 'chromatic' => 'IV',  'tone' => 'h' ],
-    [ 'rowKey' => 'tones.row5',  'abbr' => 'III', 'chromatic' => 'V',   'tone' => 'c1' ],
-    [ 'rowKey' => 'tones.row6',  'abbr' => 'III↑','chromatic' => 'VI',  'tone' => 'c1#' ],
-    [ 'rowKey' => 'tones.row7',  'abbr' => 'IV',  'chromatic' => 'VII', 'tone' => 'd1' ],
-    [ 'rowKey' => 'tones.row8',  'abbr' => 'IV↑', 'chromatic' => 'VIII','tone' => 'd1#' ],
-    [ 'rowKey' => 'tones.row9',  'abbr' => 'V',   'chromatic' => 'IX',  'tone' => 'e1' ],
-    [ 'rowKey' => 'tones.row10', 'abbr' => 'VI',  'chromatic' => 'X',   'tone' => 'f1' ],
-    [ 'rowKey' => 'tones.row11', 'abbr' => 'VII↓','chromatic' => 'XI',  'tone' => 'f1#' ],
-    [ 'rowKey' => 'tones.row12', 'abbr' => 'VII', 'chromatic' => 'XII', 'tone' => 'g1' ],
+    [ 'rowKey' => 'tones.row1',  'abbr' => 'I↓',  'chromatic' => 'I',  'tone' => 'hb' ],
+    [ 'rowKey' => 'tones.row2',  'abbr' => 'I',   'chromatic' => 'II',  'tone' => 'h' ],
+    [ 'rowKey' => 'tones.row3',  'abbr' => 'II↓', 'chromatic' => 'III', 'tone' => 'c' ],
+    [ 'rowKey' => 'tones.row4',  'abbr' => 'II↑', 'chromatic' => 'IV',  'tone' => 'c#' ],
+    [ 'rowKey' => 'tones.row5',  'abbr' => 'III', 'chromatic' => 'V',   'tone' => 'd1' ],
+    [ 'rowKey' => 'tones.row6',  'abbr' => 'III↑','chromatic' => 'VI',  'tone' => 'd1#' ],
+    [ 'rowKey' => 'tones.row7',  'abbr' => 'IV',  'chromatic' => 'VII', 'tone' => 'e1' ],
+    [ 'rowKey' => 'tones.row8',  'abbr' => 'IV↑', 'chromatic' => 'VIII','tone' => 'f1' ],
+    [ 'rowKey' => 'tones.row9',  'abbr' => 'V',   'chromatic' => 'IX',  'tone' => 'f1#' ],
+    [ 'rowKey' => 'tones.row10', 'abbr' => 'VI',  'chromatic' => 'X',   'tone' => 'g1' ],
+    [ 'rowKey' => 'tones.row11', 'abbr' => 'VII↓','chromatic' => 'XI',  'tone' => 'g1#' ],
+    [ 'rowKey' => 'tones.row12', 'abbr' => 'VII', 'chromatic' => 'XII', 'tone' => 'a1' ],
 ];
 foreach ($positionRows as $r):
 ?>
