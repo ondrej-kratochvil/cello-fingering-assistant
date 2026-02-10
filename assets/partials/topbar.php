@@ -34,7 +34,7 @@ require __DIR__ . '/../php/tools_config.php';
                         <a href="<?= htmlspecialchars($tool['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 text-indigo-200 hover:bg-indigo-900 hover:text-white transition-colors"><?= $num ?>. <span data-i18n="<?= $tool['navKey'] ?>"></span></a>
                         <div class="nav-submenu absolute left-0 top-full mt-0 py-2 bg-indigo-900 rounded-lg border border-indigo-800 min-w-[8rem] z-50 opacity-0 invisible md:group-hover:opacity-100 md:group-hover:visible transition-opacity">
 <?php foreach ($tool['submenu'] as $sub): ?>
-                            <a href="<?= htmlspecialchars($sub['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 pl-6 text-indigo-200 hover:bg-indigo-800 hover:text-white transition-colors" data-i18n="<?= $sub['navKey'] ?>">Testy</a>
+                            <a href="<?= htmlspecialchars($sub['url'], ENT_QUOTES, 'UTF-8') ?>" class="block px-4 py-2 pl-6 text-indigo-200 hover:bg-indigo-800 hover:text-white transition-colors" data-i18n="<?= $sub['navKey'] ?>"></a>
 <?php endforeach; ?>
                         </div>
                     </div>
