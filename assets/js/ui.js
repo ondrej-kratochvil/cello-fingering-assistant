@@ -981,7 +981,11 @@ function runSolver(options = {}) {
 
 function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, skipHideAbout, display, wrapper }) {
     if (!display) return;
-    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(germanToCanonical(t))));
+    const displayTokens = (inputOriginal !== null && inputOriginal.length === inputForDisplay.length ? inputOriginal : inputForDisplay).map((t) => {
+        const canon = normalizeOctaveAccidentalSwap(germanToCanonical(t));
+        const forDisplay = toDisplayNote(canon);
+        return forDisplay !== canon ? forDisplay : t;
+    });
 
     display.innerHTML = '';
     if (result === null || result === undefined) {

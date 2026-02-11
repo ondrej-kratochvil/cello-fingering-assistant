@@ -13,7 +13,8 @@ export function initMobileMenu() {
         document.body.classList.toggle('nav-open');
     });
 
-    mainNav.addEventListener('click', () => {
+    mainNav.addEventListener('click', (e) => {
+        if (e.target.closest('#navToolsDetails') && !e.target.closest('#navToolsDetails a')) return;
         document.body.classList.remove('nav-open');
     });
 }

@@ -63,10 +63,13 @@
             }, delay);
         }
 
+        let startCancelled = false;
         function start() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             if (startBtn?.dataset?.running === 'true') return;
+            startCancelled = false;
             getCtx().resume().then(() => {
+                if (startCancelled) return;
                 beatIndex = 0;
                 nextTickTime = performance.now();
                 startBtn.dataset.running = 'true';
@@ -79,6 +82,7 @@
         }
 
         function stop() {
+            startCancelled = true;
             if (timerId != null) clearTimeout(timerId);
             timerId = null;
             startBtn.dataset.running = '';

@@ -67,7 +67,8 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             tickables.push(note);
         }
 
-        const voice = new Voice({ num_beats: totalBeats(durations), beat_value: 4 });
+        const beats = Math.max(1, Math.ceil(totalBeats(durations)));
+        const voice = new Voice({ num_beats: beats, beat_value: 4 });
         voice.addTickables(tickables);
         const formatter = new Formatter();
         formatter.joinVoices([voice]);

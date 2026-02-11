@@ -201,6 +201,11 @@
             animationId = null;
             if (stream) stream.getTracks().forEach(tr => tr.stop());
             stream = null;
+            if (audioContext) {
+                audioContext.close().catch(() => {});
+                audioContext = null;
+            }
+            analyser = null;
             if (micBtn) {
                 micBtn.textContent = typeof t === 'function' ? t('tuner.micStart') : 'Zapnout mikrofon';
                 micBtn.dataset.active = 'false';
