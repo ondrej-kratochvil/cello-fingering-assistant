@@ -1,4 +1,6 @@
 // Jednoduchý testovací framework
+import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
+
 class TestRunner {
     constructor() {
         this.tests = [];
@@ -90,43 +92,6 @@ const bToHMap = {
     B: 'H', Bb: 'Hb', b: 'h', bb: 'hb', b1: 'h1', bb1: 'hb1', B1: 'H1', Bb1: 'Hb1'
 };
 
-function normalizeOctaveAccidentalSwap(token) {
-    const m1 = token.match(/^([a-g])(#)(1)$/i);
-    if (m1) return m1[1] + '1' + m1[2];
-    const m2 = token.match(/^([a-g])(1)(b)$/i);
-    if (m2) return m2[1] + 'b' + m2[2];
-    const m3 = token.match(/^([a-g])(#)(2)$/i);
-    if (m3) return m3[1] + '2' + m3[2];
-    const m4 = token.match(/^([a-g])(2)(b)$/i);
-    if (m4) return m4[1] + 'b' + m4[2];
-    return token;
-}
-
-/** Německá notace -is/-es na křížek/béčko (synchronní s ui.js). */
-function germanToCanonical(token) {
-    if (!token || typeof token !== 'string') return token;
-    const t = token.trim();
-    if (t.toLowerCase() === 'es') return 'eb';
-    if (t.toLowerCase() === 'as') return 'ab';
-    let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
-    if (m) {
-        const letter = m[1];
-        const digit = m[2] || '';
-        const acc = m[3].toLowerCase() === 'is' ? '#' : 'b';
-        const out = letter + digit + acc;
-        return digit ? letter.toLowerCase() + digit + acc : out;
-    }
-    m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
-    if (m) {
-        const letter = m[1];
-        const acc = m[2].toLowerCase() === 'is' ? '#' : 'b';
-        const digit = m[3] || '';
-        if (digit) return letter.toLowerCase() + digit + acc;
-        return letter + acc;
-    }
-    return token;
-}
-
 /** Token → kanonický tvar (němčina + přehození oktáva/posuvka). */
 function tokenToCanonical(token) {
     return normalizeOctaveAccidentalSwap(germanToCanonical(token));
@@ -143,7 +108,11 @@ const noteParsingTests = [
     { input: 'C#', expected: 'C#' },
     { input: 'Db', expected: 'Db' },
     { input: 'c#', expected: 'c#' },
-    { input: 'db', expected: 'db' }
+    { input: 'db', expected: 'db' },
+    { input: 'Es', expected: 'Eb' },
+    { input: 'es', expected: 'eb' },
+    { input: 'As', expected: 'Ab' },
+    { input: 'as', expected: 'ab' }
 ];
 
 function prepareInputForSolve(input) {

@@ -1,4 +1,6 @@
 // --- UI FUNCTIONS ---
+import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
+
 // Dynamický import s cache-busting (verze z window.__JS_VERSIONS__ v PHP)
 const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
 const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
@@ -637,49 +639,6 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
 
     legend.appendChild(legendItems);
     container.appendChild(legend);
-}
-
-/**
- * Německá notace -is/-es na křížek/béčko.
- * cis→c#, ces→cb, cis1→c1#, c1is→c1#, es→eb, as→ab, hes→hb.
- */
-function germanToCanonical(token) {
-    if (!token || typeof token !== 'string') return token;
-    const t = token.trim();
-    if (t.toLowerCase() === 'es') return 'eb';
-    if (t.toLowerCase() === 'as') return 'ab';
-    // (písmeno)(volitelně číslo)(is|es)  např. cis1, ces, dis
-    let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
-    if (m) {
-        const letter = m[1];
-        const digit = m[2] || '';
-        const acc = m[3].toLowerCase() === 'is' ? '#' : 'b';
-        const out = letter + digit + acc;
-        return digit ? letter.toLowerCase() + digit + acc : out;
-    }
-    // (písmeno)(is|es)(volitelně číslo)  např. c1is, Cis1
-    m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
-    if (m) {
-        const letter = m[1];
-        const acc = m[2].toLowerCase() === 'is' ? '#' : 'b';
-        const digit = m[3] || '';
-        if (digit) return letter.toLowerCase() + digit + acc;
-        return letter + acc;
-    }
-    return token;
-}
-
-/** c#1 → c1#, d1b → db1, c#2 → c2#, d2b → db2 (přehození oktávy a posuvky pro alternativní zadání) */
-function normalizeOctaveAccidentalSwap(token) {
-    const m1 = token.match(/^([a-g])(#)(1)$/i);
-    if (m1) return m1[1] + '1' + m1[2];
-    const m2 = token.match(/^([a-g])(1)(b)$/i);
-    if (m2) return m2[1] + 'b' + m2[2];
-    const m3 = token.match(/^([a-g])(#)(2)$/i);
-    if (m3) return m3[1] + '2' + m3[2];
-    const m4 = token.match(/^([a-g])(2)(b)$/i);
-    if (m4) return m4[1] + 'b' + m4[2];
-    return token;
 }
 
 /** Podle nastavení H/B vrací zobrazovaný tón (H/Hes vs B/Bb). Vstup je normalizovaný token (H, Hb, h, hb, h1, hb1…). */

@@ -73,6 +73,8 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
         formatter.joinVoices([voice]);
         formatter.format([voice], totalWidth - 80);
 
+        voice.draw(ctx, stave);
+
         const notesOnly = tickables.filter(t => t instanceof StaveNote);
         let idx = 0;
         while (idx < notesOnly.length) {
@@ -87,8 +89,6 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             }
             if (idx < notesOnly.length && notesOnly[idx].getDuration() !== '8') idx++;
         }
-
-        voice.draw(ctx, stave);
         container.innerHTML = '';
         container.appendChild(div);
     }
