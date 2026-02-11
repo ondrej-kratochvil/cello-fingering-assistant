@@ -120,7 +120,7 @@ export function runAllTests() {
         }
 
         const sequenceParam = encodeURIComponent(suite.input.join(' '));
-        const indexUrl = `../../index.php?sequence=${sequenceParam}`;
+        const indexUrl = `../../prstoklad.php?sequence=${sequenceParam}`;
         const hasValidResult = result != null && result.length === suite.input.length;
 
         const nameStr = (suite.nameKey && t(suite.nameKey)) || suite.name;

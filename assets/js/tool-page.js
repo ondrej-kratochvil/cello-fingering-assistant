@@ -19,7 +19,11 @@ function setIntroCollapsed(collapsed) {
     if (!content || !tFn) return;
     content.classList.toggle('hidden', collapsed);
     if (toggle) toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-    if (toggleText) toggleText.textContent = tFn(collapsed ? 'tool.toggleAbout' : 'tool.toggleAboutClose');
+    if (toggleText) {
+        const key = collapsed ? 'tool.toggleAbout' : 'tool.toggleAboutClose';
+        toggleText.setAttribute('data-i18n', key);
+        toggleText.textContent = tFn(key);
+    }
     if (chevron) chevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
 }
 
@@ -48,18 +52,30 @@ function initToolSelect() {
     });
 }
 
+function refreshToolSelectLabels() {
+    const select = document.getElementById('toolSelect');
+    if (!select || !tFn) return;
+    select.querySelectorAll('option[data-nav-key]').forEach(opt => {
+        opt.textContent = opt.getAttribute('data-num') + '. ' + tFn(opt.getAttribute('data-nav-key'));
+    });
+    const placeholder = select.querySelector('option[value=""]');
+    if (placeholder) placeholder.textContent = tFn('home.gotoToolPlaceholder');
+}
+
 export function initToolPage(i18nT) {
     tFn = typeof i18nT === 'function' ? i18nT : null;
     const section = document.getElementById('toolIntroSection');
     if (!section) {
         window.markToolUsed = function () { };
         initToolSelect();
+        window.addEventListener('languageChange', refreshToolSelectLabels);
         return;
     }
     const toolKey = section.getAttribute('data-tool-key');
     if (!toolKey) {
         window.markToolUsed = function () { };
         initToolSelect();
+        window.addEventListener('languageChange', refreshToolSelectLabels);
         return;
     }
     window.markToolUsed = markToolUsed;
@@ -79,4 +95,15 @@ export function initToolPage(i18nT) {
     }
 
     initToolSelect();
+    window.addEventListener('languageChange', () => {
+        const content = document.getElementById('toolIntroContent');
+        const toggleText = document.getElementById('toolIntroToggleText');
+        if (content && toggleText && tFn) {
+            const collapsed = content.classList.contains('hidden');
+            const key = collapsed ? 'tool.toggleAbout' : 'tool.toggleAboutClose';
+            toggleText.setAttribute('data-i18n', key);
+            toggleText.textContent = tFn(key);
+        }
+        refreshToolSelectLabels();
+    });
 }

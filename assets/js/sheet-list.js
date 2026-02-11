@@ -95,7 +95,7 @@
             const difficulty = Math.max(1, Math.min(10, Number(document.getElementById('sheetDifficulty')?.value) || 5));
             if (!title) return;
             const sheets = loadSheets();
-            const id = 's' + Date.now();
+            const id = 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
             sheets.push({ id, url, title, author, difficulty });
             saveSheets(sheets);
             renderTable(sheets);

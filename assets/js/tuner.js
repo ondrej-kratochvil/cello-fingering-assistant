@@ -214,12 +214,16 @@
             displays?.classList.add('hidden');
         }
 
+        let micStartPending = false;
         function startMic() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
+            if (micBtn?.dataset.active === 'true' || micStartPending) return;
+            micStartPending = true;
             const ref = getReferenceA();
             const pure = usePureFifths();
             updateTargets();
             if (!navigator.mediaDevices?.getUserMedia) {
+                micStartPending = false;
                 if (micStatus) micStatus.textContent = 'Mikrofon není podporován.';
                 return;
             }
@@ -238,9 +242,11 @@
                         micBtn.dataset.active = 'true';
                     }
                     if (micStatus) micStatus.textContent = typeof t === 'function' ? t('tuner.micListening') : 'Poslouchám…';
+                    micStartPending = false;
                     tick();
                 })
                 .catch((err) => {
+                    micStartPending = false;
                     if (micBtn) {
                         micBtn.dataset.active = 'false';
                         micBtn.textContent = typeof t === 'function' ? t('tuner.micStart') : 'Zapnout mikrofon';

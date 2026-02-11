@@ -797,11 +797,16 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     // Vytvořit Voice a přidat noty; vložit ClefNote vždy, když se klíč změní oproti předchozí notě
     const tickables = [];
+    const noteIndexToTickableIndex = [];
+    let tickableIdx = 0;
     for (let i = 0; i < notes.length; i++) {
         if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
             tickables.push(new ClefNote(clefPerNote[i]));
+            tickableIdx++;
         }
+        noteIndexToTickableIndex[i] = tickableIdx;
         tickables.push(notes[i]);
+        tickableIdx++;
     }
     const voice = new Voice({ num_beats: notes.length, beat_value: 1 });
     voice.addTickables(tickables);
@@ -834,11 +839,12 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         const bodyStyles = getComputedStyle(document.body);
         const highlightColor = bodyStyles.getPropertyValue('--color-primary').trim() || 'rgba(99,102,241,0.25)';
         highlightEl.style.backgroundColor = highlightColor;
-        highlightEl.style.left = (clefOffset + 0 * noteSpacing) + 'px';
+        highlightEl.style.left = (clefOffset + (noteIndexToTickableIndex[0] ?? 0) * noteSpacing) + 'px';
         staffInner.appendChild(highlightEl);
         setHighlight = (index) => {
             if (index >= 0 && index < result.length) {
-                highlightEl.style.left = (clefOffset + index * noteSpacing) + 'px';
+                const tickableIdx = noteIndexToTickableIndex[index] ?? index;
+                highlightEl.style.left = (clefOffset + tickableIdx * noteSpacing) + 'px';
                 highlightEl.style.display = 'block';
             } else {
                 highlightEl.style.display = 'none';
