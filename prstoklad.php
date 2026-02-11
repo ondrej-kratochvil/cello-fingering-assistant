@@ -45,7 +45,7 @@ $currentToolKey = 'fingering';
                     <div>
                         <h3 class="text-lg font-bold text-slate-800 mb-2" data-i18n="tones.title">Tóny, prsty a polohy</h3>
                         <p class="text-slate-600 text-sm mb-3" data-i18n="tones.intro"></p>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto tones-table-wrap">
                             <table class="w-full border border-slate-200 rounded-lg text-sm">
                                 <thead class="bg-slate-100">
                                     <tr>
