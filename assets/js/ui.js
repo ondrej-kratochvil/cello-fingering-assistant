@@ -515,7 +515,9 @@ function startPlayback(noteTokens, bpm) {
     const ctx = playbackState.audioContext;
     ctx.resume().then(() => {
         scheduleNext();
-    }).catch(() => {});
+    }).catch(() => {
+        playbackState.playing = false;
+    });
 
     function scheduleNext() {
         if (!playbackState.playing || playbackState.currentIndex >= noteTokens.length) {
