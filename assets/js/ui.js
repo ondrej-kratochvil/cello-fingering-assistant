@@ -839,7 +839,17 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         highlightEl.setAttribute('aria-hidden', 'true');
         highlightEl.style.cssText = 'position:absolute;top:50px;left:0;width:44px;height:150px;pointer-events:none;border-radius:6px;transition:left 0.05s linear;';
         const bodyStyles = getComputedStyle(document.body);
-        const highlightColor = bodyStyles.getPropertyValue('--color-primary').trim() || 'rgba(99,102,241,0.25)';
+        let highlightColor = 'rgba(99,102,241,0.25)';
+        const primary = bodyStyles.getPropertyValue('--color-primary').trim();
+        if (primary) {
+            const hex6 = primary.match(/^#([0-9a-fA-F]{6})$/);
+            if (hex6) {
+                const hex = hex6[1];
+                highlightColor = `rgba(${parseInt(hex.slice(0,2),16)},${parseInt(hex.slice(2,4),16)},${parseInt(hex.slice(4,6),16)},0.25)`;
+            } else if (primary.startsWith('rgba') || primary.startsWith('rgb(')) {
+                highlightColor = primary;
+            }
+        }
         highlightEl.style.backgroundColor = highlightColor;
         highlightEl.style.left = (clefOffset + (noteIndexToTickableIndex[0] ?? 0) * noteSpacing) + 'px';
         staffInner.appendChild(highlightEl);

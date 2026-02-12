@@ -31,20 +31,24 @@ export function germanToCanonical(token) {
     const lower = t.toLowerCase();
     if (lower === 'es') return t[0] === 'E' ? 'Eb' : 'eb';
     if (lower === 'as') return t[0] === 'A' ? 'Ab' : 'ab';
+    const esAsWithOctave = t.match(/^([eE])s(\d*)$/);
+    if (esAsWithOctave) return esAsWithOctave[1] === 'E' ? 'Eb' + esAsWithOctave[2] : 'eb' + esAsWithOctave[2];
+    const asWithOctave = t.match(/^([aA])s(\d*)$/);
+    if (asWithOctave) return asWithOctave[1] === 'A' ? 'Ab' + asWithOctave[2] : 'ab' + asWithOctave[2];
     let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
     if (m) {
         const letter = m[1];
         const digit = m[2] || '';
         const acc = m[3].toLowerCase() === 'is' ? '#' : 'b';
         const out = letter + digit + acc;
-        return digit ? letter.toLowerCase() + digit + acc : out;
+        return digit ? letter.toLowerCase() + acc + digit : out;
     }
     m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
     if (m) {
         const letter = m[1];
         const acc = m[2].toLowerCase() === 'is' ? '#' : 'b';
         const digit = m[3] || '';
-        if (digit) return letter.toLowerCase() + digit + acc;
+        if (digit) return letter.toLowerCase() + acc + digit;
         return letter + acc;
     }
     return token;
