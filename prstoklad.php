@@ -32,14 +32,14 @@ $currentToolKey = 'fingering';
                 </button>
                 <div id="fingeringAboutContent" class="mt-4 space-y-6">
                     <div class="prose prose-slate max-w-none">
-                        <p class="text-slate-700" data-i18n-html="about.p1"></p>
-                        <p class="text-slate-700" data-i18n-html="about.p2"></p>
+                        <p class="text-slate-700" data-i18n="about.p1" data-i18n-html></p>
+                        <p class="text-slate-700" data-i18n="about.p2" data-i18n-html></p>
                     </div>
                     <h3 class="text-lg font-bold text-slate-800" data-i18n="features.title">Hlavní funkce</h3>
                     <ul class="space-y-3 list-none pl-0 text-slate-700">
                         <li><strong data-i18n="features.algo.title"></strong> <span data-i18n="features.algo.desc"></span></li>
-                        <li><strong data-i18n="features.staff.title"></strong> <span data-i18n="features.staff.desc"></span></li>
-                        <li><strong data-i18n="features.fingerboard.title"></strong> <span data-i18n="features.fingerboard.desc"></span></li>
+                        <li><strong data-i18n="features.staff.title"></strong> <span data-i18n="features.staff.desc" data-i18n-html></span></li>
+                        <li><strong data-i18n="features.fingerboard.title"></strong> <span data-i18n="features.fingerboard.desc" data-i18n-html></span></li>
                         <li><strong data-i18n="features.tech.title"></strong> <span data-i18n="features.tech.desc"></span></li>
                     </ul>
                     <div>
