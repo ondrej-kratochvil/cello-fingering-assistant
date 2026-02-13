@@ -1070,62 +1070,65 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
     if (currentOutputFormat === 'staff') {
         const staffResult = renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn, { enableHighlight: true });
         staffDiv = staffResult && staffResult.staffDiv ? staffResult.staffDiv : staffResult;
-        if (staffResult && typeof staffResult.setHighlight === 'function') currentSetStaffHighlight = staffResult.setHighlight;
+        const hasStaffHighlight = staffResult && typeof staffResult.setHighlight === 'function';
+        if (hasStaffHighlight) currentSetStaffHighlight = staffResult.setHighlight;
 
-        // Pás přehrávání: BPM, Start, Pauza, Na začátek
-        const playbackBar = document.createElement('div');
-        playbackBar.className = 'playback-bar flex flex-wrap items-center gap-3 py-2';
-        const bpmLabel = document.createElement('label');
-        bpmLabel.className = 'text-sm font-bold text-slate-700';
-        bpmLabel.textContent = t('playback.bpm');
-        bpmLabel.htmlFor = 'playbackBpm';
-        const bpmInput = document.createElement('input');
-        bpmInput.type = 'number';
-        bpmInput.id = 'playbackBpm';
-        bpmInput.min = 60;
-        bpmInput.max = 600;
-        bpmInput.value = playbackState.bpm;
-        bpmInput.className = 'w-20 px-2 py-1 border border-slate-300 rounded font-mono text-sm';
-        const playBtn = document.createElement('button');
-        playBtn.type = 'button';
-        playBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg';
-        playBtn.textContent = t('playback.play');
-        const pauseBtn = document.createElement('button');
-        pauseBtn.type = 'button';
-        pauseBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg';
-        pauseBtn.textContent = t('playback.pause');
-        const restartBtn = document.createElement('button');
-        restartBtn.type = 'button';
-        restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg';
-        restartBtn.textContent = t('playback.restart');
+        // Pás přehrávání pouze když máme osnovu s highlightem (jinak byl fallback na textový výstup)
+        if (hasStaffHighlight) {
+            const playbackBar = document.createElement('div');
+            playbackBar.className = 'playback-bar flex flex-wrap items-center gap-3 py-2';
+            const bpmLabel = document.createElement('label');
+            bpmLabel.className = 'text-sm font-bold text-slate-700';
+            bpmLabel.textContent = t('playback.bpm');
+            bpmLabel.htmlFor = 'playbackBpm';
+            const bpmInput = document.createElement('input');
+            bpmInput.type = 'number';
+            bpmInput.id = 'playbackBpm';
+            bpmInput.min = 60;
+            bpmInput.max = 600;
+            bpmInput.value = playbackState.bpm;
+            bpmInput.className = 'w-20 px-2 py-1 border border-slate-300 rounded font-mono text-sm';
+            const playBtn = document.createElement('button');
+            playBtn.type = 'button';
+            playBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg';
+            playBtn.textContent = t('playback.play');
+            const pauseBtn = document.createElement('button');
+            pauseBtn.type = 'button';
+            pauseBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg';
+            pauseBtn.textContent = t('playback.pause');
+            const restartBtn = document.createElement('button');
+            restartBtn.type = 'button';
+            restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg';
+            restartBtn.textContent = t('playback.restart');
 
-        bpmInput.addEventListener('change', () => {
-            const v = parseInt(bpmInput.value, 10);
-            if (!Number.isNaN(v) && v >= 60 && v <= 600) playbackState.bpm = v;
-        });
-        playBtn.addEventListener('click', () => {
-            if (!playbackState.playing) {
+            bpmInput.addEventListener('change', () => {
+                const v = parseInt(bpmInput.value, 10);
+                if (!Number.isNaN(v) && v >= 60 && v <= 600) playbackState.bpm = v;
+            });
+            playBtn.addEventListener('click', () => {
+                if (!playbackState.playing) {
+                    const bpm = parseInt(bpmInput.value, 10);
+                    if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
+                    startPlayback(inputForSolve, playbackState.bpm);
+                }
+            });
+            pauseBtn.addEventListener('click', stopPlayback);
+            restartBtn.addEventListener('click', () => {
+                stopPlayback();
+                playbackState.currentIndex = 0;
+                if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
                 const bpm = parseInt(bpmInput.value, 10);
                 if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
                 startPlayback(inputForSolve, playbackState.bpm);
-            }
-        });
-        pauseBtn.addEventListener('click', stopPlayback);
-        restartBtn.addEventListener('click', () => {
-            stopPlayback();
-            playbackState.currentIndex = 0;
-            if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
-            const bpm = parseInt(bpmInput.value, 10);
-            if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
-            startPlayback(inputForSolve, playbackState.bpm);
-        });
+            });
 
-        playbackBar.appendChild(bpmLabel);
-        playbackBar.appendChild(bpmInput);
-        playbackBar.appendChild(playBtn);
-        playbackBar.appendChild(pauseBtn);
-        playbackBar.appendChild(restartBtn);
-        container.appendChild(playbackBar);
+            playbackBar.appendChild(bpmLabel);
+            playbackBar.appendChild(bpmInput);
+            playbackBar.appendChild(playBtn);
+            playbackBar.appendChild(pauseBtn);
+            playbackBar.appendChild(restartBtn);
+            container.appendChild(playbackBar);
+        }
     } else {
         renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
     }
