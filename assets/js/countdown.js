@@ -63,6 +63,7 @@
             const endTimeVal = paused ? now + remainingSeconds * 1000 : (endTime != null ? endTime : now + remainingSeconds * 1000);
             const state = {
                 remaining: remainingSeconds,
+                total: totalSeconds,
                 paused: !!paused,
                 endTime: endTimeVal
             };
@@ -250,6 +251,7 @@
         getCtx().resume().catch(() => {});
         isPausedFlag = false;
         remainingSeconds = state.remaining;
+        if (typeof state.total === 'number' && state.total > 0) totalSeconds = state.total;
         endTime = Date.now() + remainingSeconds * 1000;
         if (timerId != null) clearInterval(timerId);
         timerId = setInterval(tick, 200);
@@ -287,6 +289,7 @@
         const state = loadState();
         if (!state) return;
         remainingSeconds = state.remaining;
+        if (typeof state.total === 'number' && state.total > 0) totalSeconds = state.total;
         if (state.paused) {
             isPausedFlag = true;
             updateDisplay(remainingSeconds);
