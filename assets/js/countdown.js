@@ -112,7 +112,9 @@
     }
 
     function resetTitle() {
-        document.title = TITLE_BASE;
+        if (document.location.pathname.endsWith('odpocet.php')) {
+            document.title = TITLE_BASE;
+        }
     }
 
     function tick() {
@@ -194,6 +196,7 @@
     function topbarPlay() {
         const state = loadState();
         if (!state) return;
+        getCtx().resume().catch(() => {});
         isPausedFlag = false;
         remainingSeconds = state.remaining;
         endTime = Date.now() + remainingSeconds * 1000;
@@ -216,6 +219,7 @@
         if (pauseBtnPage) pauseBtnPage.dataset.paused = 'true';
         const startBtn = document.getElementById('countdownStart');
         if (startBtn) startBtn.dataset.running = '';
+        resetTitle();
         saveState();
         updateTopbarWidget();
     }
@@ -225,6 +229,8 @@
         if (!state) return;
         remainingSeconds = state.remaining;
         if (state.paused) {
+            isPausedFlag = true;
+            updateDisplay(remainingSeconds);
             showTopbarWidget(true);
             updateTopbarWidget();
             const pauseBtnPage = document.getElementById('countdownPause');
