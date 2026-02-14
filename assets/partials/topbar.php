@@ -65,3 +65,5 @@ require __DIR__ . '/../php/tools_config.php';
             <button type="button" id="countdownTopbarPlay" class="p-1 hover:bg-indigo-800 rounded" aria-label="Pokračovat" data-i18n-aria-label="countdown.resume"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
             <button type="button" id="countdownTopbarPause" class="p-1 hover:bg-indigo-800 rounded hidden" aria-label="Pauza" data-i18n-aria-label="countdown.pause"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
         </div>
+    </div>
+</header>
