@@ -215,10 +215,12 @@
         }
 
         let micStartPending = false;
+        let micStartCancelled = false;
         function startMic() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             if (micBtn?.dataset.active === 'true' || micStartPending) return;
             micStartPending = true;
+            micStartCancelled = false;
             const ref = getReferenceA();
             const pure = usePureFifths();
             updateTargets();
@@ -229,6 +231,11 @@
             }
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then((s) => {
+                    if (micStartCancelled) {
+                        s.getTracks().forEach(tr => tr.stop());
+                        micStartPending = false;
+                        return;
+                    }
                     stream = s;
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const src = audioContext.createMediaStreamSource(stream);
@@ -247,6 +254,7 @@
                 })
                 .catch((err) => {
                     micStartPending = false;
+                    if (micStartCancelled) return;
                     if (micBtn) {
                         micBtn.dataset.active = 'false';
                         micBtn.textContent = typeof t === 'function' ? t('tuner.micStart') : 'Zapnout mikrofon';
@@ -257,6 +265,10 @@
 
         if (micBtn) {
             micBtn.addEventListener('click', () => {
+                if (micStartPending) {
+                    micStartCancelled = true;
+                    return;
+                }
                 if (micBtn.dataset.active === 'true') stopMic();
                 else startMic();
             });
