@@ -714,3 +714,31 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
     }
 }
 
+/* Toast notification */
+.toast-notification {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 1.5rem;
+    background: var(--color-bg-header);
+    color: var(--color-text-inverse);
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    z-index: 9999;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: toast-fade-in 0.3s ease-out;
+}
+.toast-notification.toast-fade-out {
+    animation: toast-fade-out 0.3s ease-in forwards;
+}
+@keyframes toast-fade-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(1rem); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toast-fade-out {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(-0.5rem); }
+}
+

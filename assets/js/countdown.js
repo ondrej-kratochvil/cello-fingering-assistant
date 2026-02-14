@@ -121,6 +121,21 @@
         }
     }
 
+    function showToast(message, durationMs) {
+        const existing = document.querySelector('.toast-notification');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.textContent = message;
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, durationMs);
+    }
+
     function tick() {
         remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
         updateDisplay(remainingSeconds);
@@ -129,6 +144,8 @@
             if (timerId != null) clearInterval(timerId);
             timerId = null;
             endTime = null;
+            const t = typeof window.t === 'function' ? window.t : (k, v) => (v?.m != null ? v.m + ' minutes elapsed' : k);
+            showToast(t('countdown.elapsed', { m: Math.round(totalSeconds / 60) }), 3000);
             playAlarm();
             resetTitle();
             saveState();
