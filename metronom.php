@@ -45,7 +45,7 @@ $toolTitleKey = 'metronome.title';
                     </div>
                 </div>
                 <div class="flex gap-4">
-                    <button type="button" id="metronomePlayStop" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2" data-i18n="metronome.start" aria-label="" data-state="stopped">
+                    <button type="button" id="metronomePlayStop" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2" data-i18n="metronome.start" data-i18n-aria-label="metronome.startStop" aria-label="" data-state="stopped">
                         <svg class="metronome-icon-play w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
                         <svg class="metronome-icon-stop w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>
                         <span class="metronome-btn-text">Start</span>
