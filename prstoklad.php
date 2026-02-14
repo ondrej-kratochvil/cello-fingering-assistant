@@ -23,13 +23,14 @@ require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'fingering';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="guide.stepFingering">Prstoklad</h2>
-
             <section id="fingeringAboutBlock" class="mb-8">
-                <button type="button" id="fingeringAboutToggle" class="flex items-center gap-2 text-left w-full text-lg font-bold text-slate-800 py-2 hover:text-indigo-600 transition-colors" aria-expanded="true" data-i18n-expanded="fingering.toggleAboutClose" data-i18n-collapsed="fingering.toggleAbout">
-                    <span id="fingeringAboutToggleText" data-i18n="fingering.toggleAboutClose">Skrýt popis</span>
-                    <svg id="fingeringAboutChevron" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+                    <h2 class="text-2xl font-bold text-slate-800" data-i18n="guide.stepFingering">Prstoklad</h2>
+                    <button type="button" id="fingeringAboutToggle" class="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors text-sm font-medium ml-auto" aria-expanded="true" data-i18n-expanded="fingering.toggleAboutClose" data-i18n-collapsed="fingering.toggleAbout">
+                        <span id="fingeringAboutToggleText" data-i18n="fingering.toggleAboutClose">Skrýt popis</span>
+                        <svg id="fingeringAboutChevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
                 <div id="fingeringAboutContent" class="mt-4 space-y-6">
                     <div class="prose prose-slate max-w-none">
                         <p class="text-slate-700" data-i18n="about.p1" data-i18n-html></p>
@@ -170,16 +171,20 @@ foreach ($positionRows as $r):
                 <div id="pathDisplay" class="flex flex-nowrap md:flex-wrap justify-center md:justify-start gap-4 min-w-max md:min-w-0"></div>
             </div>
             <div class="overflow-x-auto -mx-8 px-8 md:mx-0 md:px-0 mt-10">
+                <h3 class="text-lg font-bold text-slate-800 mb-4" data-i18n="fingering.fingerboardHeading">Vizualizace hmatníku</h3>
                 <canvas id="fretboardCanvas" width="1000" height="400" class="border border-slate-300 rounded-lg"></canvas>
             </div>
         </div>
 
+<?php $showJson = isset($_GET['dev']) && $_GET['dev'] === '1'; ?>
+        <?php if ($showJson): ?>
         <div class="p-8 bg-white border-t border-slate-100 text-center">
             <button id="toggleJsonButton" class="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors" data-i18n="button.jsonShow">Zobrazit JSON Model</button>
             <div id="jsonContainer" class="hidden mt-4 bg-slate-900 rounded-2xl p-6 text-left overflow-hidden">
                 <pre id="jsonDisplay" class="text-emerald-400 text-xs overflow-auto max-h-[300px]"></pre>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="p-8 bg-white">
 <?php require __DIR__ . '/assets/partials/tool_next_bar.php'; ?>
@@ -202,7 +207,9 @@ $JS_VERSIONS = [
     'uiSettings' => filemtime($jsDir . '/ui-settings.js'),
     'uiModals' => filemtime($jsDir . '/ui-modals.js'),
     'uiFingerEditor' => filemtime($jsDir . '/ui-finger-editor.js'),
+    'uiPlayback' => filemtime($jsDir . '/ui-playback.js'),
     'toolPage' => filemtime($jsDir . '/tool-page.js'),
+    'countdown' => filemtime($jsDir . '/countdown.js'),
 ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
@@ -223,6 +230,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
             await initNavigation();
             ui.initUI();
             initToolPage(t);
+            await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
         }
         main();
     </script>

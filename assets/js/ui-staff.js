@@ -3,6 +3,7 @@
  */
 import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
 import { t, getNoteNamingCurrent } from './i18n.js';
+import { ensureHighlightDefs, ensureHighlightLayer } from './ui-modals.js';
 
 /** Prahy pro výběr klíče (notová osnova): nad a1 → houslový; v houslovém zpět na basový až od d1 a nižší */
 const A1_MIDI_CLEF = 69;
@@ -315,34 +316,62 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     let setHighlight = null;
     if (opts.enableHighlight && result.length > 0) {
-        const highlightEl = document.createElement('div');
-        highlightEl.className = 'staff-note-highlight';
-        highlightEl.setAttribute('aria-hidden', 'true');
-        highlightEl.style.cssText = 'position:absolute;top:50px;left:0;width:44px;height:150px;pointer-events:none;border-radius:6px;transition:left 0.05s linear;';
-        let highlightColor = 'rgba(99,102,241,0.25)';
-        const primary = bodyStyles.getPropertyValue('--color-primary').trim();
-        if (primary) {
-            const hex6 = primary.match(/^#([0-9a-fA-F]{6})$/);
-            if (hex6) {
-                const hex = hex6[1];
-                highlightColor = `rgba(${parseInt(hex.slice(0,2),16)},${parseInt(hex.slice(2,4),16)},${parseInt(hex.slice(4,6),16)},0.25)`;
-            } else if (primary.startsWith('rgba') || primary.startsWith('rgb(')) {
-                highlightColor = primary;
+        const svg = staffDiv.querySelector('svg');
+        if (svg) {
+            ensureHighlightDefs(svg);
+            const layer = ensureHighlightLayer(svg);
+            if (layer) {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.classList.add('fingering-highlight');
+                rect.setAttribute('rx', '8');
+                rect.setAttribute('ry', '8');
+                rect.setAttribute('pointer-events', 'none');
+                rect.setAttribute('stroke', 'none');
+                rect.setAttribute('stroke-width', '0');
+                layer.appendChild(rect);
+
+                function collectAnchors() {
+                    const dataEls = Array.from(svg.querySelectorAll('[data-finger-idx]'));
+                    if (dataEls.length) {
+                        const mapped = [];
+                        dataEls.forEach((el) => {
+                            const idx = Number.parseInt(el.getAttribute('data-finger-idx'), 10);
+                            if (!Number.isNaN(idx)) mapped[idx] = el;
+                        });
+                        if (mapped.filter(Boolean).length >= result.length) return mapped;
+                    }
+                    const textEls = Array.from(svg.querySelectorAll('text'));
+                    const fingerRegex = /^[0-4](?:↑)?!?$/;
+                    const fingerTexts = textEls.filter((el) => fingerRegex.test((el.textContent || '').trim()));
+                    const sorted = fingerTexts.map((el) => {
+                        let x = 0;
+                        try { x = el.getBBox().x; } catch (e) { x = 0; }
+                        return { el, x };
+                    }).sort((a, b) => a.x - b.x).map(item => item.el);
+                    return sorted.slice(0, result.length);
+                }
+
+                const anchors = collectAnchors();
+                const padX = 8;
+                const padY = 6;
+                setHighlight = (index) => {
+                    if (index >= 0 && index < result.length && anchors[index]) {
+                        try {
+                            const box = anchors[index].getBBox();
+                            rect.setAttribute('x', String(box.x - padX));
+                            rect.setAttribute('y', String(box.y - padY));
+                            rect.setAttribute('width', String(box.width + padX * 2));
+                            rect.setAttribute('height', String(box.height + padY * 2));
+                            rect.setAttribute('fill', 'url(#fingering-highlight-gradient-light)');
+                            rect.style.display = '';
+                        } catch (e) { rect.style.display = 'none'; }
+                    } else {
+                        rect.style.display = 'none';
+                    }
+                };
+                setHighlight(-1);
             }
         }
-        highlightEl.style.backgroundColor = highlightColor;
-        highlightEl.style.left = (clefOffset + (noteIndexToTickableIndex[0] ?? 0) * noteSpacing) + 'px';
-        staffInner.appendChild(highlightEl);
-        setHighlight = (index) => {
-            if (index >= 0 && index < result.length) {
-                const tickableIdx = noteIndexToTickableIndex[index] ?? index;
-                highlightEl.style.left = (clefOffset + tickableIdx * noteSpacing) + 'px';
-                highlightEl.style.display = 'block';
-            } else {
-                highlightEl.style.display = 'none';
-            }
-        };
-        setHighlight(-1);
     }
 
     staffContainer.appendChild(staffInner);

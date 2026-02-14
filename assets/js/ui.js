@@ -13,6 +13,7 @@ import { drawFingerboard } from './ui-fingerboard.js';
 import { initSettings } from './ui-settings.js';
 import * as modals from './ui-modals.js';
 import * as fingerEditor from './ui-finger-editor.js';
+import * as playback from './ui-playback.js';
 
 const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
 const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
@@ -65,66 +66,6 @@ function arraysEqual(a, b) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
     return a.every((val, idx) => val === b[idx]);
-}
-
-function playNote(ctx, midi, durationSeconds) {
-    if (!ctx) return;
-    const freq = 440 * Math.pow(2, (midi - 69) / 12);
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + durationSeconds);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + durationSeconds);
-}
-
-function stopPlayback() {
-    const ps = state.playbackState;
-    if (ps.timeoutId != null) {
-        clearTimeout(ps.timeoutId);
-        ps.timeoutId = null;
-    }
-    ps.playing = false;
-    if (state.currentSetStaffHighlight) state.currentSetStaffHighlight(-1);
-}
-
-function startPlayback(noteTokens, bpm) {
-    if (!noteTokens || noteTokens.length === 0) return;
-    const ps = state.playbackState;
-    if (ps.playing) return;
-    ps.playing = true;
-    if (ps.currentIndex === undefined || ps.currentIndex >= noteTokens.length) {
-        ps.currentIndex = 0;
-    }
-    ps.bpm = bpm;
-    const durationSec = (4 * 60) / bpm;
-    if (!ps.audioContext) {
-        ps.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const ctx = ps.audioContext;
-    ctx.resume().then(() => {
-        scheduleNext();
-    }).catch(() => {
-        ps.playing = false;
-    });
-
-    function scheduleNext() {
-        if (!ps.playing || ps.currentIndex >= noteTokens.length) {
-            ps.playing = false;
-            if (state.currentSetStaffHighlight) state.currentSetStaffHighlight(-1);
-            return;
-        }
-        const idx = ps.currentIndex;
-        if (state.currentSetStaffHighlight) state.currentSetStaffHighlight(idx);
-        const midi = getMidiNumber(noteTokens[idx]);
-        playNote(ctx, midi, durationSec * 0.9);
-        ps.currentIndex += 1;
-        ps.timeoutId = setTimeout(scheduleNext, durationSec * 1000);
-    }
 }
 
 function setEditMode(enabled, focusIndex = 0) {
@@ -248,7 +189,7 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
     const container = document.createElement('div');
     container.className = 'w-full space-y-4';
 
-    stopPlayback();
+    playback.stopPlayback();
     state.playbackState.currentIndex = 0;
     state.currentSetStaffHighlight = null;
 
@@ -260,59 +201,7 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
         if (hasStaffHighlight) state.currentSetStaffHighlight = staffResult.setHighlight;
 
         if (hasStaffHighlight) {
-            const playbackBar = document.createElement('div');
-            playbackBar.className = 'playback-bar flex flex-wrap items-center gap-3 py-2';
-            const bpmLabel = document.createElement('label');
-            bpmLabel.className = 'text-sm font-bold text-slate-700';
-            bpmLabel.textContent = t('playback.bpm');
-            bpmLabel.htmlFor = 'playbackBpm';
-            const bpmInput = document.createElement('input');
-            bpmInput.type = 'number';
-            bpmInput.id = 'playbackBpm';
-            bpmInput.min = 60;
-            bpmInput.max = 600;
-            bpmInput.value = state.playbackState.bpm;
-            bpmInput.className = 'w-20 px-2 py-1 border border-slate-300 rounded font-mono text-sm';
-            const playBtn = document.createElement('button');
-            playBtn.type = 'button';
-            playBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg';
-            playBtn.textContent = t('playback.play');
-            const pauseBtn = document.createElement('button');
-            pauseBtn.type = 'button';
-            pauseBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg';
-            pauseBtn.textContent = t('playback.pause');
-            const restartBtn = document.createElement('button');
-            restartBtn.type = 'button';
-            restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg';
-            restartBtn.textContent = t('playback.restart');
-
-            bpmInput.addEventListener('change', () => {
-                const v = parseInt(bpmInput.value, 10);
-                if (!Number.isNaN(v) && v >= 60 && v <= 600) state.playbackState.bpm = v;
-            });
-            playBtn.addEventListener('click', () => {
-                if (!state.playbackState.playing) {
-                    const bpm = parseInt(bpmInput.value, 10);
-                    if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) state.playbackState.bpm = bpm;
-                    startPlayback(inputForSolve, state.playbackState.bpm);
-                }
-            });
-            pauseBtn.addEventListener('click', stopPlayback);
-            restartBtn.addEventListener('click', () => {
-                stopPlayback();
-                state.playbackState.currentIndex = 0;
-                if (state.currentSetStaffHighlight) state.currentSetStaffHighlight(-1);
-                const bpm = parseInt(bpmInput.value, 10);
-                if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) state.playbackState.bpm = bpm;
-                startPlayback(inputForSolve, state.playbackState.bpm);
-            });
-
-            playbackBar.appendChild(bpmLabel);
-            playbackBar.appendChild(bpmInput);
-            playbackBar.appendChild(playBtn);
-            playbackBar.appendChild(pauseBtn);
-            playbackBar.appendChild(restartBtn);
-            container.appendChild(playbackBar);
+            playback.createPlaybackBar(state, t, inputForSolve, container);
         }
     } else {
         renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
@@ -367,7 +256,8 @@ function updateEditButtonState() {
 }
 
 function toggleJson() {
-    document.getElementById('jsonContainer').classList.toggle('hidden');
+    const el = document.getElementById('jsonContainer');
+    if (el) el.classList.toggle('hidden');
 }
 
 // Export na window
@@ -398,6 +288,8 @@ if (!Object.getOwnPropertyDescriptor(window, 'lastInputForSolve')) {
 
 export function initUI() {
     if (!document.getElementById('pathDisplay')) return;
+
+    playback.initPlayback(state, { getMidiNumber, t });
 
     modals.initModals({
         state,
