@@ -1,8 +1,8 @@
 /**
  * Metronom – BPM, počet dob (0=bez zvýraznění, 2, 3, 4, 6), táhlo, puntíky, notová sekvence.
  */
-import { loadFingeringState, noteToVexKey, getClefPerNote, getPositionChanges } from './fingering-staff-utils.js';
-import { toPositionLabel, getPositionLabelMode } from './ui-staff.js';
+import { loadFingeringState } from './fingering-staff-utils.js';
+import { renderStaffWithRhythm } from './ui-staff.js';
 import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
 
 (function () {
@@ -34,92 +34,6 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.06);
-    }
-
-    function totalBeats(durations) {
-        let sum = 0;
-        for (const d of durations) {
-            sum += d === 'e' ? 0.5 : 1;
-        }
-        return sum;
-    }
-
-    function renderStaff(container, input, durations, fingering) {
-        if (typeof Vex === 'undefined' || !Vex.Flow) return;
-        const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, ClefNote, Annotation } = Vex.Flow;
-        const clefPerNote = getClefPerNote(input);
-        const noteSpacing = 36;
-        const totalWidth = 60 + input.length * noteSpacing + 20;
-        const totalHeight = 180;
-
-        const div = document.createElement('div');
-        div.id = 'vexflow-staff-metronome';
-        div.className = 'staff-output rounded-lg overflow-x-auto';
-        const renderer = new Renderer(div, Renderer.Backends.SVG);
-        renderer.resize(totalWidth, totalHeight);
-        const ctx = renderer.getContext();
-        const ink = getComputedStyle(document.body).getPropertyValue('--color-staff-ink')?.trim() || '#0f172a';
-        ctx.setFillStyle(ink);
-        ctx.setStrokeStyle(ink);
-
-        const stave = new Stave(0, 40, totalWidth);
-        stave.addClef(clefPerNote[0] || 'bass');
-        stave.setContext(ctx).draw();
-
-        const positionChanges = fingering?.length ? getPositionChanges(fingering) : [];
-        const tickables = [];
-        for (let i = 0; i < input.length; i++) {
-            if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
-                tickables.push(new ClefNote(clefPerNote[i]));
-            }
-            const key = noteToVexKey(input[i]);
-            const dur = durations[i] === 'e' ? '8' : 'q';
-            const opts = { clef: clefPerNote[i], keys: [key], duration: dur };
-            const note = new StaveNote(opts);
-            if (fingering?.[i]) {
-                const step = fingering[i];
-                let fingerText = step.f === 0 ? '0' : String(step.f);
-                if (step.ext === 1) fingerText += '↑';
-                const fingerAnn = new Annotation(fingerText);
-                fingerAnn.setFont('Arial', 12, 'bold');
-                fingerAnn.setStyle({ fillStyle: ink });
-                note.addModifier(fingerAnn, 0);
-                if (positionChanges.includes(i) && step.p > 0) {
-                    const posAnn = new Annotation(toPositionLabel(step.p, getPositionLabelMode()));
-                    posAnn.setVerticalJustification(Annotation.VerticalJustify.TOP);
-                    posAnn.setFont('Arial', 10, 'bold');
-                    posAnn.setStyle({ fillStyle: ink });
-                    note.addModifier(posAnn, 0);
-                }
-            }
-            tickables.push(note);
-        }
-
-        const beats = Math.max(1, Math.ceil(totalBeats(durations)));
-        const voice = new Voice({ num_beats: beats, beat_value: 4 });
-        voice.addTickables(tickables);
-        const formatter = new Formatter();
-        formatter.joinVoices([voice]);
-        formatter.format([voice], totalWidth - 80);
-
-        voice.draw(ctx, stave);
-
-        const notesOnly = tickables.filter(t => t instanceof StaveNote);
-        let idx = 0;
-        while (idx < notesOnly.length) {
-            const group = [];
-            while (idx < notesOnly.length && notesOnly[idx].getDuration() === '8') {
-                group.push(notesOnly[idx]);
-                idx++;
-            }
-            if (group.length > 1) {
-                const beam = new Beam(group);
-                beam.setContext(ctx).draw();
-            }
-            if (idx < notesOnly.length && notesOnly[idx].getDuration() !== '8') idx++;
-        }
-        container.innerHTML = '';
-        container.appendChild(div);
     }
 
     function init() {
@@ -211,13 +125,13 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
                 if (startCancelled) return;
                 beatIndex = 0;
                 nextTickTime = performance.now();
-                if (playStopBtn) playStopBtn.dataset.running = 'true';
+                playStopBtn && (playStopBtn.dataset.running = 'true');
                 if (iconPlay) iconPlay.classList.add('hidden');
                 if (iconStop) iconStop.classList.remove('hidden');
                 if (btnText) btnText.textContent = t('metronome.stop');
                 playStopBtn?.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
                 playStopBtn?.classList.add('bg-slate-600', 'hover:bg-slate-700');
-                playStopBtn?.setAttribute('aria-label', t('metronome.stop'));
+                playStopBtn?.setAttribute('aria-label', t('metronome.startStop'));
                 updateDots(0);
                 playTick(useAccent());
                 beatIndex = 1;
@@ -230,13 +144,13 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             startCancelled = true;
             if (timerId != null) clearTimeout(timerId);
             timerId = null;
-            if (playStopBtn) playStopBtn.dataset.running = '';
+            playStopBtn && (playStopBtn.dataset.running = '');
             if (iconPlay) iconPlay.classList.remove('hidden');
             if (iconStop) iconStop.classList.add('hidden');
             if (btnText) btnText.textContent = t('metronome.start');
             playStopBtn?.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
             playStopBtn?.classList.remove('bg-slate-600', 'hover:bg-slate-700');
-            playStopBtn?.setAttribute('aria-label', t('metronome.start'));
+            playStopBtn?.setAttribute('aria-label', t('metronome.startStop'));
             const dots = beatDisplay?.querySelectorAll('.metronome-dot');
             dots?.forEach((d) => {
                 d.classList.remove('metronome-dot--active', 'bg-indigo-500', 'scale-125');
@@ -274,7 +188,7 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             const notes = state.inputNormalized && state.inputNormalized.length === state.input.length
                 ? state.inputNormalized : state.input;
             const durations = getDurationsForSequence(notes.length, pattern);
-            renderStaff(staffContainer, notes, durations, state.fingering);
+            renderStaffWithRhythm(staffContainer, notes, durations, state.fingering, { staffId: 'vexflow-staff-metronome' });
             sequenceSection.classList.remove('hidden');
         }
     }

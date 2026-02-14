@@ -1,7 +1,7 @@
 /**
- * Notová osnova a textový výstup – getClefPerNote, renderStaffOutput, renderTextOutput, toPositionLabel.
+ * Notová osnova a textový výstup – getClefPerNote, renderStaffOutput, renderTextOutput, toPositionLabel, renderStaffWithRhythm.
  */
-import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
+import { germanToCanonical, normalizeOctaveAccidentalSwap, noteToVexKey, getClefPerNote as getClefPerNoteRhythm, getPositionChanges } from './fingering-staff-utils.js';
 import { t, getNoteNamingCurrent } from './i18n.js';
 import { ensureHighlightDefs, ensureHighlightLayer } from './ui-modals.js';
 
@@ -179,17 +179,25 @@ export function renderTextOutput(container, result, input, positionChanges, stri
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
     const legendTitle = document.createElement('p');
     legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
-    legendTitle.textContent = t('legend.strings');
+    const legendStringsResult = t('legend.strings');
+    legendTitle.textContent = legendStringsResult;
+    if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
+        console.log('[legend] key=legend.strings, result=', legendStringsResult);
+    }
     legend.appendChild(legendTitle);
 
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
     Object.entries(stringColors).forEach(([s, color]) => {
+        const legendStringResult = t('legend.string', { s });
+        if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
+            console.log('[legend] key=legend.string, s=', s, ', result=', legendStringResult);
+        }
         const legendItem = document.createElement('div');
         legendItem.className = 'flex items-center gap-2';
         legendItem.innerHTML = `
             <span class="w-4 h-4 rounded" style="background-color: ${color}"></span>
-            <span class="font-bold">${t('legend.string', { s })}</span>
+            <span class="font-bold">${legendStringResult}</span>
         `;
         legendItems.appendChild(legendItem);
     });
@@ -393,20 +401,138 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
     const legendTitle = document.createElement('p');
     legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
-    legendTitle.textContent = t('legend.strings');
+    const legendStringsResult = t('legend.strings');
+    legendTitle.textContent = legendStringsResult;
+    if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
+        console.log('[legend] key=legend.strings, result=', legendStringsResult);
+    }
     legend.appendChild(legendTitle);
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
     Object.entries(stringColors).forEach(([s, color]) => {
+        const legendStringResult = t('legend.string', { s });
+        if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
+            console.log('[legend] key=legend.string, s=', s, ', result=', legendStringResult);
+        }
         const legendItem = document.createElement('div');
         legendItem.className = 'flex items-center gap-2';
         legendItem.innerHTML = `
             <span class="w-4 h-4 rounded" style="background-color: ${color}"></span>
-            <span class="font-bold">${t('legend.string', { s })}</span>
+            <span class="font-bold">${legendStringResult}</span>
         `;
         legendItems.appendChild(legendItem);
     });
     legend.appendChild(legendItems);
     container.appendChild(legend);
     return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
+}
+
+/**
+ * Vykreslí notovou osnovu s rytmem (čtvrťové/osminové noty) pro Rytmy, Smyky a Metronom.
+ * @param {HTMLElement} container
+ * @param {string[]} input - tóny
+ * @param {string[]} durations - 'q' nebo 'e' pro každou notu
+ * @param {{ s: number, p: number, f: number, ext: number }[]} [fingering]
+ * @param {{ slurRanges?: [number, number][] }} [opts] - slurRanges pro smyky (obloučky)
+ */
+export function renderStaffWithRhythm(container, input, durations, fingering, opts) {
+    opts = opts || {};
+    if (typeof Vex === 'undefined' || !Vex.Flow) return;
+    if (!input || input.length === 0 || !durations || durations.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, ClefNote, Annotation, Curve } = Vex.Flow;
+    const clefPerNote = getClefPerNoteRhythm(input);
+
+    function totalBeats(durs) {
+        let sum = 0;
+        for (const d of durs) sum += d === 'e' ? 0.5 : 1;
+        return sum;
+    }
+
+    const noteSpacing = 36;
+    const totalWidth = 60 + input.length * noteSpacing + 20;
+    const totalHeight = opts.slurRanges?.length ? 200 : 180;
+
+    const div = document.createElement('div');
+    div.className = 'staff-output rounded-lg overflow-x-auto';
+    if (opts.staffId) div.id = opts.staffId;
+    const renderer = new Renderer(div, Renderer.Backends.SVG);
+    renderer.resize(totalWidth, totalHeight);
+    const ctx = renderer.getContext();
+    const ink = getComputedStyle(document.body).getPropertyValue('--color-staff-ink')?.trim() || '#0f172a';
+    ctx.setFillStyle(ink);
+    ctx.setStrokeStyle(ink);
+
+    const stave = new Stave(0, opts.slurRanges?.length ? 50 : 40, totalWidth);
+    stave.addClef(clefPerNote[0] || 'bass');
+    stave.setContext(ctx).draw();
+
+    const positionChanges = fingering?.length ? getPositionChanges(fingering) : [];
+    const notes = [];
+    const tickables = [];
+    for (let i = 0; i < input.length; i++) {
+        if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
+            tickables.push(new ClefNote(clefPerNote[i]));
+        }
+        const key = noteToVexKey(input[i]);
+        const dur = durations[i] === 'e' ? '8' : 'q';
+        const note = new StaveNote({ clef: clefPerNote[i], keys: [key], duration: dur });
+        if (fingering?.[i]) {
+            const step = fingering[i];
+            let fingerText = step.f === 0 ? '0' : String(step.f);
+            if (step.ext === 1) fingerText += '↑';
+            const fingerAnn = new Annotation(fingerText);
+            fingerAnn.setFont('Arial', 12, 'bold');
+            fingerAnn.setStyle({ fillStyle: ink });
+            note.addModifier(fingerAnn, 0);
+            if (positionChanges.includes(i) && step.p > 0) {
+                const posAnn = new Annotation(toPositionLabel(step.p, getPositionLabelMode()));
+                posAnn.setVerticalJustification(Annotation.VerticalJustify.TOP);
+                posAnn.setFont('Arial', 10, 'bold');
+                posAnn.setStyle({ fillStyle: ink });
+                note.addModifier(posAnn, 0);
+            }
+        }
+        notes.push(note);
+        tickables.push(note);
+    }
+
+    const beats = Math.max(1, Math.ceil(totalBeats(durations)));
+    const voice = new Voice({ num_beats: beats, beat_value: 4 });
+    voice.addTickables(tickables);
+    const formatter = new Formatter();
+    formatter.joinVoices([voice]);
+    formatter.format([voice], totalWidth - 80);
+    voice.draw(ctx, stave);
+
+    const notesOnly = tickables.filter(t => t instanceof StaveNote);
+    let idx = 0;
+    while (idx < notesOnly.length) {
+        const group = [];
+        while (idx < notesOnly.length && notesOnly[idx].getDuration() === '8') {
+            group.push(notesOnly[idx]);
+            idx++;
+        }
+        if (group.length > 1) {
+            const beam = new Beam(group);
+            beam.setContext(ctx).draw();
+        }
+        if (idx < notesOnly.length && notesOnly[idx].getDuration() !== '8') idx++;
+    }
+
+    const slurRanges = opts.slurRanges || [];
+    slurRanges.forEach(([fromIdx, toIdx]) => {
+        if (fromIdx < toIdx && notes[fromIdx] && notes[toIdx]) {
+            try {
+                const curve = new Curve(notes[fromIdx], notes[toIdx]);
+                curve.setContext(ctx).draw();
+            } catch (e) { /* ignore */ }
+        }
+    });
+
+    container.innerHTML = '';
+    container.appendChild(div);
 }
