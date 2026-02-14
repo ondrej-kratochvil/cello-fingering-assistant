@@ -1,16 +1,19 @@
-# Cello Fingering Assistant
+# Cello App Kit
 
-Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí algoritmu založeného na metodice.
+Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smyky, Metronom, Seznam not. Hlavní nástroj – **Prstoklad** – hledá optimální prstoklad pomocí algoritmu založeného na metodice.
 
 ## Struktura projektu
 
-- `index.php` – Hlavní aplikace s UI (vstup tónů, výstup prstokladu, vizualizace hmatníku). PHP includuje topbar/footer.
-- `dev/tests/test.php` – Testovací stránka pro ověření správnosti algoritmu (PHP includuje topbar/footer)
+- `index.php` – Homepage s Průvodcem cvičením (krok za krokem). PHP includuje topbar/footer.
+- `prstoklad.php`, `ladicka.php`, `metronom.php`, `odpocet.php`, `rytmy.php`, `smyky.php`, `seznam-not.php` – stránky nástrojů.
+- `dev/tests/test.php` – Testovací stránka pro ověření správnosti algoritmu prstokladu (PHP includuje topbar/footer)
 - `assets/js/fingering.js` – Hlavní logika algoritmu prstokladu
 - `assets/js/ui.js` – UI, vykreslení notové osnovy (VexFlow), textového výstupu a hmatníku (Canvas)
 - `assets/js/i18n.js` – Vlastní i18n modul: `t(key)`, načítání JSON z `assets/i18n/`, jazyk a H/B v `localStorage`
 - `assets/i18n/cs.json`, `assets/i18n/en.json` – Překlady UI, O aplikaci, Hlavní funkce, testů; snadné přidání dalších jazyků
 - `assets/js/navigation.js` – Navigace, dark mode, callback pro překreslení při změně tématu
+- `assets/js/tuner.js` – Ladička (YIN pitch detection)
+- `assets/js/countdown.js` – Odpočet (minutka), widget v hlavičce, persistence v localStorage
 - `assets/js/tests.js` – Testovací sady a framework
 - `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (notová osnova, i18n)
 - `assets/css/main.css` – Design systém, styly pro notovou osnovu a světlé/tmavé téma

@@ -14,10 +14,14 @@ Tento projekt je klientská (HTML/JS) aplikace pro návrh violoncellového prsto
 
 ## Stručný přehled projektu
 
-- `index.php` – hlavní stránka aplikace **Cello Fingering Assistant**, input sekvence tónů, vizualizace prstokladu a hmatníku (Canvas). PHP includuje topbar a footer. Sekce O aplikaci je skrývatelná (preference v `localStorage`).
+Projekt **Cello App Kit** je sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smyky, Metronom, Seznam not. Každý nástroj na samostatné stránce (`prstoklad.php`, `ladicka.php`, `metronom.php`, `odpocet.php`, `rytmy.php`, `smyky.php`, `seznam-not.php`). Homepage (`index.php`) obsahuje Průvodce cvičením krok za krokem.
+
+- `index.php` – homepage s Průvodcem cvičením. PHP includuje topbar a footer.
 - `accessibility.php` – stránka **Prohlášení o přístupnosti** (úroveň souladu WCAG 2.1, kontakt, datum revize) a **klávesové zkratky** (Enter, Escape). Odkaz v patičce na všech stránkách.
 - `assets/js/fingering.js` – model hmatníku a hlavní algoritmus `solve(sequence)`.
 - `assets/js/ui.js` – napojení UI na algoritmus, vykreslení prstokladu a vizualizace hmatníku.
+- `assets/js/tuner.js` – ladička (YIN pitch detection).
+- `assets/js/countdown.js` – odpočet s widgetem v hlavičce a persistence v `localStorage`.
 - `assets/js/i18n.js` – vlastní i18n modul: načítání JSON z `assets/i18n/`, `t(key)`, jazyk a H/B v `localStorage`, `applyTranslations()`; podpora `[data-i18n]`, `[data-i18n-html]`, `[data-i18n-aria-label]`, `[data-i18n-title]` (tooltipy).
 - `assets/i18n/cs.json`, `assets/i18n/en.json` – překlady UI, O aplikaci, Hlavní funkce, Přístupnost, testů; snadné přidání dalších jazyků.
 - `assets/js/tests.js` – sada testů nad algoritmem a pomocný test runner.
