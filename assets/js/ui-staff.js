@@ -500,7 +500,8 @@ export function renderStaffWithRhythm(container, input, durations, fingering, op
         tickables.push(note);
     }
 
-    const beats = Math.max(1, Math.ceil(totalBeats(durations)));
+    const total = totalBeats(durations);
+    const beats = Math.max(1, total);
     const voice = new Voice({ num_beats: beats, beat_value: 4 });
     voice.addTickables(tickables);
     const formatter = new Formatter();
