@@ -1,7 +1,8 @@
 /**
  * Smyky – načte výstup z Prstokladu, aplikuje smykový pattern (legato = oblouček) a rytmus, vykreslí VexFlow.
  */
-import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-staff-utils.js';
+import { loadFingeringState, noteToVexKey, getClefPerNote, getPositionChanges } from './fingering-staff-utils.js';
+import { toPositionLabel } from './ui-staff.js';
 import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
 
 (function () {
@@ -43,9 +44,9 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         return sum;
     }
 
-    function renderStaff(container, input, slurRanges, durations) {
+    function renderStaff(container, input, slurRanges, durations, fingering) {
         if (typeof Vex === 'undefined' || !Vex.Flow) return;
-        const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, Curve, ClefNote } = Vex.Flow;
+        const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, Curve, ClefNote, Annotation } = Vex.Flow;
         const clefPerNote = getClefPerNote(input);
         const noteSpacing = 36;
         const totalWidth = 60 + input.length * noteSpacing + 20;
@@ -64,6 +65,7 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         stave.addClef(clefPerNote[0] || 'bass');
         stave.setContext(ctx).draw();
 
+        const positionChanges = fingering?.length ? getPositionChanges(fingering) : [];
         const notes = [];
         const tickables = [];
         for (let i = 0; i < input.length; i++) {
@@ -72,8 +74,23 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             }
             const dur = durations[i] === 'e' ? '8' : 'q';
             const opts = { clef: clefPerNote[i], keys: [noteToVexKey(input[i])], duration: dur };
-            if (dur === '8') opts.stem_direction = 1;
             const note = new StaveNote(opts);
+            if (fingering?.[i]) {
+                const step = fingering[i];
+                let fingerText = step.f === 0 ? '0' : String(step.f);
+                if (step.ext === 1) fingerText += '↑';
+                const fingerAnn = new Annotation(fingerText);
+                fingerAnn.setFont('Arial', 12, 'bold');
+                fingerAnn.setStyle({ fillStyle: ink });
+                note.addModifier(fingerAnn, 0);
+                if (positionChanges.includes(i) && step.p > 0) {
+                    const posAnn = new Annotation(toPositionLabel(step.p, 'chromatic'));
+                    posAnn.setVerticalJustification(Annotation.VerticalJustify.TOP);
+                    posAnn.setFont('Arial', 10, 'bold');
+                    posAnn.setStyle({ fillStyle: ink });
+                    note.addModifier(posAnn, 0);
+                }
+            }
             notes.push(note);
             tickables.push(note);
         }
@@ -131,8 +148,6 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         const notes = state.inputNormalized && state.inputNormalized.length === state.input.length
             ? state.inputNormalized : state.input;
 
-        const rhythmSelect = document.getElementById('bowingRhythm');
-
         function loadLastRhythm() {
             try {
                 const id = localStorage.getItem(RHYTHM_STORAGE_KEY);
@@ -152,58 +167,23 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             });
             if (selected) patternSelect.value = selected;
         }
-        function fillRhythmOptions() {
-            const selected = rhythmSelect?.value || loadLastRhythm();
-            if (!rhythmSelect) return;
-            rhythmSelect.innerHTML = '';
-            const byDiff = {};
-            RHYTHM_PATTERNS.forEach(p => {
-                if (!byDiff[p.difficulty]) byDiff[p.difficulty] = [];
-                byDiff[p.difficulty].push(p);
-            });
-            Object.keys(byDiff).map(Number).sort((a, b) => a - b).forEach(diff => {
-                const group = document.createElement('optgroup');
-                group.label = (typeof window.t === 'function' ? window.t('rhythms.difficultyGroup', { n: diff }) : 'Obtížnost ' + diff);
-                byDiff[diff].forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = (typeof window.t === 'function' ? window.t(p.nameKey) : p.nameKey);
-                    group.appendChild(opt);
-                });
-                rhythmSelect.appendChild(group);
-            });
-            rhythmSelect.value = selected;
-        }
         fillPatternOptions();
-        fillRhythmOptions();
-        window.addEventListener('languageChange', () => {
-            fillPatternOptions();
-            fillRhythmOptions();
-        });
+        window.addEventListener('languageChange', fillPatternOptions);
 
         function updateStaff() {
             const selected = patternSelect.value;
             const pattern = BOWING_PATTERNS.find(p => p.id === selected) || BOWING_PATTERNS[0];
-            const rhythmId = rhythmSelect?.value || loadLastRhythm();
+            const rhythmId = loadLastRhythm();
             const rhythm = RHYTHM_PATTERNS.find(p => p.id === rhythmId) || RHYTHM_PATTERNS[0];
             const durations = getDurationsForSequence(notes.length, rhythm);
             const slurRanges = getSlurRanges(notes.length, pattern);
-            renderStaff(staffContainer, notes, slurRanges, durations);
+            renderStaff(staffContainer, notes, slurRanges, durations, state.fingering);
         }
 
         patternSelect.addEventListener('change', () => {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             updateStaff();
         });
-        if (rhythmSelect) {
-            rhythmSelect.addEventListener('change', () => {
-                if (typeof window.markToolUsed === 'function') window.markToolUsed();
-                try {
-                    localStorage.setItem(RHYTHM_STORAGE_KEY, rhythmSelect.value);
-                } catch (e) { /* ignore */ }
-                updateStaff();
-            });
-        }
         updateStaff();
     }
 

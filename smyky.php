@@ -38,10 +38,6 @@ $toolTitleKey = 'bowing.title';
                         <label class="block text-sm font-bold text-slate-700 mb-2" data-i18n="bowing.pattern">Smykový pattern:</label>
                         <select id="bowingPattern" class="p-3 border-2 border-slate-200 rounded-xl font-mono min-w-[200px]"></select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2" data-i18n="rhythms.pattern">Rytmický pattern:</label>
-                        <select id="bowingRhythm" class="p-3 border-2 border-slate-200 rounded-xl font-mono min-w-[200px]"></select>
-                    </div>
                 </div>
                 <div id="bowingStaff" class="overflow-x-auto"></div>
             </div>
