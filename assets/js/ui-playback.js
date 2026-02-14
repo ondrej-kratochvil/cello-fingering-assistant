@@ -115,7 +115,7 @@ export function createPlaybackBar(state, t, inputForSolve, container) {
     const restartBtn = document.createElement('button');
     restartBtn.type = 'button';
     restartBtn.id = 'playbackRestartBtn';
-    restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed';
+    restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hidden';
     restartBtn.textContent = t('playback.restart');
 
     function updatePlayPauseUI() {
