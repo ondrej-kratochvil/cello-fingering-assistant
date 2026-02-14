@@ -87,13 +87,15 @@
         const centerX = w / 2;
         const maxCents = 50;
         const needleAngle = Math.max(-maxCents, Math.min(maxCents, cents)) * (Math.PI / 180) * 0.8;
-        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--color-staff-ink')?.trim() || '#0f172a';
+        const ink = getComputedStyle(document.body).getPropertyValue('--color-staff-ink')?.trim() || '#0f172a';
+        const isDark = document.body.classList.contains('dark-mode');
+        ctx.strokeStyle = isDark ? '#e2e8f0' : ink;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(centerX, h - 4);
         ctx.lineTo(centerX + Math.sin(needleAngle) * (w / 2 - 8), 4 + Math.cos(needleAngle) * (h / 2 - 4));
         ctx.stroke();
-        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeStyle = isDark ? '#64748b' : '#94a3b8';
         ctx.beginPath();
         ctx.moveTo(w / 2, 0);
         ctx.lineTo(w / 2, h);
@@ -150,35 +152,46 @@
 
         function updateTargets() {
             const targets = getTargetFrequencies(getReferenceA(), usePureFifths());
-            STRINGS.forEach((s, i) => {
-                const card = displays?.querySelectorAll('.tuner-string-card')[i];
-                if (!card) return;
-                const freqEl = card.querySelector('.tuner-freq');
-                if (freqEl) freqEl.dataset.target = targets[s];
-            });
+            const card = displays?.querySelector('.tuner-string-card');
+            if (card) card.dataset.targets = JSON.stringify(targets);
         }
 
+        let smoothedCents = 0;
         function updateDisplay(detectedFreq, targets) {
             const closest = findClosestString(detectedFreq, targets);
-            if (!closest) return;
+            const card = displays?.querySelector('.tuner-string-card');
+            const canvas = card?.querySelector('.tuner-needle');
+            const statusEl = card?.querySelector('.tuner-status');
+            const freqEl = card?.querySelector('.tuner-freq');
+            const labelEl = card?.querySelector('.tuner-string-label');
+            if (!card || !canvas || !statusEl || !freqEl || !labelEl) return;
+            if (!closest) {
+                labelEl.textContent = '—';
+                drawNeedle(canvas, 0, '');
+                statusEl.textContent = t('tuner.playString');
+                freqEl.textContent = '— Hz';
+                return;
+            }
             const c = centsOff(detectedFreq, closest.target);
-            STRINGS.forEach((s, i) => {
-                const card = displays?.querySelectorAll('.tuner-string-card')[i];
-                if (!card) return;
-                const canvas = card.querySelector('.tuner-needle');
-                const statusEl = card.querySelector('.tuner-status');
-                const freqEl = card.querySelector('.tuner-freq');
-                const isActive = closest.name === s;
-                if (isActive) {
-                    drawNeedle(canvas, c, s);
-                    statusEl.textContent = t('tuner.' + getStatusKey(c));
-                    freqEl.textContent = detectedFreq.toFixed(1) + ' Hz';
-                } else {
-                    drawNeedle(canvas, 0, s);
-                    statusEl.textContent = '—';
-                    freqEl.textContent = '— Hz';
-                }
-            });
+            smoothedCents = smoothedCents * 0.7 + c * 0.3;
+            labelEl.textContent = closest.name === 'A' ? 'a' : (closest.name === 'D' ? 'd' : closest.name);
+            drawNeedle(canvas, smoothedCents, closest.name);
+            statusEl.textContent = t('tuner.' + getStatusKey(c));
+            freqEl.textContent = detectedFreq.toFixed(1) + ' Hz';
+        }
+
+        function updateDisplayIdle() {
+            const card = displays?.querySelector('.tuner-string-card');
+            const canvas = card?.querySelector('.tuner-needle');
+            const statusEl = card?.querySelector('.tuner-status');
+            const freqEl = card?.querySelector('.tuner-freq');
+            const labelEl = card?.querySelector('.tuner-string-label');
+            if (!card || !canvas || !statusEl || !freqEl || !labelEl) return;
+            labelEl.textContent = '—';
+            drawNeedle(canvas, 0, '');
+            statusEl.textContent = t('tuner.playString');
+            freqEl.textContent = '— Hz';
+            smoothedCents = 0;
         }
 
         function tick() {
@@ -192,7 +205,11 @@
             const targets = getTargetFrequencies(getReferenceA(), usePureFifths());
             const targetObj = {};
             STRINGS.forEach(s => { targetObj[s] = targets[s]; });
-            if (freq) updateDisplay(freq, targetObj);
+            if (freq) {
+                updateDisplay(freq, targetObj);
+            } else {
+                updateDisplayIdle();
+            }
             animationId = requestAnimationFrame(tick);
         }
 
