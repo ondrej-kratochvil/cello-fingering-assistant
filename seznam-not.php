@@ -33,7 +33,7 @@ $toolTitleKey = 'sheetList.title';
             <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl hidden">
                 <div>
                     <label for="sheetSurname" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.surnameAuthor">Příjmení autora</label>
-                    <p class="text-xs text-slate-500 mb-1" data-i18n="sheetList.surnameHint">U lidových písní, stupnic apod. uveďte např. Lidová, Neznámý.</p>
+                    <p class="text-xs text-slate-500 sheet-list-hint mb-1" data-i18n="sheetList.surnameHint">U lidových písní, stupnic apod. uveďte např. Lidová, Neznámý.</p>
                     <input type="text" id="sheetSurname" class="w-full p-3 border border-slate-300 rounded-xl" required>
                 </div>
                 <div>
@@ -75,10 +75,10 @@ $toolTitleKey = 'sheetList.title';
                 <table class="w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b-2 border-slate-200">
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="surname" data-i18n="sheetList.author">Autor</th>
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleField">Název skladby</th>
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficulty">Obtížnost</th>
-                            <th class="text-left py-3 px-2" data-i18n="sheetList.url">Odkaz</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="surname" data-i18n="sheetList.authorHeader">Autor</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleHeader">Název skladby</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficultyHeader">Obtížnost</th>
+                            <th class="text-left py-3 px-2" data-i18n="sheetList.urlHeader">Odkaz</th>
                             <th class="w-12"></th>
                         </tr>
                     </thead>
