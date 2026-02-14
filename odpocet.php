@@ -23,9 +23,9 @@ require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'countdown';
 $toolKey = 'countdown';
 $introKey = 'countdown.intro';
+$toolTitleKey = 'countdown.title';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="countdown.title">Odpočet</h2>
 <?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <div class="max-w-md space-y-6">
@@ -47,7 +47,7 @@ $introKey = 'countdown.intro';
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js'), 'countdown' => filemtime($jsDir . '/countdown.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
@@ -62,7 +62,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         window.t = t;
         await initNavigation();
         initToolPage(t);
-        await import('./assets/js/countdown.js?v=<?= filemtime(__DIR__ . '/assets/js/countdown.js') ?>');
+        await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
     </script>
 </body>
 </html>
