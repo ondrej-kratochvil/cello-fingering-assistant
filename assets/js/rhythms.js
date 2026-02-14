@@ -1,7 +1,8 @@
 /**
  * Rytmy – načte výstup z Prstokladu (localStorage), aplikuje rytmický pattern, vykreslí VexFlow s čtvrťovými/osminovými notami.
  */
-import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-staff-utils.js';
+import { loadFingeringState, noteToVexKey, getClefPerNote, getPositionChanges } from './fingering-staff-utils.js';
+import { toPositionLabel } from './ui-staff.js';
 import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
 
 (function () {
@@ -18,9 +19,9 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         return sum;
     }
 
-    function renderStaff(container, input, durations) {
+    function renderStaff(container, input, durations, fingering) {
         if (typeof Vex === 'undefined' || !Vex.Flow) return;
-        const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, ClefNote } = Vex.Flow;
+        const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, ClefNote, Annotation } = Vex.Flow;
         const clefPerNote = getClefPerNote(input);
         const noteSpacing = 36;
         const totalWidth = 60 + input.length * noteSpacing + 20;
@@ -39,6 +40,7 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         stave.addClef(clefPerNote[0] || 'bass');
         stave.setContext(ctx).draw();
 
+        const positionChanges = fingering?.length ? getPositionChanges(fingering) : [];
         const tickables = [];
         for (let i = 0; i < input.length; i++) {
             if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
@@ -47,8 +49,23 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             const key = noteToVexKey(input[i]);
             const dur = durations[i] === 'e' ? '8' : 'q';
             const opts = { clef: clefPerNote[i], keys: [key], duration: dur };
-            if (dur === '8') opts.stem_direction = 1;
             const note = new StaveNote(opts);
+            if (fingering?.[i]) {
+                const step = fingering[i];
+                let fingerText = step.f === 0 ? '0' : String(step.f);
+                if (step.ext === 1) fingerText += '↑';
+                const fingerAnn = new Annotation(fingerText);
+                fingerAnn.setFont('Arial', 12, 'bold');
+                fingerAnn.setStyle({ fillStyle: ink });
+                note.addModifier(fingerAnn, 0);
+                if (positionChanges.includes(i) && step.p > 0) {
+                    const posAnn = new Annotation(toPositionLabel(step.p, 'chromatic'));
+                    posAnn.setVerticalJustification(Annotation.VerticalJustify.TOP);
+                    posAnn.setFont('Arial', 10, 'bold');
+                    posAnn.setStyle({ fillStyle: ink });
+                    note.addModifier(posAnn, 0);
+                }
+            }
             tickables.push(note);
         }
 
@@ -125,7 +142,10 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             const selected = patternSelect.value;
             const pattern = RHYTHM_PATTERNS.find(p => p.id === selected) || RHYTHM_PATTERNS[0];
             const durations = getDurationsForSequence(notes.length, pattern);
-            renderStaff(staffContainer, notes, durations);
+            if (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug')) {
+                console.debug('rhythms: pattern=', pattern.id, 'durations=', durations);
+            }
+            renderStaff(staffContainer, notes, durations, state.fingering);
             try {
                 localStorage.setItem(RHYTHM_STORAGE_KEY, pattern.id);
             } catch (e) { /* ignore */ }

@@ -90,6 +90,24 @@ export function getClefPerNote(input) {
 }
 
 /**
+ * Vrátí indexy, kde se mění poloha (pro zobrazení anotací).
+ * @param {{ p: number }[]} fingering
+ * @returns {number[]}
+ */
+export function getPositionChanges(fingering) {
+    const out = [];
+    let lastNonZero = null;
+    for (let i = 0; i < fingering.length; i++) {
+        const p = fingering[i]?.p;
+        if (p > 0 && (lastNonZero === null || p !== lastNonZero)) {
+            out.push(i);
+            lastNonZero = p;
+        }
+    }
+    return out;
+}
+
+/**
  * Načte poslední stav Prstokladu z localStorage.
  * @returns {{ input: string[], inputNormalized?: string[], fingering: unknown[] } | null}
  */
