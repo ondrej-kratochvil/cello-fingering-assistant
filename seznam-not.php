@@ -32,12 +32,12 @@ $toolTitleKey = 'sheetList.title';
             </div>
             <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl hidden">
                 <div>
-                    <label for="sheetSurname" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.surname">Příjmení:</label>
+                    <label for="sheetSurname" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.surnameAuthor">Příjmení autora</label>
                     <p class="text-xs text-slate-500 mb-1" data-i18n="sheetList.surnameHint">U lidových písní, stupnic apod. uveďte např. Lidová, Neznámý.</p>
                     <input type="text" id="sheetSurname" class="w-full p-3 border border-slate-300 rounded-xl" required>
                 </div>
                 <div>
-                    <label for="sheetFirstName" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.firstName">Jméno:</label>
+                    <label for="sheetFirstName" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.firstNameAuthor">Jméno autora</label>
                     <input type="text" id="sheetFirstName" class="w-full p-3 border border-slate-300 rounded-xl">
                 </div>
                 <div>
@@ -47,6 +47,10 @@ $toolTitleKey = 'sheetList.title';
                 <div>
                     <label for="sheetDifficulty" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.difficulty">Obtížnost (1–10):</label>
                     <input type="number" id="sheetDifficulty" min="1" max="10" value="5" class="w-24 p-3 border border-slate-300 rounded-xl">
+                </div>
+                <div>
+                    <label for="sheetSequence" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.sequence">Sekvence tónů</label>
+                    <textarea id="sheetSequence" class="w-full p-3 border border-slate-300 rounded-xl font-mono text-sm" rows="2" placeholder="c d e f g a h c1"></textarea>
                 </div>
                 <div>
                     <label for="sheetUrl" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.url">Odkaz (URL):</label>
@@ -72,6 +76,7 @@ $toolTitleKey = 'sheetList.title';
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficulty">Obtížnost</th>
                             <th class="text-left py-3 px-2" data-i18n="sheetList.url">Odkaz</th>
                             <th class="w-20"></th>
+                            <th class="w-12"></th>
                         </tr>
                     </thead>
                     <tbody id="sheetTableBody"></tbody>

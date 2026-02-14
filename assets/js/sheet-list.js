@@ -48,21 +48,34 @@
             const c = va.localeCompare(vb);
             return sortAsc ? c : -c;
         });
-        tbody.innerHTML = list.map(s => `
-            <tr class="border-b border-slate-100 hover:bg-slate-50">
+        const playLabel = typeof window.t === 'function' ? window.t('playback.play') : 'Přehrát';
+        tbody.innerHTML = list.map(s => {
+            const seq = (s.sequence || '').trim();
+            const playBtn = seq ? `<button type="button" class="sheet-play p-1.5 text-emerald-600 hover:bg-emerald-50 rounded" data-sequence="${escapeAttr(seq)}" aria-label="${escapeAttr(playLabel)}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>` : '';
+            return `<tr class="border-b border-slate-100 hover:bg-slate-50">
                 <td class="py-2 px-2">${escapeHtml((s.surname || s.author || '') + (s.firstName ? ' ' + s.firstName : ''))}</td>
                 <td class="py-2 px-2 font-medium">${escapeHtml(s.title)}</td>
                 <td class="py-2 px-2">${escapeHtml(String(s.difficulty))}</td>
                 <td class="py-2 px-2"><a href="${safeHref(s.url) === '#' ? '#' : escapeAttr(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
                 <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">${typeof window.t === 'function' ? escapeHtml(window.t('sheetList.delete')) : 'Smazat'}</button></td>
-            </tr>
-        `).join('');
+                <td class="py-2 px-2">${playBtn}</td>
+            </tr>`;
+        }).join('');
         tbody.querySelectorAll('.sheet-delete').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
                 const next = loadSheets().filter(s => s.id !== id);
                 saveSheets(next);
                 renderTable(next);
+            });
+        });
+        tbody.querySelectorAll('.sheet-play').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const seq = btn.getAttribute('data-sequence');
+                if (!seq) return;
+                const path = window.location.pathname;
+                const dir = path.substring(0, path.lastIndexOf('/') + 1);
+                window.location.href = dir + 'prstoklad.php?sequence=' + encodeURIComponent(seq);
             });
         });
     }
@@ -90,6 +103,10 @@
 
         formToggle?.addEventListener('click', () => {
             form?.classList.toggle('hidden');
+            const isVisible = !form?.classList.contains('hidden');
+            formToggle.textContent = typeof window.t === 'function'
+                ? (isVisible ? window.t('sheetList.cancelAdd') : window.t('sheetList.addSheet'))
+                : (isVisible ? 'Zrušit přidání skladby' : 'Přidat skladbu');
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
         });
         const filterMaxEl = document.getElementById('filterMax');
@@ -103,11 +120,12 @@
             const title = document.getElementById('sheetTitle')?.value?.trim();
             const surname = document.getElementById('sheetSurname')?.value?.trim() || '';
             const firstName = document.getElementById('sheetFirstName')?.value?.trim() || '';
+            const sequence = document.getElementById('sheetSequence')?.value?.trim() || '';
             const difficulty = Math.max(1, Math.min(10, Number(document.getElementById('sheetDifficulty')?.value) || 5));
             if (!title || !surname) return;
             const sheets = loadSheets();
             const id = 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
-            sheets.push({ id, url, title, surname, firstName, difficulty });
+            sheets.push({ id, url, title, surname, firstName, difficulty, sequence });
             saveSheets(sheets);
             renderTable(sheets);
             form.reset();
