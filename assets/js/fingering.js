@@ -88,7 +88,8 @@ function filterOptionsByConstraint(options, constraint) {
 // --- THE METODICAL ALGORITHM v7 ---
 
 function solve(sequence, constraints = null) {
-    console.log('=== ŘEŠENÍ SEKVENCE:', sequence.join(' '), '===');
+    const isDev = typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'));
+    if (isDev) console.log('=== ŘEŠENÍ SEKVENCE:', sequence.join(' '), '===');
     let layers = [];
 
     const firstOptions = filterOptionsByConstraint(model[sequence[0]] || [], constraints ? constraints[0] : null);
@@ -101,7 +102,7 @@ function solve(sequence, constraints = null) {
         groupSize: opt.f === 0 ? 0 : 1,
         hasWideInGroup: opt.ext === 1
     }));
-    console.log(`Vrstva 0 (${sequence[0]}): ${layers[0].length} možností`);
+    if (isDev) console.log(`Vrstva 0 (${sequence[0]}): ${layers[0].length} možností`);
 
     for (let i = 1; i < sequence.length; i++) {
         const note = sequence[i];
@@ -110,7 +111,7 @@ function solve(sequence, constraints = null) {
         const options = filterOptionsByConstraint(rawOptions, constraints ? constraints[i] : null);
         if (!options.length) return null;
 
-        console.log(`\n--- Vrstva ${i}: ${note} (${options.length} možností) ---`);
+        if (isDev) console.log(`\n--- Vrstva ${i}: ${note} (${options.length} možností) ---`);
         layers[i] = [];
 
         options.forEach(curr => {
@@ -127,15 +128,14 @@ function solve(sequence, constraints = null) {
                     opt.s === narrowAlt.s && opt.p === narrowAlt.p &&
                     opt.f === narrowAlt.f && opt.ext === narrowAlt.ext
                 );
-                if (i >= sequence.length - 3) {
+                if (isDev && i >= sequence.length - 3) {
                     if (hasNarrowAlternative) {
-                        console.log(`  ✓ Detekována široká ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} s úzkou alternativou ${narrowAlt.s}${narrowAlt.p.toString().padStart(2, '0')}${narrowAlt.f}${narrowAlt.ext}`);
+                        if (isDev) console.log(`  ✓ Detekována široká ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} s úzkou alternativou ${narrowAlt.s}${narrowAlt.p.toString().padStart(2, '0')}${narrowAlt.f}${narrowAlt.ext}`);
                     } else {
-                        // Debug: zobrazit dostupné možnosti
                         const availableNarrow = options.filter(opt => opt.ext === 0 && opt.p === narrowAlt.p);
                         if (availableNarrow.length > 0) {
-                            console.log(`  ✗ Široká ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} - úzká alternativa ${narrowAlt.s}${narrowAlt.p.toString().padStart(2, '0')}${narrowAlt.f}${narrowAlt.ext} NENÍ v options`);
-                            console.log(`    Dostupné úzké v poloze ${narrowAlt.p}:`, availableNarrow.map(o => `${o.s}${o.p.toString().padStart(2, '0')}${o.f}${o.ext}`).join(', '));
+                            if (isDev) console.log(`  ✗ Široká ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} - úzká alternativa ${narrowAlt.s}${narrowAlt.p.toString().padStart(2, '0')}${narrowAlt.f}${narrowAlt.ext} NENÍ v options`);
+                            if (isDev) console.log(`    Dostupné úzké v poloze ${narrowAlt.p}:`, availableNarrow.map(o => `${o.s}${o.p.toString().padStart(2, '0')}${o.f}${o.ext}`).join(', '));
                         }
                     }
                 }
@@ -183,8 +183,8 @@ function solve(sequence, constraints = null) {
                         // Vždy silně penalizujeme širokou, pokud existuje úzká alternativa
                         // Toto je důležité pravidlo: úzká o 1 vyšší je vždy lepší než široká
                         linkCost += 10000; // Velmi silná penalizace - preferujeme úzkou o 1 vyšší
-                        if (i >= sequence.length - 3) {
-                            console.log(`    Široká s úzkou alternativou: ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} -> penalizace +10000`);
+                        if (isDev && i >= sequence.length - 3) {
+                            if (isDev) console.log(`    Široká s úzkou alternativou: ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} -> penalizace +10000`);
                         }
                     }
                 }
@@ -203,10 +203,10 @@ function solve(sequence, constraints = null) {
                     if (i === sequence.length - 1 || i >= sequence.length - 3) {
                         const prevId = `${prev.s}${prev.p.toString().padStart(2, '0')}${prev.f}${prev.ext}`;
                         const currId = `${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext}`;
-                        console.log(`  ✓ Lepší: ${prevId} -> ${currId}, cost=${total.toFixed(0)} (prevCost=${prevStep.cost.toFixed(0)}, linkCost=${linkCost.toFixed(0)})`);
-                        if (isShift) console.log(`    Shift: ${prev.p} -> ${curr.p}, groupSize=${prevStep.groupSize}`);
+                        if (isDev) console.log(`  ✓ Lepší: ${prevId} -> ${currId}, cost=${total.toFixed(0)} (prevCost=${prevStep.cost.toFixed(0)}, linkCost=${linkCost.toFixed(0)})`);
+                        if (isDev && isShift) console.log(`    Shift: ${prev.p} -> ${curr.p}, groupSize=${prevStep.groupSize}`);
                         if (hasNarrowAlternative && curr.ext === 1) {
-                            console.log(`    Široká s úzkou alternativou: ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} -> penalizace +10000`);
+                            if (isDev) console.log(`    Široká s úzkou alternativou: ${curr.s}${curr.p.toString().padStart(2, '0')}${curr.f}${curr.ext} -> penalizace +10000`);
                         }
                     }
                 }
@@ -231,19 +231,19 @@ function solve(sequence, constraints = null) {
 
         // Zobrazit top 3 možnosti
         if (i >= sequence.length - 3 || i < 3) {
-            console.log(`Top 3 možnosti pro ${note}:`);
+            if (isDev) console.log(`Top 3 možnosti pro ${note}:`);
             layers[i].slice(0, 3).forEach((state, idx) => {
                 const last = state.path[state.path.length - 1];
                 const id = `${last.s}${last.p.toString().padStart(2, '0')}${last.f}${last.ext}`;
                 const positions = new Set();
                 state.path.forEach(step => { if (step.p > 0) positions.add(step.p); });
-                console.log(`  ${idx + 1}. ${id}, cost=${state.cost.toFixed(0)}, groupSize=${state.groupSize}, polohy=[${Array.from(positions).sort().join(',')}]`);
+                if (isDev) console.log(`  ${idx + 1}. ${id}, cost=${state.cost.toFixed(0)}, groupSize=${state.groupSize}, polohy=[${Array.from(positions).sort().join(',')}]`);
             });
         }
     }
 
     // Finální penalizace: osamocený tón na konci + počet různých poloh
-    console.log('\n=== FINÁLNÍ VÝBĚR ===');
+    if (isDev) console.log('\n=== FINÁLNÍ VÝBĚR ===');
     const lastLayer = layers[sequence.length - 1];
     if (!lastLayer) return null;
 
@@ -291,12 +291,12 @@ function solve(sequence, constraints = null) {
     optionsWithCosts.sort((a, b) => a.costs.total - b.costs.total);
 
     // Zobrazit top 3 možnosti
-    console.log('Top 3 možnosti:');
+    if (isDev) console.log('Top 3 možnosti:');
     optionsWithCosts.slice(0, 3).forEach((item, idx) => {
         const pathStr = item.state.path.map(s => `${s.s}${s.p.toString().padStart(2, '0')}${s.f}${s.ext}`).join(' ');
-        console.log(`  ${idx + 1}. ${pathStr}`);
-        console.log(`     baseCost=${item.costs.baseCost.toFixed(0)}, lastPenalty=${item.costs.lastPenalty}, posPenalty=${item.costs.positionPenalty}, maxPosPenalty=${item.costs.maxPositionPenalty}, TOTAL=${item.costs.total.toFixed(0)}`);
-        console.log(`     Polohy: [${item.costs.positions.join(', ')}], maxPos=${item.costs.maxPosition}, groupSize=${item.costs.groupSize}`);
+        if (isDev) console.log(`  ${idx + 1}. ${pathStr}`);
+        if (isDev) console.log(`     baseCost=${item.costs.baseCost.toFixed(0)}, lastPenalty=${item.costs.lastPenalty}, posPenalty=${item.costs.positionPenalty}, maxPosPenalty=${item.costs.maxPositionPenalty}, TOTAL=${item.costs.total.toFixed(0)}`);
+        if (isDev) console.log(`     Polohy: [${item.costs.positions.join(', ')}], maxPos=${item.costs.maxPosition}, groupSize=${item.costs.groupSize}`);
     });
 
     const winner = optionsWithCosts[0]?.state;
@@ -304,13 +304,13 @@ function solve(sequence, constraints = null) {
 
     const costs = calculateTotalCost(winner);
     const pathStr = winner.path.map(s => `${s.s}${s.p.toString().padStart(2, '0')}${s.f}${s.ext}`).join(' ');
-    console.log(`\n✓ VYBRANÉ ŘEŠENÍ (první průchod): ${pathStr}`);
-    console.log(`  Polohy: [${costs.positions.join(', ')}], počet poloh: ${costs.positions.length}`);
-    console.log('==================\n');
+    if (isDev) console.log(`\n✓ VYBRANÉ ŘEŠENÍ (první průchod): ${pathStr}`);
+    if (isDev) console.log(`  Polohy: [${costs.positions.join(', ')}], počet poloh: ${costs.positions.length}`);
+    if (isDev) console.log('==================\n');
 
     // DRUHÝ PRŮCHOD 1: Oprava 3. prstů v úzké poloze na 2. prsty v široké poloze,
     // když okolní tóny mají 4. prst v široké poloze
-    console.log('=== DRUHÝ PRŮCHOD 1: Oprava širokých poloh ===');
+    if (isDev) console.log('=== DRUHÝ PRŮCHOD 1: Oprava širokých poloh ===');
     let result = [...winner.path];
 
     const wide4thFingers = [];
@@ -331,7 +331,7 @@ function solve(sequence, constraints = null) {
                 const candidate = { ...prevStep, f: 2, ext: 1 };
                 if (!constraints || matchesConstraint(candidate, constraints[idx - 1])) {
                     result[idx - 1] = candidate;
-                    console.log(`  Oprava: ${prevStep.s}${prevStep.p.toString().padStart(2, '0')}${prevStep.f}${prevStep.ext} -> ${result[idx - 1].s}${result[idx - 1].p.toString().padStart(2, '0')}${result[idx - 1].f}${result[idx - 1].ext} (před 4. prstem v široké)`);
+                    if (isDev) console.log(`  Oprava: ${prevStep.s}${prevStep.p.toString().padStart(2, '0')}${prevStep.f}${prevStep.ext} -> ${result[idx - 1].s}${result[idx - 1].p.toString().padStart(2, '0')}${result[idx - 1].f}${result[idx - 1].ext} (před 4. prstem v široké)`);
                 }
             }
         }
@@ -344,14 +344,14 @@ function solve(sequence, constraints = null) {
                 const candidate = { ...nextStep, f: 2, ext: 1 };
                 if (!constraints || matchesConstraint(candidate, constraints[idx + 1])) {
                     result[idx + 1] = candidate;
-                    console.log(`  Oprava: ${nextStep.s}${nextStep.p.toString().padStart(2, '0')}${nextStep.f}${nextStep.ext} -> ${result[idx + 1].s}${result[idx + 1].p.toString().padStart(2, '0')}${result[idx + 1].f}${result[idx + 1].ext} (po 4. prstu v široké)`);
+                    if (isDev) console.log(`  Oprava: ${nextStep.s}${nextStep.p.toString().padStart(2, '0')}${nextStep.f}${nextStep.ext} -> ${result[idx + 1].s}${result[idx + 1].p.toString().padStart(2, '0')}${result[idx + 1].f}${result[idx + 1].ext} (po 4. prstu v široké)`);
                 }
             }
         }
     });
 
     // DRUHÝ PRŮCHOD 2: Oprava osamoceného posledního tónu v poloze
-    console.log('=== DRUHÝ PRŮCHOD 2: Oprava osamoceného posledního tónu ===');
+    if (isDev) console.log('=== DRUHÝ PRŮCHOD 2: Oprava osamoceného posledního tónu ===');
     if (result.length > 0) {
         const lastIdx = result.length - 1;
         const last = result[lastIdx];
@@ -390,7 +390,7 @@ function solve(sequence, constraints = null) {
                     });
 
                     const chosen = candidates[0];
-                    console.log(
+                    if (isDev) console.log(
                         `  Oprava osamoceného závěrečného tónu: předchozí tón ${prevStep.s}${prevStep.p.toString().padStart(2, '0')}${prevStep.f}${prevStep.ext}` +
                         ` -> ${chosen.s}${chosen.p.toString().padStart(2, '0')}${chosen.f}${chosen.ext} (přesun do polohy posledního tónu)`
                     );
@@ -401,8 +401,8 @@ function solve(sequence, constraints = null) {
     }
 
     const finalPathStr = result.map(s => `${s.s}${s.p.toString().padStart(2, '0')}${s.f}${s.ext}`).join(' ');
-    console.log(`\n✓ FINÁLNÍ ŘEŠENÍ (po opravách): ${finalPathStr}`);
-    console.log('==================\n');
+    if (isDev) console.log(`\n✓ FINÁLNÍ ŘEŠENÍ (po opravách): ${finalPathStr}`);
+    if (isDev) console.log('==================\n');
 
     return result;
 }
