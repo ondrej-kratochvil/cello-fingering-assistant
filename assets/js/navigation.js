@@ -14,7 +14,7 @@ export function initMobileMenu() {
     });
 
     mainNav.addEventListener('click', (e) => {
-        if (e.target.closest('#navToolsDetails')) return;
+        if (e.target.closest('#navToolsDetails summary')) return;
         document.body.classList.remove('nav-open');
     });
 }
