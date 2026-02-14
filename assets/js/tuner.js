@@ -32,28 +32,48 @@
         };
     }
 
-    /** Jednoduchá detekce výšky tónu – autocorrelation na časové řadě. */
-    function detectPitch(float32Array, sampleRate) {
+    /**
+     * YIN pitch detection – lepší detekce fundamentální frekvence než autocorrelation.
+     * Viz http://audition.ens.fr/adc/pdf/2002_JASA_YIN.pdf
+     */
+    function detectPitchYin(float32Array, sampleRate) {
         const size = float32Array.length;
-        const maxSamples = Math.floor(size / 2);
-        let bestOffset = -1;
-        let bestCorrelation = 0;
+        const tauMax = Math.min(Math.floor(size / 2), Math.floor(sampleRate / 40));
+        const thresh = 0.15;
         const rms = Math.sqrt(float32Array.reduce((s, x) => s + x * x, 0) / size);
         if (rms < 0.01) return null;
 
-        for (let offset = 10; offset < maxSamples; offset++) {
-            let correlation = 0;
-            for (let i = 0; i < maxSamples; i++) {
-                correlation += float32Array[i] * float32Array[i + offset];
+        const diff = new Float32Array(tauMax);
+        for (let tau = 1; tau < tauMax; tau++) {
+            let sum = 0;
+            for (let j = 0; j < tauMax; j++) {
+                const d = float32Array[j] - float32Array[j + tau];
+                sum += d * d;
             }
-            correlation /= maxSamples;
-            if (correlation > bestCorrelation) {
-                bestCorrelation = correlation;
-                bestOffset = offset;
-            }
+            diff[tau] = sum;
         }
-        if (bestOffset <= 0) return null;
-        return sampleRate / bestOffset;
+        diff[0] = 1;
+        let runningSum = 0;
+        for (let tau = 1; tau < tauMax; tau++) {
+            runningSum += diff[tau];
+            if (runningSum > 0) diff[tau] = diff[tau] * tau / runningSum;
+        }
+        let tau = 2;
+        while (tau < tauMax - 1) {
+            if (diff[tau] < thresh && diff[tau] <= diff[tau - 1] && diff[tau] <= diff[tau + 1]) {
+                const s0 = diff[tau - 1];
+                const s1 = diff[tau];
+                const s2 = diff[tau + 1];
+                let adj = 0;
+                const denom = s0 - 2 * s1 + s2;
+                if (Math.abs(denom) > 1e-10) adj = 0.5 * (s0 - s2) / denom;
+                const period = Math.max(1, tau + adj);
+                const freq = sampleRate / period;
+                if (freq >= 30 && freq <= 500) return freq;
+            }
+            tau++;
+        }
+        return null;
     }
 
     function findClosestString(freq, targets) {
@@ -157,6 +177,17 @@
         }
 
         let smoothedCents = 0;
+        const freqHistory = [];
+        const FREQ_HISTORY_SIZE = 7;
+
+        function medianFilter(freq) {
+            if (freq == null || !Number.isFinite(freq)) return null;
+            freqHistory.push(freq);
+            if (freqHistory.length > FREQ_HISTORY_SIZE) freqHistory.shift();
+            const sorted = [...freqHistory].sort((a, b) => a - b);
+            return sorted[Math.floor(sorted.length / 2)];
+        }
+
         function updateDisplay(detectedFreq, targets) {
             const closest = findClosestString(detectedFreq, targets);
             const card = displays?.querySelector('.tuner-string-card');
@@ -192,6 +223,7 @@
             statusEl.textContent = t('tuner.playString');
             freqEl.textContent = '— Hz';
             smoothedCents = 0;
+            freqHistory.length = 0;
         }
 
         function tick() {
@@ -201,7 +233,8 @@
             }
             analyser.getFloatTimeDomainData(dataArray);
             const sampleRate = audioContext?.sampleRate || 44100;
-            const freq = detectPitch(dataArray, sampleRate);
+            const rawFreq = detectPitchYin(dataArray, sampleRate);
+            const freq = medianFilter(rawFreq);
             const targets = getTargetFrequencies(getReferenceA(), usePureFifths());
             const targetObj = {};
             STRINGS.forEach(s => { targetObj[s] = targets[s]; });
@@ -258,7 +291,7 @@
                     const src = audioContext.createMediaStreamSource(stream);
                     analyser = audioContext.createAnalyser();
                     analyser.fftSize = bufferLength * 2;
-                    analyser.smoothingTimeConstant = 0.8;
+                    analyser.smoothingTimeConstant = 0.9;
                     src.connect(analyser);
                     displays?.classList.remove('hidden');
                     if (micBtn) {
