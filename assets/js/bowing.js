@@ -89,6 +89,25 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             updateStaff();
         });
+        const nextBtn = document.getElementById('bowingNextBtn');
+        const randomBtn = document.getElementById('bowingRandomBtn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (typeof window.markToolUsed === 'function') window.markToolUsed();
+                const idx = BOWING_PATTERNS.findIndex(p => p.id === patternSelect.value);
+                const nextIdx = (idx + 1) % BOWING_PATTERNS.length;
+                patternSelect.value = BOWING_PATTERNS[nextIdx].id;
+                updateStaff();
+            });
+        }
+        if (randomBtn) {
+            randomBtn.addEventListener('click', () => {
+                if (typeof window.markToolUsed === 'function') window.markToolUsed();
+                const r = BOWING_PATTERNS[Math.floor(Math.random() * BOWING_PATTERNS.length)];
+                patternSelect.value = r.id;
+                updateStaff();
+            });
+        }
         updateStaff();
     }
 

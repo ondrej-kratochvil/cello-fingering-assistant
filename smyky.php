@@ -33,11 +33,11 @@ $toolTitleKey = 'bowing.title';
             </div>
 
             <div id="bowingContent" class="hidden space-y-6">
-                <div class="flex flex-wrap items-center gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2" data-i18n="bowing.pattern">Smykový pattern:</label>
-                        <select id="bowingPattern" class="p-3 border-2 border-slate-200 rounded-xl font-mono min-w-[200px]"></select>
-                    </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <label class="block text-sm font-bold text-slate-700" data-i18n="bowing.pattern">Smykový pattern:</label>
+                    <select id="bowingPattern" class="p-3 border-2 border-slate-200 rounded-xl font-mono min-w-[200px]"></select>
+                    <button type="button" id="bowingNextBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-xl" data-i18n="rhythms.next">Další</button>
+                    <button type="button" id="bowingRandomBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-xl" data-i18n="rhythms.random">Náhodný</button>
                 </div>
                 <div id="bowingStaff" class="overflow-x-auto"></div>
             </div>

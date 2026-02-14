@@ -14,6 +14,9 @@ Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smy
 - `assets/js/navigation.js` – Navigace, dark mode, callback pro překreslení při změně tématu
 - `assets/js/tuner.js` – Ladička (YIN pitch detection)
 - `assets/js/countdown.js` – Odpočet (minutka), widget v hlavičce, persistence v localStorage
+- `assets/js/sheet-list.js` – Seznam not: localStorage, řazení, filtr obtížnosti, editace kliknutím na řádek, Smazat ve formuláři
+- `assets/js/ui-staff.js` – Notová osnova (VexFlow): `renderStaffOutput`, `renderStaffWithRhythm` pro Rytmy/Smyky/Metronom (barvy prstů podle strun, tóny pod notami, Beam)
+- `assets/js/rhythm-patterns.js` – Rytmické patterny sdílené Rytmy/Smyky/Metronomem
 - `assets/js/tests.js` – Testovací sady a framework
 - `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (notová osnova, i18n)
 - `assets/css/main.css` – Design systém, styly pro notovou osnovu a světlé/tmavé téma
@@ -29,6 +32,16 @@ Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smy
 - Tóny lze zadávat i v **alternativním formátu** (např. `c#1` místo `c1#`, `d1b` místo `db1`)
 - **Notová osnova** (VexFlow) zobrazuje posuvky před notou; tóny v osnově, textu a hmatníku podle volby H/B
 - **Vizualizace hmatníku** má černé pozadí (ve světlém i tmavém režimu) s proporčními rozestupy mezi polohami
+
+## Nástroje
+
+- **Odpočet** – minutka s widgetem v hlavičce, persistence v localStorage
+- **Ladička** – YIN pitch detection, otevřené struny C, G, d, a
+- **Prstoklad** – hlavní nástroj, algoritmus prstokladu, vizualizace hmatníku, přehrávání
+- **Rytmy** – rytmické patterny (čtvrťové, osminové), tlačítka Další/Náhodný
+- **Smyky** – smykové patterny (legato/samostatně), tlačítka Další/Náhodný, sdílený rytmus s Rytmy
+- **Metronom** – tempo BPM, počet dob, tlačítko Start/Stop s ikonami
+- **Seznam not** – odkaz, název, autor, obtížnost; editace kliknutím na řádek, Smazat ve formuláři
 
 ## Testy
 

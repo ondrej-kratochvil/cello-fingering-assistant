@@ -3,6 +3,9 @@
  */
 import { germanToCanonical, normalizeOctaveAccidentalSwap, noteToVexKey, getClefPerNote as getClefPerNoteRhythm, getPositionChanges } from './fingering-staff-utils.js';
 import { t, getNoteNamingCurrent } from './i18n.js';
+
+/** Pro legendu použít window.t (nastavené v initToolPage po initI18n), jinak importovaný t. */
+const getT = () => (typeof window !== 'undefined' && typeof window.t === 'function' ? window.t : t);
 import { ensureHighlightDefs, ensureHighlightLayer } from './ui-modals.js';
 
 /** Prahy pro výběr klíče (notová osnova): nad a1 → houslový; v houslovém zpět na basový až od d1 a nižší */
@@ -179,7 +182,7 @@ export function renderTextOutput(container, result, input, positionChanges, stri
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
     const legendTitle = document.createElement('p');
     legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
-    const legendStringsResult = t('legend.strings');
+    const legendStringsResult = getT()('legend.strings');
     legendTitle.textContent = legendStringsResult;
     if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
         console.log('[legend] key=legend.strings, result=', legendStringsResult);
@@ -189,7 +192,7 @@ export function renderTextOutput(container, result, input, positionChanges, stri
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
     Object.entries(stringColors).forEach(([s, color]) => {
-        const legendStringResult = t('legend.string', { s });
+        const legendStringResult = getT()('legend.string', { s });
         if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
             console.log('[legend] key=legend.string, s=', s, ', result=', legendStringResult);
         }
@@ -401,7 +404,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     legend.className = 'mt-6 pt-4 border-t border-slate-200';
     const legendTitle = document.createElement('p');
     legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
-    const legendStringsResult = t('legend.strings');
+    const legendStringsResult = getT()('legend.strings');
     legendTitle.textContent = legendStringsResult;
     if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
         console.log('[legend] key=legend.strings, result=', legendStringsResult);
@@ -410,7 +413,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     const legendItems = document.createElement('div');
     legendItems.className = 'flex flex-wrap gap-4 text-sm';
     Object.entries(stringColors).forEach(([s, color]) => {
-        const legendStringResult = t('legend.string', { s });
+        const legendStringResult = getT()('legend.string', { s });
         if (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('dev') === '1' || localStorage.getItem('debug'))) {
             console.log('[legend] key=legend.string, s=', s, ', result=', legendStringResult);
         }
@@ -445,6 +448,15 @@ export function renderStaffWithRhythm(container, input, durations, fingering, op
 
     const { Renderer, Stave, StaveNote, Voice, Formatter, Beam, ClefNote, Annotation, Curve } = Vex.Flow;
     const clefPerNote = getClefPerNoteRhythm(input);
+
+    const bodyStyles = document.body ? getComputedStyle(document.body) : null;
+    const rootStyles = document.documentElement ? getComputedStyle(document.documentElement) : null;
+    const stringColors = {
+        'C': (bodyStyles?.getPropertyValue('--cello-string-c') || rootStyles?.getPropertyValue('--cello-string-c') || '').trim() || '#0f172a',
+        'G': (bodyStyles?.getPropertyValue('--cello-string-g') || rootStyles?.getPropertyValue('--cello-string-g') || '').trim() || '#0f172a',
+        'D': (bodyStyles?.getPropertyValue('--cello-string-d') || rootStyles?.getPropertyValue('--cello-string-d') || '').trim() || '#0f172a',
+        'A': (bodyStyles?.getPropertyValue('--cello-string-a') || rootStyles?.getPropertyValue('--cello-string-a') || '').trim() || '#0f172a'
+    };
 
     function totalBeats(durs) {
         let sum = 0;
@@ -486,7 +498,7 @@ export function renderStaffWithRhythm(container, input, durations, fingering, op
             if (step.ext === 1) fingerText += '↑';
             const fingerAnn = new Annotation(fingerText);
             fingerAnn.setFont('Arial', 12, 'bold');
-            fingerAnn.setStyle({ fillStyle: ink });
+            fingerAnn.setStyle({ fillStyle: stringColors[step.s] || ink });
             note.addModifier(fingerAnn, 0);
             if (positionChanges.includes(i) && step.p > 0) {
                 const posAnn = new Annotation(toPositionLabel(step.p, getPositionLabelMode()));
@@ -496,8 +508,28 @@ export function renderStaffWithRhythm(container, input, durations, fingering, op
                 note.addModifier(posAnn, 0);
             }
         }
+        const toneAnn = new Annotation(toDisplayNote(input[i]));
+        toneAnn.setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
+        toneAnn.setFont('Arial', 12, 'normal');
+        toneAnn.setStyle({ fillStyle: ink });
+        note.addModifier(toneAnn, 0);
         notes.push(note);
         tickables.push(note);
+    }
+
+    const notesOnly = tickables.filter(t => t instanceof StaveNote);
+    const beams = [];
+    let idx = 0;
+    while (idx < notesOnly.length) {
+        const group = [];
+        while (idx < notesOnly.length && notesOnly[idx].getDuration() === '8') {
+            group.push(notesOnly[idx]);
+            idx++;
+        }
+        if (group.length > 1) {
+            beams.push(new Beam(group));
+        }
+        if (idx < notesOnly.length && notesOnly[idx].getDuration() !== '8') idx++;
     }
 
     const total = totalBeats(durations);
@@ -508,21 +540,7 @@ export function renderStaffWithRhythm(container, input, durations, fingering, op
     formatter.joinVoices([voice]);
     formatter.format([voice], totalWidth - 80);
     voice.draw(ctx, stave);
-
-    const notesOnly = tickables.filter(t => t instanceof StaveNote);
-    let idx = 0;
-    while (idx < notesOnly.length) {
-        const group = [];
-        while (idx < notesOnly.length && notesOnly[idx].getDuration() === '8') {
-            group.push(notesOnly[idx]);
-            idx++;
-        }
-        if (group.length > 1) {
-            const beam = new Beam(group);
-            beam.setContext(ctx).draw();
-        }
-        if (idx < notesOnly.length && notesOnly[idx].getDuration() !== '8') idx++;
-    }
+    beams.forEach(b => b.setContext(ctx).draw());
 
     const slurRanges = opts.slurRanges || [];
     slurRanges.forEach(([fromIdx, toIdx]) => {

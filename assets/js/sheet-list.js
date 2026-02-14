@@ -52,25 +52,27 @@
         tbody.innerHTML = list.map(s => {
             const seq = (s.sequence || '').trim();
             const playBtn = seq ? `<button type="button" class="sheet-play p-1.5 text-emerald-600 hover:bg-emerald-50 rounded" data-sequence="${escapeAttr(seq)}" aria-label="${escapeAttr(playLabel)}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>` : '';
-            return `<tr class="border-b border-slate-100 hover:bg-slate-50">
+            return `<tr class="sheet-row border-b border-slate-100 cursor-pointer hover:bg-slate-100" data-id="${escapeAttr(s.id)}">
                 <td class="py-2 px-2">${escapeHtml((s.surname || s.author || '') + (s.firstName ? ' ' + s.firstName : ''))}</td>
                 <td class="py-2 px-2 font-medium">${escapeHtml(s.title)}</td>
                 <td class="py-2 px-2">${escapeHtml(String(s.difficulty))}</td>
-                <td class="py-2 px-2"><a href="${safeHref(s.url) === '#' ? '#' : escapeAttr(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
-                <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">${typeof window.t === 'function' ? escapeHtml(window.t('sheetList.delete')) : 'Smazat'}</button></td>
+                <td class="py-2 px-2"><a href="${safeHref(s.url) === '#' ? '#' : escapeAttr(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" class="sheet-link text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
                 <td class="py-2 px-2">${playBtn}</td>
             </tr>`;
         }).join('');
-        tbody.querySelectorAll('.sheet-delete').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                const next = loadSheets().filter(s => s.id !== id);
-                saveSheets(next);
-                renderTable(next);
+        tbody.querySelectorAll('.sheet-row').forEach(tr => {
+            tr.addEventListener('click', (e) => {
+                if (e.target.closest('.sheet-link') || e.target.closest('.sheet-play')) return;
+                const id = tr.getAttribute('data-id');
+                openEdit(id);
             });
         });
+        tbody.querySelectorAll('.sheet-link').forEach(a => {
+            a.addEventListener('click', (e) => e.stopPropagation());
+        });
         tbody.querySelectorAll('.sheet-play').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const seq = btn.getAttribute('data-sequence');
                 if (!seq) return;
                 const path = window.location.pathname;
@@ -78,6 +80,40 @@
                 window.location.href = dir + 'prstoklad.php?sequence=' + encodeURIComponent(seq);
             });
         });
+    }
+
+    function openEdit(id) {
+        const sheets = loadSheets();
+        const s = sheets.find(x => x.id === id);
+        if (!s) return;
+        const form = document.getElementById('sheetForm');
+        const editIdEl = document.getElementById('sheetEditId');
+        const submitBtn = document.getElementById('sheetSubmitBtn');
+        const deleteBtn = document.getElementById('sheetDeleteBtn');
+        if (!form || !editIdEl || !submitBtn || !deleteBtn) return;
+        editIdEl.value = id;
+        document.getElementById('sheetUrl').value = s.url || '';
+        document.getElementById('sheetTitle').value = s.title || '';
+        document.getElementById('sheetSurname').value = s.surname || s.author || '';
+        document.getElementById('sheetFirstName').value = s.firstName || '';
+        document.getElementById('sheetDifficulty').value = s.difficulty || 5;
+        document.getElementById('sheetSequence').value = s.sequence || '';
+        submitBtn.textContent = typeof window.t === 'function' ? window.t('sheetList.save') : 'Uložit';
+        deleteBtn.classList.remove('hidden');
+        form.classList.remove('hidden');
+        const formToggle = document.getElementById('sheetFormToggle');
+        if (formToggle) formToggle.textContent = typeof window.t === 'function' ? window.t('sheetList.cancelAdd') : 'Zrušit přidání skladby';
+    }
+
+    function closeEdit() {
+        const editIdEl = document.getElementById('sheetEditId');
+        const submitBtn = document.getElementById('sheetSubmitBtn');
+        const deleteBtn = document.getElementById('sheetDeleteBtn');
+        const formToggle = document.getElementById('sheetFormToggle');
+        if (editIdEl) editIdEl.value = '';
+        if (submitBtn) submitBtn.textContent = typeof window.t === 'function' ? window.t('sheetList.add') : 'Přidat';
+        if (deleteBtn) deleteBtn.classList.add('hidden');
+        if (formToggle) formToggle.textContent = typeof window.t === 'function' ? window.t('sheetList.addSheet') : 'Přidat skladbu';
     }
 
     function escapeHtml(s) {
@@ -102,11 +138,14 @@
         const filterMinEl = document.getElementById('filterMin');
 
         formToggle?.addEventListener('click', () => {
+            const wasHidden = form?.classList.contains('hidden');
             form?.classList.toggle('hidden');
             const isVisible = !form?.classList.contains('hidden');
             formToggle.textContent = typeof window.t === 'function'
                 ? (isVisible ? window.t('sheetList.cancelAdd') : window.t('sheetList.addSheet'))
                 : (isVisible ? 'Zrušit přidání skladby' : 'Přidat skladbu');
+            if (isVisible && wasHidden) closeEdit();
+            if (!isVisible) closeEdit();
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
         });
         const filterMaxEl = document.getElementById('filterMax');
@@ -124,13 +163,35 @@
             const difficulty = Math.max(1, Math.min(10, Number(document.getElementById('sheetDifficulty')?.value) || 5));
             if (!title || !surname) return;
             const sheets = loadSheets();
-            const id = 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
-            sheets.push({ id, url, title, surname, firstName, difficulty, sequence });
+            const editId = document.getElementById('sheetEditId')?.value?.trim() || '';
+            if (editId) {
+                const idx = sheets.findIndex(s => s.id === editId);
+                if (idx >= 0) {
+                    sheets[idx] = { ...sheets[idx], url, title, surname, firstName, difficulty, sequence };
+                }
+            } else {
+                const id = 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+                sheets.push({ id, url, title, surname, firstName, difficulty, sequence });
+            }
             saveSheets(sheets);
             renderTable(sheets);
             form.reset();
             document.getElementById('sheetDifficulty').value = 5;
+            closeEdit();
             form.classList.add('hidden');
+        });
+
+        document.getElementById('sheetDeleteBtn')?.addEventListener('click', () => {
+            const editId = document.getElementById('sheetEditId')?.value?.trim() || '';
+            if (!editId) return;
+            if (typeof window.markToolUsed === 'function') window.markToolUsed();
+            const sheets = loadSheets().filter(s => s.id !== editId);
+            saveSheets(sheets);
+            renderTable(sheets);
+            form?.reset();
+            document.getElementById('sheetDifficulty').value = 5;
+            closeEdit();
+            form?.classList.add('hidden');
         });
 
         filterApplyBtn?.addEventListener('click', () => {

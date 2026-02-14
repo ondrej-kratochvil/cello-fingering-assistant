@@ -286,6 +286,7 @@
   "sheetList.surnameHint": "U lidových písní, stupnic apod. uveďte např. Lidová, Neznámý.",
   "sheetList.difficulty": "Obtížnost (1–10):",
   "sheetList.add": "Přidat",
+  "sheetList.save": "Uložit",
   "sheetList.addSheet": "Přidat skladbu",
   "sheetList.cancelAdd": "Zrušit přidání skladby",
   "sheetList.surnameAuthor": "Příjmení autora",

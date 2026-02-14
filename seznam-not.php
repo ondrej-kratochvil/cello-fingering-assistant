@@ -56,7 +56,11 @@ $toolTitleKey = 'sheetList.title';
                     <label for="sheetUrl" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.url">Odkaz (URL):</label>
                     <input type="url" id="sheetUrl" class="w-full p-3 border border-slate-300 rounded-xl" placeholder="https://…">
                 </div>
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.add">Přidat</button>
+                <input type="hidden" id="sheetEditId" value="">
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit" id="sheetSubmitBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.add">Přidat</button>
+                    <button type="button" id="sheetDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl hidden" data-i18n="sheetList.delete">Smazat</button>
+                </div>
             </form>
 
             <div class="mb-4 flex flex-wrap items-center gap-4">
@@ -75,7 +79,6 @@ $toolTitleKey = 'sheetList.title';
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleField">Název skladby</th>
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficulty">Obtížnost</th>
                             <th class="text-left py-3 px-2" data-i18n="sheetList.url">Odkaz</th>
-                            <th class="w-20"></th>
                             <th class="w-12"></th>
                         </tr>
                     </thead>

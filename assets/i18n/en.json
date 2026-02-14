@@ -286,6 +286,7 @@
   "sheetList.surnameHint": "For folk songs, scales etc. use e.g. Traditional, Unknown.",
   "sheetList.difficulty": "Difficulty (1–10):",
   "sheetList.add": "Add",
+  "sheetList.save": "Save",
   "sheetList.addSheet": "Add piece",
   "sheetList.cancelAdd": "Cancel add piece",
   "sheetList.surnameAuthor": "Author surname",
