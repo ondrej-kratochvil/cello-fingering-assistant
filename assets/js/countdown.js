@@ -59,10 +59,12 @@
                 localStorage.removeItem(STORAGE_KEY);
                 return;
             }
+            const now = Date.now();
+            const endTimeVal = paused ? now + remainingSeconds * 1000 : (endTime != null ? endTime : now + remainingSeconds * 1000);
             const state = {
                 remaining: remainingSeconds,
                 paused: !!paused,
-                endTime: paused ? Date.now() + remainingSeconds * 1000 : endTime
+                endTime: endTimeVal
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (e) { /* ignore */ }

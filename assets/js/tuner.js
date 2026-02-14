@@ -56,7 +56,7 @@
         let runningSum = 0;
         for (let tau = 1; tau < tauMax; tau++) {
             runningSum += diff[tau];
-            if (runningSum > 0) diff[tau] = diff[tau] * tau / runningSum;
+            diff[tau] = runningSum > 0 ? diff[tau] * tau / runningSum : 1;
         }
         let tau = 2;
         while (tau < tauMax - 1) {
