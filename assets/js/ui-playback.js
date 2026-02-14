@@ -74,8 +74,7 @@ export function startPlayback(noteTokens, bpm) {
         if (state.currentSetStaffHighlight) state.currentSetStaffHighlight(idx);
         if (state.playbackState.onIndexChange) state.playbackState.onIndexChange();
         let midi = getMidiNumber(noteTokens[idx]);
-        if (midi < 48) midi += 12;
-        else midi += 12;
+        if (midi < 72) midi += 12;
         playNote(ctx, midi, durationSec * 0.9);
         ps.currentIndex += 1;
         ps.timeoutId = setTimeout(scheduleNext, durationSec * 1000);

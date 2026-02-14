@@ -46,7 +46,7 @@
         const diff = new Float32Array(tauMax);
         for (let tau = 1; tau < tauMax; tau++) {
             let sum = 0;
-            for (let j = 0; j < tauMax; j++) {
+            for (let j = 0; j < size - tau; j++) {
                 const d = float32Array[j] - float32Array[j + tau];
                 sum += d * d;
             }

@@ -250,8 +250,11 @@
         isPausedFlag = true;
         const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
         if (pauseBtnPage) pauseBtnPage.dataset.paused = 'true';
-        const startBtn = document.getElementById('countdownStart');
-        if (startBtn) startBtn.dataset.running = '';
+        const startBtn = document.getElementById('countdownStart') || document.getElementById('countdownPlayPause');
+        if (startBtn) {
+            startBtn.dataset.running = '';
+            updatePlayPauseButtonUI(startBtn, false);
+        }
         resetTitle();
         saveState();
         updateTopbarWidget();
