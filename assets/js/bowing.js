@@ -2,7 +2,7 @@
  * Smyky – načte výstup z Prstokladu, aplikuje smykový pattern (legato = oblouček) a rytmus, vykreslí VexFlow.
  */
 import { loadFingeringState, noteToVexKey, getClefPerNote, getPositionChanges } from './fingering-staff-utils.js';
-import { toPositionLabel } from './ui-staff.js';
+import { toPositionLabel, getPositionLabelMode } from './ui-staff.js';
 import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
 
 (function () {
@@ -84,7 +84,7 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
                 fingerAnn.setStyle({ fillStyle: ink });
                 note.addModifier(fingerAnn, 0);
                 if (positionChanges.includes(i) && step.p > 0) {
-                    const posAnn = new Annotation(toPositionLabel(step.p, 'chromatic'));
+                    const posAnn = new Annotation(toPositionLabel(step.p, getPositionLabelMode()));
                     posAnn.setVerticalJustification(Annotation.VerticalJustify.TOP);
                     posAnn.setFont('Arial', 10, 'bold');
                     posAnn.setStyle({ fillStyle: ink });

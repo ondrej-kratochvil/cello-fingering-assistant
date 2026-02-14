@@ -172,6 +172,8 @@
         if (timerId != null) clearInterval(timerId);
         timerId = null;
         isPausedFlag = true;
+        if (endTime != null) remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        updateDisplay(remainingSeconds);
         const playPauseBtn = document.getElementById('countdownPlayPause') || document.getElementById('countdownStart');
         const pauseBtn = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
         if (playPauseBtn) {
@@ -248,6 +250,8 @@
         if (timerId != null) clearInterval(timerId);
         timerId = null;
         isPausedFlag = true;
+        if (endTime != null) remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        updateDisplay(remainingSeconds);
         const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
         if (pauseBtnPage) pauseBtnPage.dataset.paused = 'true';
         const startBtn = document.getElementById('countdownStart') || document.getElementById('countdownPlayPause');

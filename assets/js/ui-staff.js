@@ -60,6 +60,16 @@ export function getClefPerNote(input) {
 }
 
 /**
+ * Vrátí aktuální režim označení poloh z localStorage (nastavení v Prstokladu).
+ * @returns {'diatonic'|'chromatic'}
+ */
+export function getPositionLabelMode() {
+    if (typeof localStorage === 'undefined') return 'diatonic';
+    const v = localStorage.getItem('positionLabelMode');
+    return (v === 'chromatic' || v === 'diatonic') ? v : 'diatonic';
+}
+
+/**
  * Vrátí označení polohy pro zobrazení.
  * @param {number} p - Chromatická poloha (0 = prázdná, 1–14)
  * @param {'diatonic'|'chromatic'} mode
