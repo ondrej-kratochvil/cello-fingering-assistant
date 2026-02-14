@@ -226,6 +226,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
             if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r));
             await ui.ready;
             await initI18n();
+            window.t = t;
             setCanvasRedrawCallback(() => { if (typeof window.redrawResults === 'function') window.redrawResults(); });
             await initNavigation();
             ui.initUI();

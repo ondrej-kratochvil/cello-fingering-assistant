@@ -289,6 +289,7 @@
   "sheetList.save": "Uložit",
   "sheetList.addSheet": "Přidat skladbu",
   "sheetList.cancelAdd": "Zrušit přidání skladby",
+  "sheetList.cancelEdit": "Zrušit editaci skladby",
   "sheetList.surnameAuthor": "Příjmení autora",
   "sheetList.firstNameAuthor": "Jméno autora",
   "sheetList.sequence": "Sekvence tónů",

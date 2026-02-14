@@ -102,7 +102,7 @@
         deleteBtn.classList.remove('hidden');
         form.classList.remove('hidden');
         const formToggle = document.getElementById('sheetFormToggle');
-        if (formToggle) formToggle.textContent = typeof window.t === 'function' ? window.t('sheetList.cancelAdd') : 'Zrušit přidání skladby';
+        if (formToggle) formToggle.textContent = typeof window.t === 'function' ? window.t('sheetList.cancelEdit') : 'Zrušit editaci skladby';
     }
 
     function closeEdit() {
@@ -139,11 +139,12 @@
 
         formToggle?.addEventListener('click', () => {
             const wasHidden = form?.classList.contains('hidden');
+            const isEditMode = !!document.getElementById('sheetEditId')?.value?.trim();
             form?.classList.toggle('hidden');
             const isVisible = !form?.classList.contains('hidden');
             formToggle.textContent = typeof window.t === 'function'
-                ? (isVisible ? window.t('sheetList.cancelAdd') : window.t('sheetList.addSheet'))
-                : (isVisible ? 'Zrušit přidání skladby' : 'Přidat skladbu');
+                ? (isVisible ? (isEditMode ? window.t('sheetList.cancelEdit') : window.t('sheetList.cancelAdd')) : window.t('sheetList.addSheet'))
+                : (isVisible ? (isEditMode ? 'Zrušit editaci skladby' : 'Zrušit přidání skladby') : 'Přidat skladbu');
             if (isVisible && wasHidden) closeEdit();
             if (!isVisible) closeEdit();
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
