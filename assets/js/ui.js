@@ -1,4 +1,6 @@
 // --- UI FUNCTIONS ---
+import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
+
 // Dynamický import s cache-busting (verze z window.__JS_VERSIONS__ v PHP)
 const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
 const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
@@ -511,6 +513,11 @@ function startPlayback(noteTokens, bpm) {
         playbackState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     const ctx = playbackState.audioContext;
+    ctx.resume().then(() => {
+        scheduleNext();
+    }).catch(() => {
+        playbackState.playing = false;
+    });
 
     function scheduleNext() {
         if (!playbackState.playing || playbackState.currentIndex >= noteTokens.length) {
@@ -526,7 +533,6 @@ function startPlayback(noteTokens, bpm) {
         playbackState.timeoutId = setTimeout(scheduleNext, durationSec * 1000);
     }
 
-    scheduleNext();
 }
 
 function saveLastFingeringState(state) {
@@ -637,49 +643,6 @@ function renderTextOutput(container, result, input, positionChanges, stringColor
     container.appendChild(legend);
 }
 
-/**
- * Německá notace -is/-es na křížek/béčko.
- * cis→c#, ces→cb, cis1→c1#, c1is→c1#, es→eb, as→ab, hes→hb.
- */
-function germanToCanonical(token) {
-    if (!token || typeof token !== 'string') return token;
-    const t = token.trim();
-    if (t === 'es') return 'eb';
-    if (t === 'as') return 'ab';
-    // (písmeno)(volitelně číslo)(is|es)  např. cis1, ces, dis
-    let m = t.match(/^([a-hA-H])(\d?)(is|es)$/i);
-    if (m) {
-        const letter = m[1];
-        const digit = m[2] || '';
-        const acc = m[3] === 'is' ? '#' : 'b';
-        const out = letter + digit + acc;
-        return digit ? letter.toLowerCase() + digit + acc : out;
-    }
-    // (písmeno)(is|es)(volitelně číslo)  např. c1is, Cis1
-    m = t.match(/^([a-hA-H])(is|es)(\d?)$/i);
-    if (m) {
-        const letter = m[1];
-        const acc = m[2] === 'is' ? '#' : 'b';
-        const digit = m[3] || '';
-        if (digit) return letter.toLowerCase() + digit + acc;
-        return letter + acc;
-    }
-    return token;
-}
-
-/** c#1 → c1#, d1b → db1, c#2 → c2#, d2b → db2 (přehození oktávy a posuvky pro alternativní zadání) */
-function normalizeOctaveAccidentalSwap(token) {
-    const m1 = token.match(/^([a-g])(#)(1)$/i);
-    if (m1) return m1[1] + '1' + m1[2];
-    const m2 = token.match(/^([a-g])(1)(b)$/i);
-    if (m2) return m2[1] + 'b' + m2[2];
-    const m3 = token.match(/^([a-g])(#)(2)$/i);
-    if (m3) return m3[1] + '2' + m3[2];
-    const m4 = token.match(/^([a-g])(2)(b)$/i);
-    if (m4) return m4[1] + 'b' + m4[2];
-    return token;
-}
-
 /** Podle nastavení H/B vrací zobrazovaný tón (H/Hes vs B/Bb). Vstup je normalizovaný token (H, Hb, h, hb, h1, hb1…). */
 function toDisplayNote(token) {
     if (!token || typeof token !== 'string') return token;
@@ -724,7 +687,8 @@ function noteToVexFlow(noteName) {
  * @param {Object} [opts] - Volitelné: { skipLegend: true } pro vynechání legendy (např. na stránce testů)
  */
 export { toPositionLabel };
-export function renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman, opts = {}) {
+export function renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman, opts) {
+    opts = opts || {};
     // Zkontrolovat, jestli je VexFlow načten
     if (typeof Vex === 'undefined' || !Vex.Flow) {
         console.error('VexFlow není načten. Použijte textový výstup nebo načtěte VexFlow z CDN.');
@@ -835,11 +799,16 @@ export function renderStaffOutput(container, result, input, positionChanges, str
 
     // Vytvořit Voice a přidat noty; vložit ClefNote vždy, když se klíč změní oproti předchozí notě
     const tickables = [];
+    const noteIndexToTickableIndex = [];
+    let tickableIdx = 0;
     for (let i = 0; i < notes.length; i++) {
         if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
             tickables.push(new ClefNote(clefPerNote[i]));
+            tickableIdx++;
         }
+        noteIndexToTickableIndex[i] = tickableIdx;
         tickables.push(notes[i]);
+        tickableIdx++;
     }
     const voice = new Voice({ num_beats: notes.length, beat_value: 1 });
     voice.addTickables(tickables);
@@ -854,10 +823,14 @@ export function renderStaffOutput(container, result, input, positionChanges, str
     context.setStrokeStyle(staffInk);
     voice.draw(context, stave);
 
-    // Kontejner pro osnovu s horizontálním scrollováním
+    // Kontejner pro osnovu s horizontálním scrollováním; vnitřní wrapper scrolluje i s highlightem
     const staffContainer = document.createElement('div');
-    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0 relative';
-    staffContainer.appendChild(staffDiv);
+    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0';
+    const staffInner = document.createElement('div');
+    staffInner.className = 'relative';
+    staffInner.style.width = totalWidth + 'px';
+    staffInner.style.minHeight = totalHeight + 'px';
+    staffInner.appendChild(staffDiv);
 
     let setHighlight = null;
     if (opts.enableHighlight && result.length > 0) {
@@ -866,13 +839,24 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         highlightEl.setAttribute('aria-hidden', 'true');
         highlightEl.style.cssText = 'position:absolute;top:50px;left:0;width:44px;height:150px;pointer-events:none;border-radius:6px;transition:left 0.05s linear;';
         const bodyStyles = getComputedStyle(document.body);
-        const highlightColor = bodyStyles.getPropertyValue('--color-primary').trim() || 'rgba(99,102,241,0.25)';
+        let highlightColor = 'rgba(99,102,241,0.25)';
+        const primary = bodyStyles.getPropertyValue('--color-primary').trim();
+        if (primary) {
+            const hex6 = primary.match(/^#([0-9a-fA-F]{6})$/);
+            if (hex6) {
+                const hex = hex6[1];
+                highlightColor = `rgba(${parseInt(hex.slice(0,2),16)},${parseInt(hex.slice(2,4),16)},${parseInt(hex.slice(4,6),16)},0.25)`;
+            } else if (primary.startsWith('rgba') || primary.startsWith('rgb(')) {
+                highlightColor = primary;
+            }
+        }
         highlightEl.style.backgroundColor = highlightColor;
-        highlightEl.style.left = (clefOffset + 0 * noteSpacing) + 'px';
-        staffContainer.appendChild(highlightEl);
+        highlightEl.style.left = (clefOffset + (noteIndexToTickableIndex[0] ?? 0) * noteSpacing) + 'px';
+        staffInner.appendChild(highlightEl);
         setHighlight = (index) => {
             if (index >= 0 && index < result.length) {
-                highlightEl.style.left = (clefOffset + index * noteSpacing) + 'px';
+                const tickableIdx = noteIndexToTickableIndex[index] ?? index;
+                highlightEl.style.left = (clefOffset + tickableIdx * noteSpacing) + 'px';
                 highlightEl.style.display = 'block';
             } else {
                 highlightEl.style.display = 'none';
@@ -881,6 +865,7 @@ export function renderStaffOutput(container, result, input, positionChanges, str
         setHighlight(-1);
     }
 
+    staffContainer.appendChild(staffInner);
     container.appendChild(staffContainer);
 
     if (opts.skipLegend) return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
@@ -1014,7 +999,11 @@ function runSolver(options = {}) {
 
 function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, skipHideAbout, display, wrapper }) {
     if (!display) return;
-    const displayTokens = inputForDisplay.map((t) => toDisplayNote(normalizeOctaveAccidentalSwap(germanToCanonical(t))));
+    const displayTokens = (inputOriginal !== null && inputOriginal.length === inputForDisplay.length ? inputOriginal : inputForDisplay).map((t) => {
+        const canon = normalizeOctaveAccidentalSwap(germanToCanonical(t));
+        const forDisplay = toDisplayNote(canon);
+        return forDisplay !== canon ? forDisplay : t;
+    });
 
     display.innerHTML = '';
     if (result === null || result === undefined) {
@@ -1071,8 +1060,9 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
     const container = document.createElement('div');
     container.className = 'w-full space-y-4';
 
-    // Zastavit přehrávání při novém vykreslení
+    // Zastavit přehrávání při novém vykreslení a resetovat pozici
     stopPlayback();
+    playbackState.currentIndex = 0;
     currentSetStaffHighlight = null;
 
     // Zobrazit výstup podle vybraného režimu (displayTokens = původní vstup + H/B podle nastavení)
@@ -1080,62 +1070,65 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
     if (currentOutputFormat === 'staff') {
         const staffResult = renderStaffOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn, { enableHighlight: true });
         staffDiv = staffResult && staffResult.staffDiv ? staffResult.staffDiv : staffResult;
-        if (staffResult && typeof staffResult.setHighlight === 'function') currentSetStaffHighlight = staffResult.setHighlight;
+        const hasStaffHighlight = staffResult && typeof staffResult.setHighlight === 'function';
+        if (hasStaffHighlight) currentSetStaffHighlight = staffResult.setHighlight;
 
-        // Pás přehrávání: BPM, Start, Pauza, Na začátek
-        const playbackBar = document.createElement('div');
-        playbackBar.className = 'playback-bar flex flex-wrap items-center gap-3 py-2';
-        const bpmLabel = document.createElement('label');
-        bpmLabel.className = 'text-sm font-bold text-slate-700';
-        bpmLabel.textContent = t('playback.bpm');
-        bpmLabel.htmlFor = 'playbackBpm';
-        const bpmInput = document.createElement('input');
-        bpmInput.type = 'number';
-        bpmInput.id = 'playbackBpm';
-        bpmInput.min = 60;
-        bpmInput.max = 600;
-        bpmInput.value = playbackState.bpm;
-        bpmInput.className = 'w-20 px-2 py-1 border border-slate-300 rounded font-mono text-sm';
-        const playBtn = document.createElement('button');
-        playBtn.type = 'button';
-        playBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg';
-        playBtn.textContent = t('playback.play');
-        const pauseBtn = document.createElement('button');
-        pauseBtn.type = 'button';
-        pauseBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg';
-        pauseBtn.textContent = t('playback.pause');
-        const restartBtn = document.createElement('button');
-        restartBtn.type = 'button';
-        restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg';
-        restartBtn.textContent = t('playback.restart');
+        // Pás přehrávání pouze když máme osnovu s highlightem (jinak byl fallback na textový výstup)
+        if (hasStaffHighlight) {
+            const playbackBar = document.createElement('div');
+            playbackBar.className = 'playback-bar flex flex-wrap items-center gap-3 py-2';
+            const bpmLabel = document.createElement('label');
+            bpmLabel.className = 'text-sm font-bold text-slate-700';
+            bpmLabel.textContent = t('playback.bpm');
+            bpmLabel.htmlFor = 'playbackBpm';
+            const bpmInput = document.createElement('input');
+            bpmInput.type = 'number';
+            bpmInput.id = 'playbackBpm';
+            bpmInput.min = 60;
+            bpmInput.max = 600;
+            bpmInput.value = playbackState.bpm;
+            bpmInput.className = 'w-20 px-2 py-1 border border-slate-300 rounded font-mono text-sm';
+            const playBtn = document.createElement('button');
+            playBtn.type = 'button';
+            playBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg';
+            playBtn.textContent = t('playback.play');
+            const pauseBtn = document.createElement('button');
+            pauseBtn.type = 'button';
+            pauseBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg';
+            pauseBtn.textContent = t('playback.pause');
+            const restartBtn = document.createElement('button');
+            restartBtn.type = 'button';
+            restartBtn.className = 'bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg';
+            restartBtn.textContent = t('playback.restart');
 
-        bpmInput.addEventListener('change', () => {
-            const v = Number(bpmInput.value, 10);
-            if (!Number.isNaN(v) && v >= 60 && v <= 600) playbackState.bpm = v;
-        });
-        playBtn.addEventListener('click', () => {
-            if (!playbackState.playing) {
-                const bpm = Number(bpmInput.value, 10);
+            bpmInput.addEventListener('change', () => {
+                const v = parseInt(bpmInput.value, 10);
+                if (!Number.isNaN(v) && v >= 60 && v <= 600) playbackState.bpm = v;
+            });
+            playBtn.addEventListener('click', () => {
+                if (!playbackState.playing) {
+                    const bpm = parseInt(bpmInput.value, 10);
+                    if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
+                    startPlayback(inputForSolve, playbackState.bpm);
+                }
+            });
+            pauseBtn.addEventListener('click', stopPlayback);
+            restartBtn.addEventListener('click', () => {
+                stopPlayback();
+                playbackState.currentIndex = 0;
+                if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
+                const bpm = parseInt(bpmInput.value, 10);
                 if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
                 startPlayback(inputForSolve, playbackState.bpm);
-            }
-        });
-        pauseBtn.addEventListener('click', stopPlayback);
-        restartBtn.addEventListener('click', () => {
-            stopPlayback();
-            playbackState.currentIndex = 0;
-            if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
-            const bpm = Number(bpmInput.value, 10);
-            if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
-            startPlayback(inputForSolve, playbackState.bpm);
-        });
+            });
 
-        playbackBar.appendChild(bpmLabel);
-        playbackBar.appendChild(bpmInput);
-        playbackBar.appendChild(playBtn);
-        playbackBar.appendChild(pauseBtn);
-        playbackBar.appendChild(restartBtn);
-        container.appendChild(playbackBar);
+            playbackBar.appendChild(bpmLabel);
+            playbackBar.appendChild(bpmInput);
+            playbackBar.appendChild(playBtn);
+            playbackBar.appendChild(pauseBtn);
+            playbackBar.appendChild(restartBtn);
+            container.appendChild(playbackBar);
+        }
     } else {
         renderTextOutput(container, result, displayTokens, positionChanges, stringColors, toPositionLabelFn);
     }

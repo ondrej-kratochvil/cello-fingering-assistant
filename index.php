@@ -59,9 +59,11 @@ require __DIR__ . '/assets/php/tools_config.php';
     </div>
 <?php
 $jsDir = __DIR__ . '/assets/js';
+$i18nDir = __DIR__ . '/assets/i18n';
 $JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js') ];
+$I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
-    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
     <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__?.i18n ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script type="module">
         const V = window.__JS_VERSIONS__ || {};
@@ -81,20 +83,40 @@ $JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filem
             toggle.addEventListener('click', () => {
                 const isHidden = content.classList.toggle('hidden');
                 toggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
-                toggleText.textContent = t(isHidden ? keyCollapsed : keyExpanded);
+                const key = isHidden ? keyCollapsed : keyExpanded;
+                if (toggleText) {
+                    toggleText.setAttribute('data-i18n', key);
+                    toggleText.textContent = t(key);
+                }
                 if (chevron) chevron.style.transform = isHidden ? 'rotate(-90deg)' : '';
             });
         }
 
-        const select = document.getElementById('homeToolSelect');
-        if (select) {
-            select.querySelectorAll('option[data-nav-key]').forEach(opt => {
+        function refreshHomeToolSelect() {
+            const sel = document.getElementById('homeToolSelect');
+            if (!sel) return;
+            sel.querySelectorAll('option[data-nav-key]').forEach(opt => {
                 opt.textContent = opt.getAttribute('data-num') + '. ' + t(opt.getAttribute('data-nav-key'));
             });
-            const placeholder = select.querySelector('option[value=""]');
+            const placeholder = sel.querySelector('option[value=""]');
             if (placeholder) placeholder.textContent = t('home.gotoToolPlaceholder');
+        }
+        const select = document.getElementById('homeToolSelect');
+        if (select) {
+            refreshHomeToolSelect();
             select.addEventListener('change', function() { const v = this.value; if (v) window.location.href = v; });
         }
+        window.addEventListener('languageChange', () => {
+            const content = document.getElementById('homeAboutContent');
+            const toggleText = document.getElementById('homeAboutToggleText');
+            if (content && toggleText) {
+                const collapsed = content.classList.contains('hidden');
+                const key = collapsed ? 'home.toggleAbout' : 'home.toggleAboutClose';
+                toggleText.setAttribute('data-i18n', key);
+                toggleText.textContent = t(key);
+            }
+            refreshHomeToolSelect();
+        });
     </script>
 </body>
 </html>

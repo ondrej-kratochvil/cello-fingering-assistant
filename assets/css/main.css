@@ -673,6 +673,10 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
         /* Pozadí pro horizontální scroll na mobilu */
         background-color: var(--color-bg-primary);
     }
+    /* Tabulka závislostí (tóny/polohy) – bez vlastního pozadí */
+    .tones-table-wrap.overflow-x-auto {
+        background: none;
+    }
     
     .overflow-x-auto::-webkit-scrollbar {
         height: 8px;

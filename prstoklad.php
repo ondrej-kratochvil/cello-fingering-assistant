@@ -32,20 +32,20 @@ $currentToolKey = 'fingering';
                 </button>
                 <div id="fingeringAboutContent" class="mt-4 space-y-6">
                     <div class="prose prose-slate max-w-none">
-                        <p class="text-slate-700" data-i18n-html="about.p1"></p>
-                        <p class="text-slate-700" data-i18n-html="about.p2"></p>
+                        <p class="text-slate-700" data-i18n="about.p1" data-i18n-html></p>
+                        <p class="text-slate-700" data-i18n="about.p2" data-i18n-html></p>
                     </div>
                     <h3 class="text-lg font-bold text-slate-800" data-i18n="features.title">Hlavní funkce</h3>
                     <ul class="space-y-3 list-none pl-0 text-slate-700">
                         <li><strong data-i18n="features.algo.title"></strong> <span data-i18n="features.algo.desc"></span></li>
-                        <li><strong data-i18n="features.staff.title"></strong> <span data-i18n="features.staff.desc"></span></li>
-                        <li><strong data-i18n="features.fingerboard.title"></strong> <span data-i18n="features.fingerboard.desc"></span></li>
+                        <li><strong data-i18n="features.staff.title"></strong> <span data-i18n="features.staff.desc" data-i18n-html></span></li>
+                        <li><strong data-i18n="features.fingerboard.title"></strong> <span data-i18n="features.fingerboard.desc" data-i18n-html></span></li>
                         <li><strong data-i18n="features.tech.title"></strong> <span data-i18n="features.tech.desc"></span></li>
                     </ul>
                     <div>
                         <h3 class="text-lg font-bold text-slate-800 mb-2" data-i18n="tones.title">Tóny, prsty a polohy</h3>
                         <p class="text-slate-600 text-sm mb-3" data-i18n="tones.intro"></p>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto tones-table-wrap">
                             <table class="w-full border border-slate-200 rounded-lg text-sm">
                                 <thead class="bg-slate-100">
                                     <tr>
@@ -58,18 +58,18 @@ $currentToolKey = 'fingering';
                                 <tbody>
 <?php
 $positionRows = [
-    [ 'rowKey' => 'tones.row1',  'abbr' => 'I↓',  'chromatic' => 'I',  'tone' => 'g#' ],
-    [ 'rowKey' => 'tones.row2',  'abbr' => 'I',   'chromatic' => 'II',  'tone' => 'a' ],
-    [ 'rowKey' => 'tones.row3',  'abbr' => 'II↓', 'chromatic' => 'III', 'tone' => 'a#' ],
-    [ 'rowKey' => 'tones.row4',  'abbr' => 'II↑', 'chromatic' => 'IV',  'tone' => 'h' ],
-    [ 'rowKey' => 'tones.row5',  'abbr' => 'III', 'chromatic' => 'V',   'tone' => 'c1' ],
-    [ 'rowKey' => 'tones.row6',  'abbr' => 'III↑','chromatic' => 'VI',  'tone' => 'c1#' ],
-    [ 'rowKey' => 'tones.row7',  'abbr' => 'IV',  'chromatic' => 'VII', 'tone' => 'd1' ],
-    [ 'rowKey' => 'tones.row8',  'abbr' => 'IV↑', 'chromatic' => 'VIII','tone' => 'd1#' ],
-    [ 'rowKey' => 'tones.row9',  'abbr' => 'V',   'chromatic' => 'IX',  'tone' => 'e1' ],
-    [ 'rowKey' => 'tones.row10', 'abbr' => 'VI',  'chromatic' => 'X',   'tone' => 'f1' ],
-    [ 'rowKey' => 'tones.row11', 'abbr' => 'VII↓','chromatic' => 'XI',  'tone' => 'f1#' ],
-    [ 'rowKey' => 'tones.row12', 'abbr' => 'VII', 'chromatic' => 'XII', 'tone' => 'g1' ],
+    [ 'rowKey' => 'tones.row1',  'abbr' => 'I↓',  'chromatic' => 'I',  'tone' => 'hb' ],
+    [ 'rowKey' => 'tones.row2',  'abbr' => 'I',   'chromatic' => 'II',  'tone' => 'h' ],
+    [ 'rowKey' => 'tones.row3',  'abbr' => 'II↓', 'chromatic' => 'III', 'tone' => 'c' ],
+    [ 'rowKey' => 'tones.row4',  'abbr' => 'II↑', 'chromatic' => 'IV',  'tone' => 'c#' ],
+    [ 'rowKey' => 'tones.row5',  'abbr' => 'III', 'chromatic' => 'V',   'tone' => 'd1' ],
+    [ 'rowKey' => 'tones.row6',  'abbr' => 'III↑','chromatic' => 'VI',  'tone' => 'd1#' ],
+    [ 'rowKey' => 'tones.row7',  'abbr' => 'IV',  'chromatic' => 'VII', 'tone' => 'e1' ],
+    [ 'rowKey' => 'tones.row8',  'abbr' => 'IV↑', 'chromatic' => 'VIII','tone' => 'f1' ],
+    [ 'rowKey' => 'tones.row9',  'abbr' => 'V',   'chromatic' => 'IX',  'tone' => 'f1#' ],
+    [ 'rowKey' => 'tones.row10', 'abbr' => 'VI',  'chromatic' => 'X',   'tone' => 'g1' ],
+    [ 'rowKey' => 'tones.row11', 'abbr' => 'VII↓','chromatic' => 'XI',  'tone' => 'g1#' ],
+    [ 'rowKey' => 'tones.row12', 'abbr' => 'VII', 'chromatic' => 'XII', 'tone' => 'a1' ],
 ];
 foreach ($positionRows as $r):
 ?>
@@ -198,8 +198,9 @@ $JS_VERSIONS = [
     'ui' => filemtime($jsDir . '/ui.js'),
     'toolPage' => filemtime($jsDir . '/tool-page.js'),
 ];
+$I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
-    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>;</script>
+    <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
     <script>window.__I18N_SCRIPT__ = new URL('./assets/js/i18n.js' + (window.__JS_VERSIONS__?.i18n ? '?v=' + window.__JS_VERSIONS__.i18n : ''), document.baseURI || window.location.href).href;</script>
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.min.js"></script>
     <script type="module">

@@ -55,7 +55,7 @@
     }
 
     function tick() {
-        remainingSeconds = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+        remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
         updateDisplay(remainingSeconds);
         if (remainingSeconds <= 0) {
             if (timerId != null) clearInterval(timerId);
@@ -70,6 +70,7 @@
 
     function start() {
         if (typeof window.markToolUsed === 'function') window.markToolUsed();
+        getCtx().resume().catch(() => {});
         const startBtn = document.getElementById('countdownStart');
         const pauseBtn = document.getElementById('countdownPause');
         if (startBtn?.dataset?.running === 'true') return;
@@ -77,7 +78,7 @@
         if (pauseBtn?.dataset?.paused === 'true') {
             endTime = Date.now() + remainingSeconds * 1000;
         } else {
-            const mins = Math.max(1, Math.min(120, Number(minsInput?.value, 10) || 30));
+            const mins = Math.max(1, Math.min(120, parseInt(minsInput?.value, 10) || 30));
             totalSeconds = mins * 60;
             remainingSeconds = totalSeconds;
             endTime = Date.now() + totalSeconds * 1000;
@@ -103,7 +104,7 @@
         if (timerId != null) clearInterval(timerId);
         timerId = null;
         const minsInput = document.getElementById('countdownMinutes');
-        const mins = Math.max(1, Math.min(120, Number(minsInput?.value, 10) || 30));
+        const mins = Math.max(1, Math.min(120, parseInt(minsInput?.value, 10) || 30));
         remainingSeconds = mins * 60;
         const startBtn = document.getElementById('countdownStart');
         const pauseBtn = document.getElementById('countdownPause');

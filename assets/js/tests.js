@@ -1,4 +1,6 @@
 // Jednoduchý testovací framework
+import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
+
 class TestRunner {
     constructor() {
         this.tests = [];
@@ -90,21 +92,32 @@ const bToHMap = {
     B: 'H', Bb: 'Hb', b: 'h', bb: 'hb', b1: 'h1', bb1: 'hb1', B1: 'H1', Bb1: 'Hb1'
 };
 
-function normalizeOctaveAccidentalSwap(token) {
-    const m1 = token.match(/^([a-g])(#)(1)$/i);
-    if (m1) return m1[1] + '1' + m1[2];
-    const m2 = token.match(/^([a-g])(1)(b)$/i);
-    if (m2) return m2[1] + 'b' + m2[2];
-    const m3 = token.match(/^([a-g])(#)(2)$/i);
-    if (m3) return m3[1] + '2' + m3[2];
-    const m4 = token.match(/^([a-g])(2)(b)$/i);
-    if (m4) return m4[1] + 'b' + m4[2];
-    return token;
+/** Token → kanonický tvar (němčina + přehození oktáva/posuvka). */
+function tokenToCanonical(token) {
+    return normalizeOctaveAccidentalSwap(germanToCanonical(token));
 }
+
+/** Testy převodu zápisu tónu na kanonický tvar (CIS→C#, des→db, C#→C# atd.). */
+const noteParsingTests = [
+    { input: 'CIS', expected: 'C#' },
+    { input: 'DES', expected: 'Db' },
+    { input: 'cis', expected: 'c#' },
+    { input: 'des', expected: 'db' },
+    { input: 'Cis', expected: 'C#' },
+    { input: 'Des', expected: 'Db' },
+    { input: 'C#', expected: 'C#' },
+    { input: 'Db', expected: 'Db' },
+    { input: 'c#', expected: 'c#' },
+    { input: 'db', expected: 'db' },
+    { input: 'Es', expected: 'Eb' },
+    { input: 'es', expected: 'eb' },
+    { input: 'As', expected: 'Ab' },
+    { input: 'as', expected: 'ab' }
+];
 
 function prepareInputForSolve(input) {
     return input.map((token) => {
-        let x = normalizeOctaveAccidentalSwap(token);
+        let x = normalizeOctaveAccidentalSwap(germanToCanonical(token));
         x = bToHMap[x] || bToHMap[x.toLowerCase()] || x;
         const flat = flatToSharpMap[x] || flatToSharpMap[x.toLowerCase()];
         if (flat) return flat;
@@ -517,6 +530,13 @@ const testSuites = [
 function runTests() {
     const runner = new TestRunner();
 
+    noteParsingTests.forEach(({ input, expected }) => {
+        runner.test(`Parsování "${input}" → "${expected}"`, () => {
+            runner.assertEqual(tokenToCanonical(input), expected,
+                `Token "${input}" měl být převeden na "${expected}"`);
+        });
+    });
+
     const allSuites = [...testSuites, ...getLocalTestSuites()];
 
     allSuites.forEach(suite => {
@@ -549,6 +569,9 @@ export {
     formatFingering,
     prepareInputForSolve,
     testSuites,
+    noteParsingTests,
+    tokenToCanonical,
+    germanToCanonical,
     STORAGE_TESTS_KEY,
     appendLocalTest,
     getLocalTestSuites

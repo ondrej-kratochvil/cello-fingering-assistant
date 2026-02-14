@@ -38,12 +38,12 @@
         const beatDisplay = document.getElementById('metronomeBeat');
 
         function getBpm() {
-            const v = Number(bpmInput?.value, 10);
+            const v = parseInt(bpmInput?.value, 10);
             return (Number.isFinite(v) && v >= 40 && v <= 240) ? v : 72;
         }
         function getBeats() {
             const r = document.querySelector('input[name="metronomeBeats"]:checked');
-            return Number(r?.value, 10) || 4;
+            return parseInt(r?.value, 10) || 4;
         }
 
         function scheduleNext() {
@@ -63,20 +63,26 @@
             }, delay);
         }
 
+        let startCancelled = false;
         function start() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             if (startBtn?.dataset?.running === 'true') return;
-            beatIndex = 0;
-            nextTickTime = performance.now();
-            startBtn.dataset.running = 'true';
-            if (beatDisplay) beatDisplay.textContent = '1';
-            playTick(true);
-            beatIndex = 1;
-            nextTickTime += (60 * 1000) / getBpm();
-            scheduleNext();
+            startCancelled = false;
+            getCtx().resume().then(() => {
+                if (startCancelled) return;
+                beatIndex = 0;
+                nextTickTime = performance.now();
+                startBtn.dataset.running = 'true';
+                if (beatDisplay) beatDisplay.textContent = '1';
+                playTick(true);
+                beatIndex = 1;
+                nextTickTime += (60 * 1000) / getBpm();
+                scheduleNext();
+            }).catch(() => {});
         }
 
         function stop() {
+            startCancelled = true;
             if (timerId != null) clearTimeout(timerId);
             timerId = null;
             startBtn.dataset.running = '';

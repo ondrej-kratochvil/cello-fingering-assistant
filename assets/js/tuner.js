@@ -142,7 +142,7 @@
         const dataArray = new Float32Array(bufferLength);
 
         function getReferenceA() {
-            return Number(refSelect?.value || 440, 10) || 440;
+            return parseInt(refSelect?.value || 440, 10) || 440;
         }
         function usePureFifths() {
             return document.querySelector('input[name="tunerMode"]:checked')?.value === 'pure';
@@ -201,6 +201,11 @@
             animationId = null;
             if (stream) stream.getTracks().forEach(tr => tr.stop());
             stream = null;
+            if (audioContext) {
+                audioContext.close().catch(() => {});
+                audioContext = null;
+            }
+            analyser = null;
             if (micBtn) {
                 micBtn.textContent = typeof t === 'function' ? t('tuner.micStart') : 'Zapnout mikrofon';
                 micBtn.dataset.active = 'false';
@@ -209,17 +214,28 @@
             displays?.classList.add('hidden');
         }
 
+        let micStartPending = false;
+        let micStartCancelled = false;
         function startMic() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
+            if (micBtn?.dataset.active === 'true' || micStartPending) return;
+            micStartPending = true;
+            micStartCancelled = false;
             const ref = getReferenceA();
             const pure = usePureFifths();
             updateTargets();
             if (!navigator.mediaDevices?.getUserMedia) {
+                micStartPending = false;
                 if (micStatus) micStatus.textContent = 'Mikrofon není podporován.';
                 return;
             }
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then((s) => {
+                    if (micStartCancelled) {
+                        s.getTracks().forEach(tr => tr.stop());
+                        micStartPending = false;
+                        return;
+                    }
                     stream = s;
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const src = audioContext.createMediaStreamSource(stream);
@@ -233,15 +249,26 @@
                         micBtn.dataset.active = 'true';
                     }
                     if (micStatus) micStatus.textContent = typeof t === 'function' ? t('tuner.micListening') : 'Poslouchám…';
+                    micStartPending = false;
                     tick();
                 })
                 .catch((err) => {
+                    micStartPending = false;
+                    if (micStartCancelled) return;
+                    if (micBtn) {
+                        micBtn.dataset.active = 'false';
+                        micBtn.textContent = typeof t === 'function' ? t('tuner.micStart') : 'Zapnout mikrofon';
+                    }
                     if (micStatus) micStatus.textContent = (typeof t === 'function' ? t('tuner.micError') : 'Chyba: ') + (err.message || '');
                 });
         }
 
         if (micBtn) {
             micBtn.addEventListener('click', () => {
+                if (micStartPending) {
+                    micStartCancelled = true;
+                    return;
+                }
                 if (micBtn.dataset.active === 'true') stopMic();
                 else startMic();
             });

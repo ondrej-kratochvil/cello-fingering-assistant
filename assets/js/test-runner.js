@@ -4,7 +4,7 @@
 const V = typeof window !== 'undefined' && window.__JS_VERSIONS__ || {};
 const q = (path, k) => path + (V[k] != null ? '?v=' + V[k] : '');
 
-let solve, compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites;
+let solve, compareFingering, formatFingering, prepareInputForSolve, testSuites, getLocalTestSuites, tokenToCanonical, noteParsingTests;
 let renderStaffOutput, toPositionLabel, getClefPerNote, t;
 
 const loadDeps = (async () => {
@@ -20,6 +20,8 @@ const loadDeps = (async () => {
   prepareInputForSolve = testsMod.prepareInputForSolve;
   testSuites = testsMod.testSuites;
   getLocalTestSuites = testsMod.getLocalTestSuites;
+  tokenToCanonical = testsMod.tokenToCanonical;
+  noteParsingTests = testsMod.noteParsingTests;
   renderStaffOutput = uiMod.renderStaffOutput;
   toPositionLabel = uiMod.toPositionLabel;
   getClefPerNote = uiMod.getClefPerNote;
@@ -74,6 +76,22 @@ export function runAllTests() {
     let passed = 0;
     let failed = 0;
 
+    if (Array.isArray(noteParsingTests) && typeof tokenToCanonical === 'function') {
+        const parseTitle = document.createElement('h2');
+        parseTitle.className = 'text-xl font-bold mb-3 mt-2';
+        parseTitle.textContent = t('test.noteParsingTitle') || 'Parsování zápisu tónů';
+        resultsDiv.appendChild(parseTitle);
+        noteParsingTests.forEach(({ input, expected }) => {
+            const actual = tokenToCanonical(input);
+            const isPass = actual === expected;
+            if (isPass) passed++; else failed++;
+            const div = document.createElement('div');
+            div.className = 'py-1 px-2 rounded ' + (isPass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+            div.textContent = `"${input}" → "${actual}"` + (isPass ? '' : (typeof t === 'function' ? t('test.expectedNote', { expected }) : ` (očekáváno "${expected}")`));
+            resultsDiv.appendChild(div);
+        });
+    }
+
     const allSuites = [...testSuites, ...getLocalTestSuites()];
 
     allSuites.forEach((suite, index) => {
@@ -102,7 +120,7 @@ export function runAllTests() {
         }
 
         const sequenceParam = encodeURIComponent(suite.input.join(' '));
-        const indexUrl = `../../index.php?sequence=${sequenceParam}`;
+        const indexUrl = `../../prstoklad.php?sequence=${sequenceParam}`;
         const hasValidResult = result != null && result.length === suite.input.length;
 
         const nameStr = (suite.nameKey && t(suite.nameKey)) || suite.name;

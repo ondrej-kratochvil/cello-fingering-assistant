@@ -49,8 +49,8 @@
                 <td class="py-2 px-2 font-medium">${escapeHtml(s.title)}</td>
                 <td class="py-2 px-2">${escapeHtml(s.author || '')}</td>
                 <td class="py-2 px-2">${escapeHtml(String(s.difficulty))}</td>
-                <td class="py-2 px-2"><a href="${escapeAttr(s.url || '#')}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
-                <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">Smazat</button></td>
+                <td class="py-2 px-2"><a href="${safeHref(s.url) === '#' ? '#' : escapeAttr(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
+                <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">${typeof window.t === 'function' ? escapeHtml(window.t('sheetList.delete')) : 'Smazat'}</button></td>
             </tr>
         `).join('');
         tbody.querySelectorAll('.sheet-delete').forEach(btn => {
@@ -71,6 +71,13 @@
     function escapeAttr(s) {
         return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
     }
+    /** Pouze http(s) URL pro href; jinak '#' kvůli javascript: a dalším schématům. */
+    function safeHref(url) {
+        const u = String(url || '').trim().toLowerCase();
+        if (!u) return '#';
+        if (u.startsWith('https://') || u.startsWith('http://')) return url;
+        return '#';
+    }
 
     function init() {
         const form = document.getElementById('sheetForm');
@@ -88,7 +95,7 @@
             const difficulty = Math.max(1, Math.min(10, Number(document.getElementById('sheetDifficulty')?.value) || 5));
             if (!title) return;
             const sheets = loadSheets();
-            const id = 's' + Date.now();
+            const id = 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
             sheets.push({ id, url, title, author, difficulty });
             saveSheets(sheets);
             renderTable(sheets);

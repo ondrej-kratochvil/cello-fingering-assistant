@@ -8,11 +8,11 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
 
     /** Pattern: pole 'legato' nebo 'separate' */
     const BOWING_PATTERNS = [
-        { id: 'l2-s2', name: '2 legato, 2 samostatně', pattern: ['legato', 'legato', 'separate', 'separate'] },
-        { id: 's2-l2', name: '2 samostatně, 2 legato', pattern: ['separate', 'separate', 'legato', 'legato'] },
-        { id: 'l1-s3', name: '1 legato, 3 samostatně', pattern: ['legato', 'separate', 'separate', 'separate'] },
-        { id: 'l3-s1', name: '3 legato, 1 samostatně', pattern: ['legato', 'legato', 'legato', 'separate'] },
-        { id: 'l2-s1', name: '2 legato, 1 samostatně', pattern: ['legato', 'legato', 'separate'] },
+        { id: 'l2-s2', nameKey: 'bowing.patternL2S2', pattern: ['legato', 'legato', 'separate', 'separate'] },
+        { id: 's2-l2', nameKey: 'bowing.patternS2L2', pattern: ['separate', 'separate', 'legato', 'legato'] },
+        { id: 'l1-s3', nameKey: 'bowing.patternL1S3', pattern: ['legato', 'separate', 'separate', 'separate'] },
+        { id: 'l3-s1', nameKey: 'bowing.patternL3S1', pattern: ['legato', 'legato', 'legato', 'separate'] },
+        { id: 'l2-s1', nameKey: 'bowing.patternL2S1', pattern: ['legato', 'legato', 'separate'] },
     ];
 
     function getSlurRanges(length, pattern) {
@@ -101,12 +101,19 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
         const notes = state.inputNormalized && state.inputNormalized.length === state.input.length
             ? state.inputNormalized : state.input;
 
-        BOWING_PATTERNS.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = p.name;
-            patternSelect.appendChild(opt);
-        });
+        function fillPatternOptions() {
+            const selected = patternSelect.value;
+            patternSelect.innerHTML = '';
+            BOWING_PATTERNS.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = (typeof window.t === 'function' ? window.t(p.nameKey) : p.nameKey);
+                patternSelect.appendChild(opt);
+            });
+            if (selected) patternSelect.value = selected;
+        }
+        fillPatternOptions();
+        window.addEventListener('languageChange', fillPatternOptions);
 
         function updateStaff() {
             const selected = patternSelect.value;

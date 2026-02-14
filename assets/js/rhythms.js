@@ -7,28 +7,21 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
     'use strict';
 
     const RHYTHM_PATTERNS = [
-        { id: 'q-q', name: '2 čtvrťové', pattern: ['q', 'q'], difficulty: 1 },
-        { id: 'q-q-e-e', name: '2 čtvrťové, 2 osminové', pattern: ['q', 'q', 'e', 'e'], difficulty: 2 },
-        { id: 'e-e-q-q', name: '2 osminové, 2 čtvrťové', pattern: ['e', 'e', 'q', 'q'], difficulty: 2 },
-        { id: 'q-e-e-q', name: '1 čtvrťová, 2 osminové, 1 čtvrťová', pattern: ['q', 'e', 'e', 'q'], difficulty: 3 },
-        { id: 'e-q-q-e', name: '1 osminová, 2 čtvrťové, 1 osminová', pattern: ['e', 'q', 'q', 'e'], difficulty: 3 },
-        { id: 'q-q-q', name: '3 čtvrťové', pattern: ['q', 'q', 'q'], difficulty: 1 },
-        { id: 'e-e-e-e-q-q', name: '4 osminové, 2 čtvrťové', pattern: ['e', 'e', 'e', 'e', 'q', 'q'], difficulty: 4 },
-        { id: 'q-q-e-e-e-e', name: '2 čtvrťové, 4 osminové', pattern: ['q', 'q', 'e', 'e', 'e', 'e'], difficulty: 4 },
+        { id: 'q-q', nameKey: 'rhythms.pattern2q', pattern: ['q', 'q'], difficulty: 1 },
+        { id: 'q-q-e-e', nameKey: 'rhythms.pattern2q2e', pattern: ['q', 'q', 'e', 'e'], difficulty: 2 },
+        { id: 'e-e-q-q', nameKey: 'rhythms.pattern2e2q', pattern: ['e', 'e', 'q', 'q'], difficulty: 2 },
+        { id: 'q-e-e-q', nameKey: 'rhythms.pattern1q2e1q', pattern: ['q', 'e', 'e', 'q'], difficulty: 3 },
+        { id: 'e-q-q-e', nameKey: 'rhythms.pattern1e2q1e', pattern: ['e', 'q', 'q', 'e'], difficulty: 3 },
+        { id: 'q-q-q', nameKey: 'rhythms.pattern3q', pattern: ['q', 'q', 'q'], difficulty: 1 },
+        { id: 'e-e-e-e-q-q', nameKey: 'rhythms.pattern4e2q', pattern: ['e', 'e', 'e', 'e', 'q', 'q'], difficulty: 4 },
+        { id: 'q-q-e-e-e-e', nameKey: 'rhythms.pattern2q4e', pattern: ['q', 'q', 'e', 'e', 'e', 'e'], difficulty: 4 },
     ];
 
     function getDurationsForSequence(length, pattern) {
         const p = pattern.pattern;
         const out = [];
         for (let i = 0; i < length; i++) {
-            if (i < p.length) out.push(p[i]);
-            else out.push(p[i % p.length]);
-        }
-        if (length > 0 && length % p.length !== 0) {
-            const remainder = length % p.length;
-            for (let i = length - remainder; i < length; i++) {
-                out[i] = p[i - (length - remainder)];
-            }
+            out.push(p[i % p.length]);
         }
         return out;
     }
@@ -74,11 +67,14 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             tickables.push(note);
         }
 
-        const voice = new Voice({ num_beats: totalBeats(durations), beat_value: 4 });
+        const beats = Math.max(1, Math.ceil(totalBeats(durations)));
+        const voice = new Voice({ num_beats: beats, beat_value: 4 });
         voice.addTickables(tickables);
         const formatter = new Formatter();
         formatter.joinVoices([voice]);
         formatter.format([voice], totalWidth - 80);
+
+        voice.draw(ctx, stave);
 
         const notesOnly = tickables.filter(t => t instanceof StaveNote);
         let idx = 0;
@@ -94,8 +90,6 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             }
             if (idx < notesOnly.length && notesOnly[idx].getDuration() !== '8') idx++;
         }
-
-        voice.draw(ctx, stave);
         container.innerHTML = '';
         container.appendChild(div);
     }
@@ -117,12 +111,21 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
         const notes = state.inputNormalized && state.inputNormalized.length === state.input.length
             ? state.inputNormalized : state.input;
 
-        RHYTHM_PATTERNS.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = p.name + ' (obtížnost ' + p.difficulty + ')';
-            patternSelect.appendChild(opt);
-        });
+        function fillPatternOptions() {
+            const selected = patternSelect.value;
+            patternSelect.innerHTML = '';
+            RHYTHM_PATTERNS.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                const name = (typeof window.t === 'function' ? window.t(p.nameKey) : p.nameKey);
+                const diffLabel = (typeof window.t === 'function' ? window.t('rhythms.difficultyLabel', { n: p.difficulty }) : ' (obtížnost ' + p.difficulty + ')');
+                opt.textContent = name + diffLabel;
+                patternSelect.appendChild(opt);
+            });
+            if (selected) patternSelect.value = selected;
+        }
+        fillPatternOptions();
+        window.addEventListener('languageChange', fillPatternOptions);
 
         function updateStaff() {
             const selected = patternSelect.value;

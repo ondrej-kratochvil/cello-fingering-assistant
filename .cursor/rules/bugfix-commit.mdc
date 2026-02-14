@@ -1,0 +1,18 @@
+---
+description: "Po opravě nahlášené chyby (verify-and-fix) ihned provést commit. Platí při úkolech typu „Verify this issue exists and fix it“."
+alwaysApply: true
+---
+
+# Commit po opravě nahlášené chyby
+
+Když uživatel zadá úkol ve stylu **„Verify this issue exists and fix it: …“** (nebo obdobně: ověř a oprav danou chybu):
+
+1. **Ověř** existenci problému a **oprav** ho.
+2. **Hned po úspěšné opravě** proveď commit (bez čekání na další pokyn).
+
+Postup:
+- `git add` pouze soubory změněné touto opravou.
+- Commit zpráva: prefix **`fix:`** a krátký popis opravy (viz `.cursor/rules/git.mdc` – ASCII, bez diakritiky v uvozovkách, PowerShell).
+- Případně `git push` podle kontextu (pokud uživatel obvykle pushuje).
+
+Pravidlo se vztahuje jen na úkoly, kde byla explicitně požadována **verifikace a oprava** konkrétního bugu; na běžné „udělej X“ nebo „přidej Y“ se nevztahuje.
