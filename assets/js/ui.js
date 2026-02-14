@@ -1109,7 +1109,7 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
                 if (!playbackState.playing) {
                     const bpm = parseInt(bpmInput.value, 10);
                     if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
-                    startPlayback(displayTokens, playbackState.bpm);
+                    startPlayback(inputForSolve, playbackState.bpm);
                 }
             });
             pauseBtn.addEventListener('click', stopPlayback);
@@ -1119,7 +1119,7 @@ function renderResults({ result, inputForSolve, inputForDisplay, inputOriginal, 
                 if (currentSetStaffHighlight) currentSetStaffHighlight(-1);
                 const bpm = parseInt(bpmInput.value, 10);
                 if (!Number.isNaN(bpm) && bpm >= 60 && bpm <= 600) playbackState.bpm = bpm;
-                startPlayback(displayTokens, playbackState.bpm);
+                startPlayback(inputForSolve, playbackState.bpm);
             });
 
             playbackBar.appendChild(bpmLabel);
