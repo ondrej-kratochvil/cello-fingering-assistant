@@ -161,6 +161,7 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         }
 
         function renderDots() {
+            if (!beatDisplay) return;
             const count = getDisplayBeats();
             beatDisplay.innerHTML = '';
             for (let i = 0; i < count; i++) {

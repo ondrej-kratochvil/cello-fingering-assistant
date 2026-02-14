@@ -282,9 +282,12 @@
             timerId = setInterval(tick, 200);
             tick();
             showTopbarWidget(true);
-            const startBtn = document.getElementById('countdownStart');
+            const startBtn = document.getElementById('countdownStart') || document.getElementById('countdownPlayPause');
             const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
-            if (startBtn) startBtn.dataset.running = 'true';
+            if (startBtn) {
+                startBtn.dataset.running = 'true';
+                updatePlayPauseButtonUI(startBtn, true);
+            }
             if (pauseBtnPage) pauseBtnPage.dataset.paused = '';
         } else {
             localStorage.removeItem(STORAGE_KEY);
