@@ -1,7 +1,10 @@
 /**
- * Ladička – otevřené struny C, G, d, a.
+ * Ladička – prázdné struny C, G, d, a.
  * Mikrofon, detekce výšky tónu, zobrazení jehly (nízko / správně / vysoko).
  * Temperované ladění nebo čisté kvinty (3/2), referenční A = 440–443 Hz.
+ *
+ * Záměrně zobrazujeme jen jednu ladičku (nejbližší strunu k detekované frekvenci),
+ * ne všechny 4 struny najednou – jednodušší UX, uživatel ladí jednu strunu po druhé.
  */
 (function () {
     'use strict';
@@ -172,7 +175,7 @@
 
         function updateTargets() {
             const targets = getTargetFrequencies(getReferenceA(), usePureFifths());
-            const card = displays?.querySelector('.tuner-string-card');
+            const card = displays?.querySelector('.tuner-string-card'); // jedna karta – viz komentář v hlavičce
             if (card) card.dataset.targets = JSON.stringify(targets);
         }
 
@@ -194,7 +197,7 @@
 
         function updateDisplay(detectedFreq, targets) {
             const closest = findClosestString(detectedFreq, targets);
-            const card = displays?.querySelector('.tuner-string-card');
+            const card = displays?.querySelector('.tuner-string-card'); // jedna karta – záměrně ne querySelectorAll
             const canvas = card?.querySelector('.tuner-needle');
             const statusEl = card?.querySelector('.tuner-status');
             const freqEl = card?.querySelector('.tuner-freq');

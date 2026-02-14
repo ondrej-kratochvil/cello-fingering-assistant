@@ -12,7 +12,7 @@ Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smy
 - `assets/js/i18n.js` – Vlastní i18n modul: `t(key)`, načítání JSON z `assets/i18n/`, jazyk a H/B v `localStorage`
 - `assets/i18n/cs.json`, `assets/i18n/en.json` – Překlady UI, O aplikaci, Hlavní funkce, testů; snadné přidání dalších jazyků
 - `assets/js/navigation.js` – Navigace, dark mode, callback pro překreslení při změně tématu
-- `assets/js/tuner.js` – Ladička (YIN pitch detection)
+- `assets/js/tuner.js` – Ladička (YIN pitch detection); zobrazuje jen jednu strunu (nejbližší detekované frekvenci), ne všechny 4
 - `assets/js/countdown.js` – Odpočet (minutka), widget v hlavičce, persistence v localStorage
 - `assets/js/sheet-list.js` – Seznam not: localStorage, řazení, filtr obtížnosti, editace kliknutím na řádek, Smazat ve formuláři, tlačítko se 3 stavy
 - `assets/js/ui-staff.js` – Notová osnova (VexFlow): `renderStaffOutput`, `renderStaffWithRhythm` pro Rytmy/Smyky/Metronom (barvy prstů podle strun, tóny pod notami, Beam)
@@ -36,7 +36,7 @@ Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smy
 ## Nástroje
 
 - **Odpočet** – minutka s widgetem v hlavičce, persistence v localStorage
-- **Ladička** – YIN pitch detection, otevřené struny C, G, d, a
+- **Ladička** – YIN pitch detection, prázdné struny C, G, d, a; zobrazuje jen jednu ladičku (nejbližší strunu)
 - **Prstoklad** – hlavní nástroj, algoritmus prstokladu, vizualizace hmatníku, přehrávání
 - **Rytmy** – rytmické patterny (čtvrťové, osminové), tlačítka Další/Náhodný
 - **Smyky** – smykové patterny (legato/samostatně), tlačítka Další/Náhodný, sdílený rytmus s Rytmy
@@ -52,7 +52,7 @@ Testy obsahují několik sad tónů s očekávanými prstoklady:
 3. **Sekvence C D E F** - C struna, I. poloha
 4. **Sekvence a h c1 d1** - A struna s posuny
 5. **Sekvence g a h c** - Sekvence přes více strun
-6. **Prázdné struny C G d a** - Preferuje otevřené struny
+6. **Prázdné struny C G d a** - Preferuje prázdné struny
 7. **Preference nižší polohy pro g** - Nižší poloha na D struně
 8. **Otevřená struna d** - Preferuje otevřenou strunu D
 
