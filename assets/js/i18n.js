@@ -106,7 +106,8 @@ export function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach((el) => {
         const key = el.getAttribute('data-i18n');
         if (!key) return;
-        const raw = t(key);
+        const toolKey = el.getAttribute('data-i18n-tool');
+        const raw = toolKey ? t(key, { tool: t(toolKey) }) : t(key);
         if (el.hasAttribute('data-i18n-html')) {
             el.innerHTML = raw;
         } else {
