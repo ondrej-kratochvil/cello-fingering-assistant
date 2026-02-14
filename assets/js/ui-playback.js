@@ -65,13 +65,17 @@ export function startPlayback(noteTokens, bpm) {
     function scheduleNext() {
         if (!ps.playing) return;
         if (ps.currentIndex >= noteTokens.length) {
-            ps.currentIndex = 0;
+            ps.playing = false;
+            ps.currentIndex = noteTokens.length;
+            if (state.playbackState.onIndexChange) state.playbackState.onIndexChange();
+            return;
         }
         const idx = ps.currentIndex;
         if (state.currentSetStaffHighlight) state.currentSetStaffHighlight(idx);
         if (state.playbackState.onIndexChange) state.playbackState.onIndexChange();
         let midi = getMidiNumber(noteTokens[idx]);
         if (midi < 48) midi += 12;
+        else midi += 12;
         playNote(ctx, midi, durationSec * 0.9);
         ps.currentIndex += 1;
         ps.timeoutId = setTimeout(scheduleNext, durationSec * 1000);
@@ -82,7 +86,8 @@ function updateRestartDisabled(state) {
     const ps = state.playbackState;
     const restartBtn = document.getElementById('playbackRestartBtn');
     if (!restartBtn) return;
-    restartBtn.disabled = ps.currentIndex === 0 && !ps.playing;
+    const hide = ps.currentIndex === 0 && !ps.playing;
+    restartBtn.classList.toggle('hidden', hide);
 }
 
 export function createPlaybackBar(state, t, inputForSolve, container) {
@@ -143,7 +148,10 @@ export function createPlaybackBar(state, t, inputForSolve, container) {
         }
         updatePlayPauseUI();
     });
-    state.playbackState.onIndexChange = () => updateRestartDisabled(state);
+    state.playbackState.onIndexChange = () => {
+        updateRestartDisabled(state);
+        updatePlayPauseUI();
+    };
     restartBtn.addEventListener('click', () => {
         stopPlayback();
         state.playbackState.currentIndex = 0;
