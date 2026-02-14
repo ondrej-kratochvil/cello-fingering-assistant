@@ -196,6 +196,12 @@ $JS_VERSIONS = [
     'fingering' => filemtime($jsDir . '/fingering.js'),
     'tests' => filemtime($jsDir . '/tests.js'),
     'ui' => filemtime($jsDir . '/ui.js'),
+    'uiState' => filemtime($jsDir . '/ui-state.js'),
+    'uiStaff' => filemtime($jsDir . '/ui-staff.js'),
+    'uiFingerboard' => filemtime($jsDir . '/ui-fingerboard.js'),
+    'uiSettings' => filemtime($jsDir . '/ui-settings.js'),
+    'uiModals' => filemtime($jsDir . '/ui-modals.js'),
+    'uiFingerEditor' => filemtime($jsDir . '/ui-finger-editor.js'),
     'toolPage' => filemtime($jsDir . '/tool-page.js'),
 ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));

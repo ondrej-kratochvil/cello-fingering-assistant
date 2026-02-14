@@ -1,0 +1,373 @@
+/**
+ * Notová osnova a textový výstup – getClefPerNote, renderStaffOutput, renderTextOutput, toPositionLabel.
+ */
+import { germanToCanonical, normalizeOctaveAccidentalSwap } from './fingering-staff-utils.js';
+import { t, getNoteNamingCurrent } from './i18n.js';
+
+/** Prahy pro výběr klíče (notová osnova): nad a1 → houslový; v houslovém zpět na basový až od d1 a nižší */
+const A1_MIDI_CLEF = 69;
+const D1_MIDI_CLEF = 62;
+
+/** Mapování chromatické polohy (1–14) na diatonické označení (struna A, 1. prst). 15+ = palcová poloha. */
+export const POSITION_LABEL_MAP = {
+    1: 'I↓', 2: 'I', 3: 'II↓', 4: 'II↑', 5: 'III', 6: 'III↑',
+    7: 'IV', 8: 'IV↑', 9: 'V', 10: 'VI', 11: 'VII↓', 12: 'VII',
+    13: 'VIII', 14: 'IX'
+};
+
+/** Chromatické polohy 1–14 jako římské číslice I–XIV. */
+export const CHROMATIC_ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
+
+/**
+ * Mapování tónů na MIDI čísla (ISO: C2=36, C3=48, C4=60)
+ * Cello prázdné struny: C2=36, G2=43, D3=50, A3=57
+ */
+export function getMidiNumber(noteName) {
+    const n = normalizeOctaveAccidentalSwap(germanToCanonical(noteName));
+    const noteMap = {
+        'Hb1': 34, 'Cb': 35, 'H1': 35,
+        'C': 36, 'C#': 37, 'D': 38, 'D#': 39, 'E': 40, 'Fb': 40, 'E#': 41, 'F': 41, 'F#': 42,
+        'G': 43, 'G#': 44, 'A': 45, 'A#': 46, 'Hb': 46, 'H': 47, 'B': 47,
+        'H#': 48, 'c': 48, 'c#': 49, 'd': 50, 'd#': 51, 'e': 52, 'fb': 52, 'e#': 53, 'f': 53, 'f#': 54,
+        'g': 55, 'g#': 56, 'a': 57, 'a#': 58, 'hb': 58, 'h': 59, 'b': 59, 'cb': 59,
+        'h#': 60, 'c1': 60, 'c1#': 61, 'db1': 61, 'd1': 62, 'd1#': 63, 'eb1': 63, 'e1': 64, 'fb1': 64,
+        'e1#': 65, 'f1': 65, 'f1#': 66, 'gb1': 66, 'g1': 67, 'g1#': 68, 'ab1': 68, 'a1': 69,
+        'a1#': 70, 'hb1': 70, 'bb1': 70, 'h1': 71, 'b1': 71, 'cb1': 71,
+        'c2': 72, 'c2#': 73, 'db2': 73,
+    };
+    return noteMap[n] || noteMap[n.toLowerCase()] || 60;
+}
+
+/**
+ * Vrátí pole klíčů ('bass' | 'treble') pro každou notu v pořadí.
+ * @param {string[]} input - pole názvů tónů
+ * @returns {('bass'|'treble')[]}
+ */
+export function getClefPerNote(input) {
+    const clefPerNote = [];
+    let currentClef = 'bass';
+    for (let i = 0; i < input.length; i++) {
+        const midi = getMidiNumber(input[i]);
+        if (midi > A1_MIDI_CLEF) {
+            currentClef = 'treble';
+        } else if (currentClef === 'treble' && midi <= D1_MIDI_CLEF) {
+            currentClef = 'bass';
+        }
+        clefPerNote.push(currentClef);
+    }
+    return clefPerNote;
+}
+
+/**
+ * Vrátí označení polohy pro zobrazení.
+ * @param {number} p - Chromatická poloha (0 = prázdná, 1–14)
+ * @param {'diatonic'|'chromatic'} mode
+ * @returns {string}
+ */
+export function toPositionLabel(p, mode) {
+    if (p === 0) return '';
+    if (mode === 'chromatic') return CHROMATIC_ROMAN[p] ?? String(p);
+    return POSITION_LABEL_MAP[p] ?? String(p);
+}
+
+export function hasAnyUserDefined(step) {
+    if (!step || !step.userDefined) return false;
+    return !!(step.userDefined.f || step.userDefined.s || step.userDefined.pos);
+}
+
+/** Podle nastavení H/B vrací zobrazovaný tón (H/Hes vs B/Bb). */
+export function toDisplayNote(token) {
+    if (!token || typeof token !== 'string') return token;
+    const mode = getNoteNamingCurrent();
+    const HtoB = {
+        'H': 'B', 'Hb': 'Bb', 'h': 'b', 'hb': 'bb',
+        'h1': 'b1', 'hb1': 'bb1', 'H1': 'B1', 'Hb1': 'Bb1'
+    };
+    const BtoH = {
+        'B': 'H', 'Bb': 'Hes', 'b': 'h', 'bb': 'hes',
+        'b1': 'h1', 'bb1': 'hb1', 'B1': 'H1', 'Bb1': 'Hb1'
+    };
+    const map = mode === 'B' ? HtoB : BtoH;
+    return map[token] ?? token;
+}
+
+/**
+ * Převod názvu noty na VexFlow formát
+ */
+function noteToVexFlow(noteName) {
+    const n = normalizeOctaveAccidentalSwap(germanToCanonical(noteName));
+    const noteMap = {
+        'Hb1': 'Bb/1', 'Cb': 'Cb/1', 'H1': 'B/1',
+        'C': 'C/2', 'C#': 'C#/2', 'D': 'D/2', 'D#': 'D#/2', 'E': 'E/2', 'Fb': 'Fb/2', 'E#': 'E#/2', 'F': 'F/2', 'F#': 'F#/2',
+        'G': 'G/2', 'G#': 'G#/2', 'A': 'A/2', 'A#': 'A#/2', 'Hb': 'Bb/2', 'H': 'B/2', 'B': 'B/2',
+        'Db': 'Db/2', 'Eb': 'Eb/2', 'Gb': 'Gb/2', 'Ab': 'Ab/2', 'H#': 'B#/2',
+        'c': 'C/3', 'c#': 'C#/3', 'd': 'D/3', 'd#': 'D#/3', 'e': 'E/3', 'fb': 'Fb/3', 'e#': 'E#/3', 'f': 'F/3', 'f#': 'F#/3',
+        'g': 'G/3', 'g#': 'G#/3', 'a': 'A/3', 'a#': 'A#/3', 'hb': 'Bb/3', 'h': 'B/3', 'b': 'B/3',
+        'cb': 'Cb/3', 'db': 'Db/3', 'eb': 'Eb/3', 'gb': 'Gb/3', 'ab': 'Ab/3', 'bb': 'Bb/3', 'h#': 'B#/3',
+        'c1': 'C/4', 'c1#': 'C#/4', 'db1': 'Db/4', 'd1': 'D/4', 'd1#': 'D#/4', 'eb1': 'Eb/4', 'e1': 'E/4', 'fb1': 'Fb/4',
+        'e1#': 'E#/4', 'f1': 'F/4', 'f1#': 'F#/4', 'gb1': 'Gb/4', 'g1': 'G/4', 'g1#': 'G#/4', 'ab1': 'Ab/4', 'a1': 'A/4',
+        'a1#': 'A#/4', 'hb1': 'Bb/4', 'bb1': 'Bb/4', 'h1': 'B/4', 'b1': 'B/4', 'cb1': 'Cb/4',
+        'c2': 'C/5', 'c2#': 'C#/5', 'db2': 'Db/5',
+    };
+    return noteMap[n] || noteMap[n.toLowerCase()] || 'C/4';
+}
+
+/**
+ * Vykreslí textový výstup (původní stav - bez osnovy)
+ */
+export function renderTextOutput(container, result, input, positionChanges, stringColors, toRoman) {
+    const positionRow = document.createElement('div');
+    positionRow.className = 'flex items-start gap-1 text-sm font-bold text-slate-600';
+
+    result.forEach((step, idx) => {
+        const positionSpan = document.createElement('span');
+        positionSpan.className = 'inline-block text-center min-w-[44px]';
+
+        if (positionChanges.includes(idx) && step.p > 0) {
+            positionSpan.textContent = toRoman(step.p);
+            positionSpan.classList.add('text-slate-800');
+        } else {
+            positionSpan.textContent = '';
+        }
+
+        positionRow.appendChild(positionSpan);
+    });
+    container.appendChild(positionRow);
+
+    const fingerRow = document.createElement('div');
+    fingerRow.className = 'flex items-center gap-1 text-lg font-bold';
+
+    result.forEach((step, idx) => {
+        const fingerSpan = document.createElement('span');
+        fingerSpan.className = 'inline-block text-center min-w-[44px]';
+        const rootStylesLocal = getComputedStyle(document.documentElement);
+        fingerSpan.style.color = stringColors[step.s] || rootStylesLocal.getPropertyValue('--color-text-primary').trim() || '#000';
+
+        let fingerText = step.f === 0 ? '0' : step.f.toString();
+        if (step.ext === 1) {
+            fingerText += ' ↑';
+        }
+
+        fingerSpan.textContent = fingerText;
+        fingerRow.appendChild(fingerSpan);
+    });
+    container.appendChild(fingerRow);
+
+    const toneRow = document.createElement('div');
+    toneRow.className = 'flex items-center gap-1 text-xl font-mono';
+
+    result.forEach((step, idx) => {
+        const toneSpan = document.createElement('span');
+        toneSpan.className = 'inline-block text-center min-w-[44px]';
+        toneSpan.textContent = input[idx];
+        toneRow.appendChild(toneSpan);
+    });
+    container.appendChild(toneRow);
+
+    const legend = document.createElement('div');
+    legend.className = 'mt-6 pt-4 border-t border-slate-200';
+    const legendTitle = document.createElement('p');
+    legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
+    legendTitle.textContent = t('legend.strings');
+    legend.appendChild(legendTitle);
+
+    const legendItems = document.createElement('div');
+    legendItems.className = 'flex flex-wrap gap-4 text-sm';
+    Object.entries(stringColors).forEach(([s, color]) => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'flex items-center gap-2';
+        legendItem.innerHTML = `
+            <span class="w-4 h-4 rounded" style="background-color: ${color}"></span>
+            <span class="font-bold">${t('legend.string', { s })}</span>
+        `;
+        legendItems.appendChild(legendItem);
+    });
+    legend.appendChild(legendItems);
+    container.appendChild(legend);
+}
+
+/**
+ * Vykreslí notovou osnovu pomocí VexFlow s polohami, prsty, osnovou a tóny
+ * @param {Object} [opts] - Volitelné: { skipLegend: true } pro vynechání legendy
+ */
+export function renderStaffOutput(container, result, input, positionChanges, stringColors, toRoman, opts) {
+    opts = opts || {};
+    if (typeof Vex === 'undefined' || !Vex.Flow) {
+        console.error('VexFlow není načten. Použijte textový výstup nebo načtěte VexFlow z CDN.');
+        renderTextOutput(container, result, input, positionChanges, stringColors, toRoman);
+        return;
+    }
+
+    const { Renderer, Stave, StaveNote, Voice, Formatter, Annotation, Accidental, ClefNote } = Vex.Flow;
+
+    const noteSpacing = 44;
+    const clefOffset = 60;
+    const totalWidth = clefOffset + (result.length * noteSpacing) + 20;
+    const totalHeight = 200;
+
+    const clefPerNote = getClefPerNote(input);
+
+    const staffDiv = document.createElement('div');
+    staffDiv.id = 'vexflow-staff-' + Date.now();
+    staffDiv.className = 'staff-output rounded-lg';
+
+    const renderer = new Renderer(staffDiv, Renderer.Backends.SVG);
+    renderer.resize(totalWidth, totalHeight);
+    const context = renderer.getContext();
+
+    const bodyStyles = getComputedStyle(document.body);
+    const staffInk = bodyStyles.getPropertyValue('--color-staff-ink').trim() || bodyStyles.getPropertyValue('--color-text-primary').trim() || '#0f172a';
+
+    const initialClef = clefPerNote[0] || 'bass';
+    const stave = new Stave(0, 50, totalWidth);
+    stave.addClef(initialClef);
+    context.setFillStyle(staffInk);
+    context.setStrokeStyle(staffInk);
+    stave.setContext(context).draw();
+
+    const notes = input.map((noteName, idx) => {
+        const step = result[idx];
+        const vexFlowNote = noteToVexFlow(noteName);
+        const noteClef = clefPerNote[idx];
+
+        const note = new StaveNote({
+            clef: noteClef,
+            keys: [vexFlowNote],
+            duration: 'w'
+        });
+        if (/[A-Ga-g]#\/\d/.test(vexFlowNote)) {
+            try { note.addModifier(new Accidental('#'), 0); } catch (e) { /* ignorovat */ }
+        } else if (/^[A-Ga-g]b\/\d/.test(vexFlowNote)) {
+            try { note.addModifier(new Accidental('b'), 0); } catch (e) { /* ignorovat */ }
+        }
+
+        const annotations = [];
+
+        const rootStylesLocal = getComputedStyle(document.documentElement);
+        const fingerColor = stringColors[step.s] || bodyStyles.getPropertyValue('--color-text-primary').trim() || staffInk;
+        let fingerText = step.f === 0 ? '0' : step.f.toString();
+        if (step.ext === 1) {
+            fingerText += '↑';
+        }
+        if (hasAnyUserDefined(step)) {
+            fingerText += '!';
+        }
+        const fingerAnnotation = new Annotation(fingerText);
+        fingerAnnotation.setFont('Arial', 14, 'bold');
+        fingerAnnotation.setStyle({ fillStyle: fingerColor });
+        if (typeof fingerAnnotation.setAttribute === 'function') {
+            try {
+                fingerAnnotation.setAttribute('data-finger-idx', String(idx));
+                fingerAnnotation.setAttribute('data-finger-role', 'finger');
+            } catch (e) { /* ignorovat */ }
+        }
+        annotations.push(fingerAnnotation);
+
+        if (positionChanges.includes(idx) && step.p > 0) {
+            const positionAnnotation = new Annotation(toRoman(step.p));
+            positionAnnotation.setVerticalJustification(Annotation.VerticalJustify.TOP);
+            positionAnnotation.setFont('Arial', 12, 'bold');
+            positionAnnotation.setStyle({ fillStyle: staffInk });
+            annotations.push(positionAnnotation);
+        }
+
+        const toneAnnotation = new Annotation(input[idx]);
+        toneAnnotation.setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
+        toneAnnotation.setFont('Arial', 12, 'normal');
+        toneAnnotation.setStyle({ fillStyle: staffInk });
+        annotations.push(toneAnnotation);
+
+        annotations.forEach(ann => note.addModifier(ann, 0));
+
+        return note;
+    });
+
+    const tickables = [];
+    const noteIndexToTickableIndex = [];
+    let tickableIdx = 0;
+    for (let i = 0; i < notes.length; i++) {
+        if (i > 0 && clefPerNote[i] !== clefPerNote[i - 1]) {
+            tickables.push(new ClefNote(clefPerNote[i]));
+            tickableIdx++;
+        }
+        noteIndexToTickableIndex[i] = tickableIdx;
+        tickables.push(notes[i]);
+        tickableIdx++;
+    }
+    const voice = new Voice({ num_beats: notes.length, beat_value: 1 });
+    voice.addTickables(tickables);
+
+    const formatter = new Formatter();
+    formatter.joinVoices([voice]);
+    formatter.format([voice], totalWidth - clefOffset - 20);
+
+    context.setFillStyle(staffInk);
+    context.setStrokeStyle(staffInk);
+    voice.draw(context, stave);
+
+    const staffContainer = document.createElement('div');
+    staffContainer.className = 'staff-scroll overflow-x-auto md:mx-0 md:px-0';
+    const staffInner = document.createElement('div');
+    staffInner.className = 'relative';
+    staffInner.style.width = totalWidth + 'px';
+    staffInner.style.minHeight = totalHeight + 'px';
+    staffInner.appendChild(staffDiv);
+
+    let setHighlight = null;
+    if (opts.enableHighlight && result.length > 0) {
+        const highlightEl = document.createElement('div');
+        highlightEl.className = 'staff-note-highlight';
+        highlightEl.setAttribute('aria-hidden', 'true');
+        highlightEl.style.cssText = 'position:absolute;top:50px;left:0;width:44px;height:150px;pointer-events:none;border-radius:6px;transition:left 0.05s linear;';
+        let highlightColor = 'rgba(99,102,241,0.25)';
+        const primary = bodyStyles.getPropertyValue('--color-primary').trim();
+        if (primary) {
+            const hex6 = primary.match(/^#([0-9a-fA-F]{6})$/);
+            if (hex6) {
+                const hex = hex6[1];
+                highlightColor = `rgba(${parseInt(hex.slice(0,2),16)},${parseInt(hex.slice(2,4),16)},${parseInt(hex.slice(4,6),16)},0.25)`;
+            } else if (primary.startsWith('rgba') || primary.startsWith('rgb(')) {
+                highlightColor = primary;
+            }
+        }
+        highlightEl.style.backgroundColor = highlightColor;
+        highlightEl.style.left = (clefOffset + (noteIndexToTickableIndex[0] ?? 0) * noteSpacing) + 'px';
+        staffInner.appendChild(highlightEl);
+        setHighlight = (index) => {
+            if (index >= 0 && index < result.length) {
+                const tickableIdx = noteIndexToTickableIndex[index] ?? index;
+                highlightEl.style.left = (clefOffset + tickableIdx * noteSpacing) + 'px';
+                highlightEl.style.display = 'block';
+            } else {
+                highlightEl.style.display = 'none';
+            }
+        };
+        setHighlight(-1);
+    }
+
+    staffContainer.appendChild(staffInner);
+    container.appendChild(staffContainer);
+
+    if (opts.skipLegend) return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
+
+    const legend = document.createElement('div');
+    legend.className = 'mt-6 pt-4 border-t border-slate-200';
+    const legendTitle = document.createElement('p');
+    legendTitle.className = 'text-sm font-bold text-slate-700 mb-2';
+    legendTitle.textContent = t('legend.strings');
+    legend.appendChild(legendTitle);
+    const legendItems = document.createElement('div');
+    legendItems.className = 'flex flex-wrap gap-4 text-sm';
+    Object.entries(stringColors).forEach(([s, color]) => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'flex items-center gap-2';
+        legendItem.innerHTML = `
+            <span class="w-4 h-4 rounded" style="background-color: ${color}"></span>
+            <span class="font-bold">${t('legend.string', { s })}</span>
+        `;
+        legendItems.appendChild(legendItem);
+    });
+    legend.appendChild(legendItems);
+    container.appendChild(legend);
+    return (opts.enableHighlight && setHighlight) ? { staffDiv, setHighlight } : staffDiv;
+}
