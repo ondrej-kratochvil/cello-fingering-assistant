@@ -185,7 +185,11 @@
             freqHistory.push(freq);
             if (freqHistory.length > FREQ_HISTORY_SIZE) freqHistory.shift();
             const sorted = [...freqHistory].sort((a, b) => a - b);
-            return sorted[Math.floor(sorted.length / 2)];
+            const mid = sorted.length / 2;
+            if (sorted.length % 2 === 1) {
+                return sorted[Math.floor(mid)];
+            }
+            return (sorted[mid - 1] + sorted[mid]) / 2;
         }
 
         function updateDisplay(detectedFreq, targets) {
