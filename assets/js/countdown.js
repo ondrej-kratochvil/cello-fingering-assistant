@@ -322,7 +322,7 @@
             updateDisplay(remainingSeconds);
         }
         const pp = document.getElementById('countdownPlayPause');
-        if (pp) updatePlayPauseButtonUI(pp, false);
+        if (pp) updatePlayPauseButtonUI(pp, timerId != null);
     }
 
     if (document.readyState === 'loading') {
