@@ -22,27 +22,30 @@ require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'sheetList';
 $toolKey = 'sheetList';
 $introKey = 'sheetList.intro';
+$toolTitleKey = 'sheetList.title';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="sheetList.title">Seznam not</h2>
 <?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
-            <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl">
+            <div class="mb-4">
+                <button type="button" id="sheetFormToggle" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.addSheet">Přidat skladbu</button>
+            </div>
+            <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl hidden">
                 <div>
-                    <label for="sheetUrl" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.url">Odkaz (URL):</label>
-                    <input type="url" id="sheetUrl" class="w-full p-3 border border-slate-300 rounded-xl" placeholder="https://…">
+                    <label for="sheetAuthor" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.author">Autor:</label>
+                    <input type="text" id="sheetAuthor" class="w-full p-3 border border-slate-300 rounded-xl">
                 </div>
                 <div>
                     <label for="sheetTitle" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.titleField">Název skladby:</label>
                     <input type="text" id="sheetTitle" class="w-full p-3 border border-slate-300 rounded-xl" required>
                 </div>
                 <div>
-                    <label for="sheetAuthor" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.author">Autor:</label>
-                    <input type="text" id="sheetAuthor" class="w-full p-3 border border-slate-300 rounded-xl">
-                </div>
-                <div>
                     <label for="sheetDifficulty" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.difficulty">Obtížnost (1–10):</label>
                     <input type="number" id="sheetDifficulty" min="1" max="10" value="5" class="w-24 p-3 border border-slate-300 rounded-xl">
+                </div>
+                <div>
+                    <label for="sheetUrl" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.url">Odkaz (URL):</label>
+                    <input type="url" id="sheetUrl" class="w-full p-3 border border-slate-300 rounded-xl" placeholder="https://…">
                 </div>
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.add">Přidat</button>
             </form>
@@ -59,8 +62,8 @@ $introKey = 'sheetList.intro';
                 <table class="w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b-2 border-slate-200">
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleField">Název</th>
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="author" data-i18n="sheetList.author">Autor</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleField">Název skladby</th>
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficulty">Obtížnost</th>
                             <th class="text-left py-3 px-2" data-i18n="sheetList.url">Odkaz</th>
                             <th class="w-20"></th>
@@ -76,7 +79,7 @@ $introKey = 'sheetList.intro';
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js'), 'countdown' => filemtime($jsDir . '/countdown.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
@@ -91,6 +94,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
         await import('./assets/js/sheet-list.js?v=<?= filemtime(__DIR__ . '/assets/js/sheet-list.js') ?>');
     </script>
 </body>

@@ -46,8 +46,8 @@
         });
         tbody.innerHTML = list.map(s => `
             <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="py-2 px-2 font-medium">${escapeHtml(s.title)}</td>
                 <td class="py-2 px-2">${escapeHtml(s.author || '')}</td>
+                <td class="py-2 px-2 font-medium">${escapeHtml(s.title)}</td>
                 <td class="py-2 px-2">${escapeHtml(String(s.difficulty))}</td>
                 <td class="py-2 px-2"><a href="${safeHref(s.url) === '#' ? '#' : escapeAttr(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
                 <td class="py-2 px-2"><button type="button" class="sheet-delete text-red-600 hover:underline text-xs" data-id="${escapeAttr(s.id)}">${typeof window.t === 'function' ? escapeHtml(window.t('sheetList.delete')) : 'Smazat'}</button></td>
@@ -81,7 +81,13 @@
 
     function init() {
         const form = document.getElementById('sheetForm');
+        const formToggle = document.getElementById('sheetFormToggle');
         const filterMinEl = document.getElementById('filterMin');
+
+        formToggle?.addEventListener('click', () => {
+            form?.classList.toggle('hidden');
+            if (typeof window.markToolUsed === 'function') window.markToolUsed();
+        });
         const filterMaxEl = document.getElementById('filterMax');
         const filterApplyBtn = document.getElementById('filterApply');
         const thead = document.querySelector('#sheetForm')?.closest('main')?.querySelector('thead');
@@ -101,6 +107,7 @@
             renderTable(sheets);
             form.reset();
             document.getElementById('sheetDifficulty').value = 5;
+            form.classList.add('hidden');
         });
 
         filterApplyBtn?.addEventListener('click', () => {

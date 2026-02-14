@@ -52,6 +52,16 @@ function initToolSelect() {
     });
 }
 
+function refreshToolNextLink() {
+    const link = document.getElementById('toolNextLink');
+    if (!link || !tFn) return;
+    const key = link.getAttribute('data-i18n');
+    const toolKey = link.getAttribute('data-i18n-tool');
+    if (key && toolKey) {
+        link.textContent = tFn(key, { tool: tFn(toolKey) });
+    }
+}
+
 function refreshToolSelectLabels() {
     const select = document.getElementById('toolSelect');
     if (!select || !tFn) return;
@@ -68,14 +78,22 @@ export function initToolPage(i18nT) {
     if (!section) {
         window.markToolUsed = function () { };
         initToolSelect();
-        window.addEventListener('languageChange', refreshToolSelectLabels);
+        refreshToolNextLink();
+        window.addEventListener('languageChange', () => {
+            refreshToolSelectLabels();
+            refreshToolNextLink();
+        });
         return;
     }
     const toolKey = section.getAttribute('data-tool-key');
     if (!toolKey) {
         window.markToolUsed = function () { };
         initToolSelect();
-        window.addEventListener('languageChange', refreshToolSelectLabels);
+        refreshToolNextLink();
+        window.addEventListener('languageChange', () => {
+            refreshToolSelectLabels();
+            refreshToolNextLink();
+        });
         return;
     }
     window.markToolUsed = markToolUsed;
@@ -95,6 +113,7 @@ export function initToolPage(i18nT) {
     }
 
     initToolSelect();
+    refreshToolNextLink();
     window.addEventListener('languageChange', () => {
         const content = document.getElementById('toolIntroContent');
         const toggleText = document.getElementById('toolIntroToggleText');
@@ -105,5 +124,6 @@ export function initToolPage(i18nT) {
             toggleText.textContent = tFn(key);
         }
         refreshToolSelectLabels();
+        refreshToolNextLink();
     });
 }
