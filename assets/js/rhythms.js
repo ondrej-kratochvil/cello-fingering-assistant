@@ -2,29 +2,12 @@
  * Rytmy – načte výstup z Prstokladu (localStorage), aplikuje rytmický pattern, vykreslí VexFlow s čtvrťovými/osminovými notami.
  */
 import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-staff-utils.js';
+import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
 
 (function () {
     'use strict';
 
-    const RHYTHM_PATTERNS = [
-        { id: 'q-q', nameKey: 'rhythms.pattern2q', pattern: ['q', 'q'], difficulty: 1 },
-        { id: 'q-q-e-e', nameKey: 'rhythms.pattern2q2e', pattern: ['q', 'q', 'e', 'e'], difficulty: 2 },
-        { id: 'e-e-q-q', nameKey: 'rhythms.pattern2e2q', pattern: ['e', 'e', 'q', 'q'], difficulty: 2 },
-        { id: 'q-e-e-q', nameKey: 'rhythms.pattern1q2e1q', pattern: ['q', 'e', 'e', 'q'], difficulty: 3 },
-        { id: 'e-q-q-e', nameKey: 'rhythms.pattern1e2q1e', pattern: ['e', 'q', 'q', 'e'], difficulty: 3 },
-        { id: 'q-q-q', nameKey: 'rhythms.pattern3q', pattern: ['q', 'q', 'q'], difficulty: 1 },
-        { id: 'e-e-e-e-q-q', nameKey: 'rhythms.pattern4e2q', pattern: ['e', 'e', 'e', 'e', 'q', 'q'], difficulty: 4 },
-        { id: 'q-q-e-e-e-e', nameKey: 'rhythms.pattern2q4e', pattern: ['q', 'q', 'e', 'e', 'e', 'e'], difficulty: 4 },
-    ];
-
-    function getDurationsForSequence(length, pattern) {
-        const p = pattern.pattern;
-        const out = [];
-        for (let i = 0; i < length; i++) {
-            out.push(p[i % p.length]);
-        }
-        return out;
-    }
+    const RHYTHM_STORAGE_KEY = 'celloapp:lastRhythm';
 
     /** Vrátí celkový počet dob pro Voice (q = 1, e = 0.5). */
     function totalBeats(durations) {
@@ -63,7 +46,9 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             }
             const key = noteToVexKey(input[i]);
             const dur = durations[i] === 'e' ? '8' : 'q';
-            const note = new StaveNote({ clef: clefPerNote[i], keys: [key], duration: dur });
+            const opts = { clef: clefPerNote[i], keys: [key], duration: dur };
+            if (dur === '8') opts.stem_direction = 1;
+            const note = new StaveNote(opts);
             tickables.push(note);
         }
 
@@ -112,15 +97,24 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             ? state.inputNormalized : state.input;
 
         function fillPatternOptions() {
-            const selected = patternSelect.value;
+            const selected = patternSelect.value || loadLastRhythm();
             patternSelect.innerHTML = '';
+            const byDiff = {};
             RHYTHM_PATTERNS.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                const name = (typeof window.t === 'function' ? window.t(p.nameKey) : p.nameKey);
-                const diffLabel = (typeof window.t === 'function' ? window.t('rhythms.difficultyLabel', { n: p.difficulty }) : ' (obtížnost ' + p.difficulty + ')');
-                opt.textContent = name + diffLabel;
-                patternSelect.appendChild(opt);
+                if (!byDiff[p.difficulty]) byDiff[p.difficulty] = [];
+                byDiff[p.difficulty].push(p);
+            });
+            const sortedDiffs = Object.keys(byDiff).map(Number).sort((a, b) => a - b);
+            sortedDiffs.forEach(diff => {
+                const group = document.createElement('optgroup');
+                group.label = (typeof window.t === 'function' ? window.t('rhythms.difficultyGroup', { n: diff }) : 'Obtížnost ' + diff);
+                byDiff[diff].forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = (typeof window.t === 'function' ? window.t(p.nameKey) : p.nameKey);
+                    group.appendChild(opt);
+                });
+                patternSelect.appendChild(group);
             });
             if (selected) patternSelect.value = selected;
         }
@@ -132,12 +126,44 @@ import { loadFingeringState, noteToVexKey, getClefPerNote } from './fingering-st
             const pattern = RHYTHM_PATTERNS.find(p => p.id === selected) || RHYTHM_PATTERNS[0];
             const durations = getDurationsForSequence(notes.length, pattern);
             renderStaff(staffContainer, notes, durations);
+            try {
+                localStorage.setItem(RHYTHM_STORAGE_KEY, pattern.id);
+            } catch (e) { /* ignore */ }
+        }
+
+        function loadLastRhythm() {
+            try {
+                const id = localStorage.getItem(RHYTHM_STORAGE_KEY);
+                if (id && RHYTHM_PATTERNS.some(p => p.id === id)) return id;
+            } catch (e) { /* ignore */ }
+            return RHYTHM_PATTERNS[0].id;
         }
 
         patternSelect.addEventListener('change', () => {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             updateStaff();
         });
+
+        const nextBtn = document.getElementById('rhythmNextBtn');
+        const randomBtn = document.getElementById('rhythmRandomBtn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (typeof window.markToolUsed === 'function') window.markToolUsed();
+                const idx = RHYTHM_PATTERNS.findIndex(p => p.id === patternSelect.value);
+                const nextIdx = idx < 0 || idx >= RHYTHM_PATTERNS.length - 1 ? 0 : idx + 1;
+                patternSelect.value = RHYTHM_PATTERNS[nextIdx].id;
+                updateStaff();
+            });
+        }
+        if (randomBtn) {
+            randomBtn.addEventListener('click', () => {
+                if (typeof window.markToolUsed === 'function') window.markToolUsed();
+                const p = RHYTHM_PATTERNS[Math.floor(Math.random() * RHYTHM_PATTERNS.length)];
+                patternSelect.value = p.id;
+                updateStaff();
+            });
+        }
+
         updateStaff();
     }
 
