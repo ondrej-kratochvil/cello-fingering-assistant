@@ -23,11 +23,6 @@ require __DIR__ . '/../php/tools_config.php';
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
-            <div id="countdownTopbarWidget" class="countdown-topbar-widget hidden flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-900/80 text-white text-sm font-mono">
-                <span id="countdownTopbarTime" aria-live="polite">0:00</span>
-                <button type="button" id="countdownTopbarPlay" class="p-1 hover:bg-indigo-800 rounded" aria-label="Pokračovat" data-i18n-aria-label="countdown.resume"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
-                <button type="button" id="countdownTopbarPause" class="p-1 hover:bg-indigo-800 rounded hidden" aria-label="Pauza" data-i18n-aria-label="countdown.pause"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
-            </div>
             <nav id="mainNav" class="main-nav md:ml-auto" aria-label="Hlavní">
             <a href="<?= $b ?>index.php" class="nav-link text-indigo-200 hover:text-white font-medium transition-colors" data-i18n="nav.home">Home</a>
             <details class="nav-details inline-block md:relative" id="navToolsDetails">
@@ -63,5 +58,10 @@ require __DIR__ . '/../php/tools_config.php';
             </nav>
         </div>
     </div>
-    <p id="pageTagline" class="text-indigo-300 font-medium mt-2 text-xs tracking-widest" data-i18n="<?= $tk ?>"><?= $tf ?></p>
-</header>
+    <div class="flex items-center justify-between gap-4 mt-2">
+        <p id="pageTagline" class="text-indigo-300 font-medium text-xs tracking-widest" data-i18n="<?= $tk ?>"><?= $tf ?></p>
+        <div id="countdownTopbarWidget" class="countdown-topbar-widget hidden flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-900/80 text-white text-sm font-mono">
+            <a href="<?= $b ?>odpocet.php" id="countdownTopbarTimeLink" class="hover:underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-950 rounded" aria-label="Odpočet – klikněte pro úpravu"><span id="countdownTopbarTime" aria-live="polite">0:00</span></a>
+            <button type="button" id="countdownTopbarPlay" class="p-1 hover:bg-indigo-800 rounded" aria-label="Pokračovat" data-i18n-aria-label="countdown.resume"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+            <button type="button" id="countdownTopbarPause" class="p-1 hover:bg-indigo-800 rounded hidden" aria-label="Pauza" data-i18n-aria-label="countdown.pause"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
+        </div>

@@ -18,23 +18,24 @@
         return audioContext;
     }
 
+    /** Zvonění připomínající starý telefon/budík – dvojité cinknutí. */
     function playAlarm() {
         const ctx = getCtx();
-        const freqs = [523.25, 659.25, 523.25];
-        let t = ctx.currentTime;
-        freqs.forEach((freq) => {
+        const freq = 880;
+        const pattern = [0, 0.15, 0.35, 0.5, 0.65, 0.85];
+        pattern.forEach((start, i) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.frequency.value = freq;
             osc.type = 'sine';
+            const t = ctx.currentTime + start;
             gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.2, t + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+            gain.gain.linearRampToValueAtTime(0.25, t + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
             osc.start(t);
-            osc.stop(t + 0.4);
-            t += 0.45;
+            osc.stop(t + 0.12);
         });
     }
 
@@ -47,7 +48,8 @@
     let isPausedFlag = false;
     function saveState() {
         try {
-            const paused = isPausedFlag || (timerId == null && remainingSeconds > 0 && document.getElementById('countdownPause')?.dataset?.paused === 'true');
+            const pauseBtn = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
+            const paused = isPausedFlag || (timerId == null && remainingSeconds > 0 && pauseBtn?.dataset?.paused === 'true');
             const running = timerId != null;
             if (!running && !paused) {
                 localStorage.removeItem(STORAGE_KEY);
@@ -94,7 +96,7 @@
         const timeEl = document.getElementById('countdownTopbarTime');
         const playBtn = document.getElementById('countdownTopbarPlay');
         const pauseBtn = document.getElementById('countdownTopbarPause');
-        const pauseBtnPage = document.getElementById('countdownPause');
+        const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
         const isPaused = isPausedFlag || pauseBtnPage?.dataset?.paused === 'true';
         const isRunning = timerId != null;
         if (timeEl) timeEl.textContent = formatTime(remainingSeconds);
@@ -129,8 +131,8 @@
             resetTitle();
             saveState();
             showTopbarWidget(false);
-            const startBtn = document.getElementById('countdownStart');
-            const pauseBtn = document.getElementById('countdownPause');
+            const startBtn = document.getElementById('countdownStart') || document.getElementById('countdownPlayPause');
+            const pauseBtn = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
             if (startBtn) startBtn.dataset.running = '';
             if (pauseBtn) pauseBtn.dataset.paused = '';
             return;
@@ -141,9 +143,9 @@
         if (typeof window.markToolUsed === 'function') window.markToolUsed();
         getCtx().resume().catch(() => {});
         isPausedFlag = false;
-        const startBtn = document.getElementById('countdownStart');
-        const pauseBtn = document.getElementById('countdownPause');
-        if (startBtn?.dataset?.running === 'true') return;
+        const playPauseBtn = document.getElementById('countdownPlayPause') || document.getElementById('countdownStart');
+        const pauseBtn = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
+        if (playPauseBtn?.dataset?.running === 'true') return;
         const minsInput = document.getElementById('countdownMinutes');
         if (pauseBtn?.dataset?.paused === 'true') {
             endTime = Date.now() + remainingSeconds * 1000;
@@ -153,8 +155,12 @@
             remainingSeconds = totalSeconds;
             endTime = Date.now() + totalSeconds * 1000;
         }
-        if (startBtn) startBtn.dataset.running = 'true';
-        if (pauseBtn) pauseBtn.dataset.paused = '';
+        if (playPauseBtn) {
+            playPauseBtn.dataset.running = 'true';
+            playPauseBtn.dataset.paused = '';
+            updatePlayPauseButtonUI(playPauseBtn, true);
+        }
+        if (pauseBtn && pauseBtn !== playPauseBtn) pauseBtn.dataset.paused = '';
         if (timerId != null) clearInterval(timerId);
         timerId = setInterval(tick, 200);
         tick();
@@ -166,13 +172,33 @@
         if (timerId != null) clearInterval(timerId);
         timerId = null;
         isPausedFlag = true;
-        const startBtn = document.getElementById('countdownStart');
-        const pauseBtn = document.getElementById('countdownPause');
-        if (startBtn) startBtn.dataset.running = '';
-        if (pauseBtn) pauseBtn.dataset.paused = 'true';
+        const playPauseBtn = document.getElementById('countdownPlayPause') || document.getElementById('countdownStart');
+        const pauseBtn = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
+        if (playPauseBtn) {
+            playPauseBtn.dataset.running = '';
+            playPauseBtn.dataset.paused = 'true';
+            updatePlayPauseButtonUI(playPauseBtn, false);
+        }
+        if (pauseBtn && pauseBtn !== playPauseBtn) pauseBtn.dataset.paused = 'true';
         resetTitle();
         saveState();
         updateTopbarWidget();
+    }
+
+    function updatePlayPauseButtonUI(btn, running) {
+        if (!btn) return;
+        const iconPlay = btn.querySelector('.countdown-icon-play');
+        const iconPause = btn.querySelector('.countdown-icon-pause');
+        const btnText = btn.querySelector('.countdown-btn-text');
+        const t = typeof window.t === 'function' ? window.t : (k) => k;
+        if (iconPlay) iconPlay.classList.toggle('hidden', running);
+        if (iconPause) iconPause.classList.toggle('hidden', !running);
+        if (btnText) btnText.textContent = running ? t('countdown.pause') : t('countdown.start');
+        btn.classList.toggle('bg-emerald-600', !running);
+        btn.classList.toggle('hover:bg-emerald-700', !running);
+        btn.classList.toggle('bg-amber-600', running);
+        btn.classList.toggle('hover:bg-amber-700', running);
+        btn.setAttribute('aria-label', running ? t('countdown.pause') : t('countdown.start'));
     }
 
     function reset() {
@@ -183,10 +209,14 @@
         const minsInput = document.getElementById('countdownMinutes');
         const mins = Math.max(1, Math.min(120, parseInt(minsInput?.value, 10) || 30));
         remainingSeconds = mins * 60;
-        const startBtn = document.getElementById('countdownStart');
-        const pauseBtn = document.getElementById('countdownPause');
-        if (startBtn) startBtn.dataset.running = '';
-        if (pauseBtn) pauseBtn.dataset.paused = '';
+        const playPauseBtn = document.getElementById('countdownPlayPause') || document.getElementById('countdownStart');
+        const pauseBtn = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
+        if (playPauseBtn) {
+            playPauseBtn.dataset.running = '';
+            playPauseBtn.dataset.paused = '';
+            updatePlayPauseButtonUI(playPauseBtn, false);
+        }
+        if (pauseBtn && pauseBtn !== playPauseBtn) pauseBtn.dataset.paused = '';
         updateDisplay(remainingSeconds);
         resetTitle();
         saveState();
@@ -203,10 +233,13 @@
         if (timerId != null) clearInterval(timerId);
         timerId = setInterval(tick, 200);
         tick();
-        const pauseBtnPage = document.getElementById('countdownPause');
+        const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
         if (pauseBtnPage) pauseBtnPage.dataset.paused = '';
-        const startBtn = document.getElementById('countdownStart');
-        if (startBtn) startBtn.dataset.running = 'true';
+        const startBtn = document.getElementById('countdownStart') || document.getElementById('countdownPlayPause');
+        if (startBtn) {
+            startBtn.dataset.running = 'true';
+            updatePlayPauseButtonUI(startBtn, true);
+        }
         saveState();
         updateTopbarWidget();
     }
@@ -215,7 +248,7 @@
         if (timerId != null) clearInterval(timerId);
         timerId = null;
         isPausedFlag = true;
-        const pauseBtnPage = document.getElementById('countdownPause');
+        const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
         if (pauseBtnPage) pauseBtnPage.dataset.paused = 'true';
         const startBtn = document.getElementById('countdownStart');
         if (startBtn) startBtn.dataset.running = '';
@@ -233,8 +266,11 @@
             updateDisplay(remainingSeconds);
             showTopbarWidget(true);
             updateTopbarWidget();
-            const pauseBtnPage = document.getElementById('countdownPause');
-            if (pauseBtnPage) pauseBtnPage.dataset.paused = 'true';
+            const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
+            if (pauseBtnPage) {
+                pauseBtnPage.dataset.paused = 'true';
+                updatePlayPauseButtonUI(pauseBtnPage, false);
+            }
             return;
         }
         endTime = state.endTime;
@@ -244,7 +280,7 @@
             tick();
             showTopbarWidget(true);
             const startBtn = document.getElementById('countdownStart');
-            const pauseBtnPage = document.getElementById('countdownPause');
+            const pauseBtnPage = document.getElementById('countdownPause') || document.getElementById('countdownPlayPause');
             if (startBtn) startBtn.dataset.running = 'true';
             if (pauseBtnPage) pauseBtnPage.dataset.paused = '';
         } else {
@@ -252,9 +288,22 @@
         }
     }
 
+    function togglePlayPause() {
+        const playPauseBtn = document.getElementById('countdownPlayPause') || document.getElementById('countdownStart');
+        if (playPauseBtn?.dataset?.running === 'true') pause();
+        else start();
+    }
+
     function init() {
-        document.getElementById('countdownStart')?.addEventListener('click', start);
-        document.getElementById('countdownPause')?.addEventListener('click', pause);
+        const playPauseBtn = document.getElementById('countdownPlayPause');
+        const startBtn = document.getElementById('countdownStart');
+        const pauseBtn = document.getElementById('countdownPause');
+        if (playPauseBtn) {
+            playPauseBtn.addEventListener('click', togglePlayPause);
+        } else {
+            startBtn?.addEventListener('click', start);
+            pauseBtn?.addEventListener('click', pause);
+        }
         document.getElementById('countdownReset')?.addEventListener('click', reset);
         document.getElementById('countdownTopbarPlay')?.addEventListener('click', topbarPlay);
         document.getElementById('countdownTopbarPause')?.addEventListener('click', topbarPause);
@@ -262,6 +311,8 @@
         if (!loadState()) {
             updateDisplay(remainingSeconds);
         }
+        const pp = document.getElementById('countdownPlayPause');
+        if (pp) updatePlayPauseButtonUI(pp, false);
     }
 
     if (document.readyState === 'loading') {
