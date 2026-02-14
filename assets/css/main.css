@@ -204,9 +204,23 @@ body.dark-mode .text-slate-600 {
     color: var(--color-text-secondary) !important;
 }
 
+/* Vysvětlivka v Seznamu not – světlejší písmo v dark mode pro lepší čitelnost */
+body.dark-mode .sheet-list-hint {
+    color: var(--color-text-secondary) !important;
+}
+
 body.dark-mode.text-slate-800,
 body.dark-mode .text-slate-800 {
     color: var(--color-text-primary) !important;
+}
+
+/* Tlačítka Použít, Další, Náhodný (bg-slate-200) v dark mode */
+body.dark-mode button.bg-slate-200 {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+}
+body.dark-mode button.bg-slate-200:hover {
+    background-color: var(--color-border-tertiary) !important;
 }
 
 body.dark-mode.border-slate-200,
@@ -296,15 +310,24 @@ body.dark-mode .text-red-600 {
     color: #ef4444 !important;
 }
 
-/* Input pole v dark mode */
+/* Input pole, textarea, number, url v dark mode */
 body.dark-mode input[type="text"],
-body.dark-mode input[type="text"]:focus {
+body.dark-mode input[type="text"]:focus,
+body.dark-mode input[type="number"],
+body.dark-mode input[type="number"]:focus,
+body.dark-mode input[type="url"],
+body.dark-mode input[type="url"]:focus,
+body.dark-mode textarea,
+body.dark-mode textarea:focus {
     background-color: var(--color-bg-tertiary) !important;
     color: var(--color-text-primary) !important;
     border-color: var(--color-border-secondary) !important;
 }
 
-body.dark-mode input[type="text"]::placeholder {
+body.dark-mode input[type="text"]::placeholder,
+body.dark-mode input[type="number"]::placeholder,
+body.dark-mode input[type="url"]::placeholder,
+body.dark-mode textarea::placeholder {
     color: var(--color-text-tertiary) !important;
 }
 
