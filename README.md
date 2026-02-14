@@ -14,7 +14,7 @@ Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smy
 - `assets/js/navigation.js` – Navigace, dark mode, callback pro překreslení při změně tématu
 - `assets/js/tuner.js` – Ladička (YIN pitch detection)
 - `assets/js/countdown.js` – Odpočet (minutka), widget v hlavičce, persistence v localStorage
-- `assets/js/sheet-list.js` – Seznam not: localStorage, řazení, filtr obtížnosti, editace kliknutím na řádek, Smazat ve formuláři
+- `assets/js/sheet-list.js` – Seznam not: localStorage, řazení, filtr obtížnosti, editace kliknutím na řádek, Smazat ve formuláři, tlačítko se 3 stavy
 - `assets/js/ui-staff.js` – Notová osnova (VexFlow): `renderStaffOutput`, `renderStaffWithRhythm` pro Rytmy/Smyky/Metronom (barvy prstů podle strun, tóny pod notami, Beam)
 - `assets/js/rhythm-patterns.js` – Rytmické patterny sdílené Rytmy/Smyky/Metronomem
 - `assets/js/tests.js` – Testovací sady a framework
@@ -41,7 +41,7 @@ Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smy
 - **Rytmy** – rytmické patterny (čtvrťové, osminové), tlačítka Další/Náhodný
 - **Smyky** – smykové patterny (legato/samostatně), tlačítka Další/Náhodný, sdílený rytmus s Rytmy
 - **Metronom** – tempo BPM, počet dob, tlačítko Start/Stop s ikonami
-- **Seznam not** – odkaz, název, autor, obtížnost; editace kliknutím na řádek, Smazat ve formuláři
+- **Seznam not** – odkaz, název, autor, obtížnost; editace kliknutím na řádek, Smazat ve formuláři; tlačítko Přidat skladbu má 3 stavy (Přidat / Zrušit přidání / Zrušit editaci)
 
 ## Testy
 

@@ -101,19 +101,34 @@
         submitBtn.textContent = typeof window.t === 'function' ? window.t('sheetList.save') : 'Uložit';
         deleteBtn.classList.remove('hidden');
         form.classList.remove('hidden');
-        const formToggle = document.getElementById('sheetFormToggle');
-        if (formToggle) formToggle.textContent = typeof window.t === 'function' ? window.t('sheetList.cancelEdit') : 'Zrušit editaci skladby';
+        updateFormToggleText();
     }
 
     function closeEdit() {
         const editIdEl = document.getElementById('sheetEditId');
         const submitBtn = document.getElementById('sheetSubmitBtn');
         const deleteBtn = document.getElementById('sheetDeleteBtn');
-        const formToggle = document.getElementById('sheetFormToggle');
         if (editIdEl) editIdEl.value = '';
         if (submitBtn) submitBtn.textContent = typeof window.t === 'function' ? window.t('sheetList.add') : 'Přidat';
         if (deleteBtn) deleteBtn.classList.add('hidden');
-        if (formToggle) formToggle.textContent = typeof window.t === 'function' ? window.t('sheetList.addSheet') : 'Přidat skladbu';
+        updateFormToggleText();
+    }
+
+    /** Aktualizuje text tlačítka: Přidat skladbu | Zrušit přidání | Zrušit editaci */
+    function updateFormToggleText() {
+        const formToggle = document.getElementById('sheetFormToggle');
+        const form = document.getElementById('sheetForm');
+        if (!formToggle || !form) return;
+        const isVisible = !form.classList.contains('hidden');
+        const isEditMode = !!document.getElementById('sheetEditId')?.value?.trim();
+        const t = typeof window.t === 'function' ? window.t : (k) => k;
+        if (!isVisible) {
+            formToggle.textContent = t('sheetList.addSheet');
+        } else if (isEditMode) {
+            formToggle.textContent = t('sheetList.cancelEdit');
+        } else {
+            formToggle.textContent = t('sheetList.cancelAdd');
+        }
     }
 
     function escapeHtml(s) {
@@ -139,14 +154,11 @@
 
         formToggle?.addEventListener('click', () => {
             const wasHidden = form?.classList.contains('hidden');
-            const isEditMode = !!document.getElementById('sheetEditId')?.value?.trim();
             form?.classList.toggle('hidden');
             const isVisible = !form?.classList.contains('hidden');
-            formToggle.textContent = typeof window.t === 'function'
-                ? (isVisible ? (isEditMode ? window.t('sheetList.cancelEdit') : window.t('sheetList.cancelAdd')) : window.t('sheetList.addSheet'))
-                : (isVisible ? (isEditMode ? 'Zrušit editaci skladby' : 'Zrušit přidání skladby') : 'Přidat skladbu');
             if (isVisible && wasHidden) closeEdit();
             if (!isVisible) closeEdit();
+            updateFormToggleText();
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
         });
         const filterMaxEl = document.getElementById('filterMax');
@@ -211,6 +223,8 @@
         });
 
         renderTable(loadSheets());
+        updateFormToggleText();
+        window.addEventListener('languageChange', updateFormToggleText);
     }
 
     if (document.readyState === 'loading') {
