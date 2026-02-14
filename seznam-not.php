@@ -32,8 +32,13 @@ $toolTitleKey = 'sheetList.title';
             </div>
             <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl hidden">
                 <div>
-                    <label for="sheetAuthor" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.author">Autor:</label>
-                    <input type="text" id="sheetAuthor" class="w-full p-3 border border-slate-300 rounded-xl">
+                    <label for="sheetSurname" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.surname">Příjmení:</label>
+                    <p class="text-xs text-slate-500 mb-1" data-i18n="sheetList.surnameHint">U lidových písní, stupnic apod. uveďte např. Lidová, Neznámý.</p>
+                    <input type="text" id="sheetSurname" class="w-full p-3 border border-slate-300 rounded-xl" required>
+                </div>
+                <div>
+                    <label for="sheetFirstName" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.firstName">Jméno:</label>
+                    <input type="text" id="sheetFirstName" class="w-full p-3 border border-slate-300 rounded-xl">
                 </div>
                 <div>
                     <label for="sheetTitle" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.titleField">Název skladby:</label>
@@ -62,7 +67,7 @@ $toolTitleKey = 'sheetList.title';
                 <table class="w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b-2 border-slate-200">
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="author" data-i18n="sheetList.author">Autor</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="surname" data-i18n="sheetList.author">Autor</th>
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleField">Název skladby</th>
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficulty">Obtížnost</th>
                             <th class="text-left py-3 px-2" data-i18n="sheetList.url">Odkaz</th>

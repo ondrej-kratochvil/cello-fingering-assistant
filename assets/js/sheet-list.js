@@ -21,7 +21,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(sheets));
     }
 
-    let sortBy = 'title';
+    let sortBy = 'surname';
     let sortAsc = true;
     let filterMin = null;
     let filterMax = null;
@@ -33,20 +33,24 @@
         if (filterMin != null && filterMin !== '') list = list.filter(s => s.difficulty >= Number(filterMin));
         if (filterMax != null && filterMax !== '') list = list.filter(s => s.difficulty <= Number(filterMax));
         list.sort((a, b) => {
-            let va = a[sortBy], vb = b[sortBy];
-            if (sortBy === 'difficulty') {
-                va = Number(va) || 0;
-                vb = Number(vb) || 0;
+            let va, vb;
+            if (sortBy === 'surname' || sortBy === 'author') {
+                va = (a.surname || a.author || '').toLowerCase();
+                vb = (b.surname || b.author || '').toLowerCase();
+            } else if (sortBy === 'difficulty') {
+                va = Number(a.difficulty) || 0;
+                vb = Number(b.difficulty) || 0;
                 return sortAsc ? va - vb : vb - va;
+            } else {
+                va = String(a[sortBy] || '').toLowerCase();
+                vb = String(b[sortBy] || '').toLowerCase();
             }
-            va = String(va || '').toLowerCase();
-            vb = String(vb || '').toLowerCase();
             const c = va.localeCompare(vb);
             return sortAsc ? c : -c;
         });
         tbody.innerHTML = list.map(s => `
             <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="py-2 px-2">${escapeHtml(s.author || '')}</td>
+                <td class="py-2 px-2">${escapeHtml((s.surname || s.author || '') + (s.firstName ? ' ' + s.firstName : ''))}</td>
                 <td class="py-2 px-2 font-medium">${escapeHtml(s.title)}</td>
                 <td class="py-2 px-2">${escapeHtml(String(s.difficulty))}</td>
                 <td class="py-2 px-2"><a href="${safeHref(s.url) === '#' ? '#' : escapeAttr(safeHref(s.url))}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline truncate max-w-[200px] inline-block">${escapeHtml(s.url || '')}</a></td>
@@ -97,12 +101,13 @@
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
             const url = document.getElementById('sheetUrl')?.value?.trim() || '';
             const title = document.getElementById('sheetTitle')?.value?.trim();
-            const author = document.getElementById('sheetAuthor')?.value?.trim() || '';
+            const surname = document.getElementById('sheetSurname')?.value?.trim() || '';
+            const firstName = document.getElementById('sheetFirstName')?.value?.trim() || '';
             const difficulty = Math.max(1, Math.min(10, Number(document.getElementById('sheetDifficulty')?.value) || 5));
-            if (!title) return;
+            if (!title || !surname) return;
             const sheets = loadSheets();
             const id = 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
-            sheets.push({ id, url, title, author, difficulty });
+            sheets.push({ id, url, title, surname, firstName, difficulty });
             saveSheets(sheets);
             renderTable(sheets);
             form.reset();
