@@ -105,12 +105,16 @@
     }
 
     function closeEdit() {
+        const form = document.getElementById('sheetForm');
         const editIdEl = document.getElementById('sheetEditId');
         const submitBtn = document.getElementById('sheetSubmitBtn');
         const deleteBtn = document.getElementById('sheetDeleteBtn');
+        if (form) form.reset();
         if (editIdEl) editIdEl.value = '';
         if (submitBtn) submitBtn.textContent = typeof window.t === 'function' ? window.t('sheetList.add') : 'Přidat';
         if (deleteBtn) deleteBtn.classList.add('hidden');
+        const diffEl = document.getElementById('sheetDifficulty');
+        if (diffEl) diffEl.value = 5;
         updateFormToggleText();
     }
 
