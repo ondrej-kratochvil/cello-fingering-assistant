@@ -72,7 +72,7 @@ $toolTitleKey = 'sheetList.title';
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse">
+                <table class="sheet-list-table w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b-2 border-slate-200">
                             <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="surname" data-i18n="sheetList.authorHeader">Autor</th>
