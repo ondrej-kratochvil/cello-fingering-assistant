@@ -1,5 +1,5 @@
 /**
- * Seznam not – odkaz, název, autor, obtížnost 1–10. localStorage, řazení, filtry.
+ * Seznam skladeb – odkaz, název, autor, obtížnost 1–10. localStorage, řazení, filtry.
  */
 (function () {
     'use strict';

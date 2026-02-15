@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cello App Kit – Seznam not</title>
-    <meta name="description" content="Seznam odkazů na noty – skladby, autoři, obtížnost.">
+    <title>Cello App Kit – Seznam skladeb</title>
+    <meta name="description" content="Seznam skladeb – odkazy na noty, autoři, obtížnost.">
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="stylesheet" href="assets/css/main.css?v=<?= filemtime(__DIR__ . '/assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
 $base = '';
 $pageTitle = 'Cello App Kit';
 $taglineKey = 'sheetList.tagline';
-$taglineFallback = 'Seznam not';
+$taglineFallback = 'Seznam skladeb';
 require __DIR__ . '/assets/partials/topbar.php';
 require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'sheetList';

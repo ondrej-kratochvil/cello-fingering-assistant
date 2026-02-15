@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cello App Kit – Nástroje pro violoncellisty</title>
-    <meta name="description" content="Cello App Kit – odpočet, ladička, prstoklad, rytmy, smyky, metronom a seznam not. Sada nástrojů pro violoncellisty.">
+    <meta name="description" content="Cello App Kit – odpočet, ladička, prstoklad, rytmy, smyky, metronom a seznam skladeb. Sada nástrojů pro violoncellisty.">
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="stylesheet" href="assets/css/main.css?v=<?= filemtime(__DIR__ . '/assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +23,7 @@ require __DIR__ . '/assets/php/tools_config.php';
 ?>
         <main class="p-8 bg-white">
             <p class="text-slate-700 leading-relaxed mb-8" data-i18n="home.intro">
-                Cello App Kit je sada nástrojů pro violoncellisty: odpočet na cvičení, ladička, prstoklad, rytmy, smyky, metronom a seznam not. Níže najdete přehled nástrojů v doporučeném pořadí.
+                Cello App Kit je sada nástrojů pro violoncellisty: odpočet na cvičení, ladička, prstoklad, rytmy, smyky, metronom a seznam skladeb. Níže najdete přehled nástrojů v doporučeném pořadí.
             </p>
 
             <section id="aboutSection" class="mb-8">

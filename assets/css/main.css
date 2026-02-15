@@ -209,7 +209,7 @@ body.dark-mode .sheet-list-hint {
     color: var(--color-text-secondary) !important;
 }
 
-/* Seznam not – hover na záhlaví a řádcích tabulky v dark mode */
+/* Seznam skladeb – hover na záhlaví a řádcích tabulky v dark mode */
 body.dark-mode .sheet-list-table thead th:hover,
 body.dark-mode .sheet-list-table .sheet-row:hover {
     background-color: var(--color-bg-tertiary) !important;
