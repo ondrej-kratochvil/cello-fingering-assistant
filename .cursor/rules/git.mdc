@@ -7,6 +7,10 @@ alwaysApply: true
 
 Při jakékoli práci s gitem (status, add, commit, push, branch, …) v tomto projektu dodržuj tato pravidla.
 
+## Vynucení subagenta
+
+**Git operace deleguj na subagenta `/git-ops`** – neprováděj git příkazy (status, add, commit, push, branch, diff, log) přímo v hlavním agentovi. Použij syntaxi `/git-ops` nebo explicitně vyvolej subagenta git-ops s požadovaným úkolem. Subagent používá rychlejší model a dodržuje tato pravidla.
+
 ## Atomické commity
 
 - **Princip**: Jedna úprava = jeden commit.
