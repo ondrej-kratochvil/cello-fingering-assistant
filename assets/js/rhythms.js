@@ -27,6 +27,14 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
         const notes = state.inputNormalized && state.inputNormalized.length === state.input.length
             ? state.inputNormalized : state.input;
 
+        function loadLastRhythm() {
+            try {
+                const id = localStorage.getItem(RHYTHM_STORAGE_KEY);
+                if (id && RHYTHM_PATTERNS.some(p => p.id === id)) return id;
+            } catch (e) { /* ignore */ }
+            return RHYTHM_PATTERNS[0].id;
+        }
+
         function fillPatternOptions() {
             const selected = patternSelect.value || loadLastRhythm();
             patternSelect.innerHTML = '';
@@ -63,14 +71,6 @@ import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
             try {
                 localStorage.setItem(RHYTHM_STORAGE_KEY, pattern.id);
             } catch (e) { /* ignore */ }
-        }
-
-        function loadLastRhythm() {
-            try {
-                const id = localStorage.getItem(RHYTHM_STORAGE_KEY);
-                if (id && RHYTHM_PATTERNS.some(p => p.id === id)) return id;
-            } catch (e) { /* ignore */ }
-            return RHYTHM_PATTERNS[0].id;
         }
 
         patternSelect.addEventListener('change', () => {
