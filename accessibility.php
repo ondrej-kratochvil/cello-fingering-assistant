@@ -65,7 +65,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
             }
             await initI18n();
             await initNavigation();
-            await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
+            await import('./assets/js/countdown.js' + (V.countdown != null ? '?v=' + V.countdown : ''));
         }
         main();
     </script>
