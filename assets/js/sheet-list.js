@@ -196,6 +196,7 @@
             document.getElementById('sheetDifficulty').value = 5;
             closeEdit();
             form.classList.add('hidden');
+            updateFormToggleText();
         });
 
         document.getElementById('sheetDeleteBtn')?.addEventListener('click', () => {
@@ -209,6 +210,7 @@
             document.getElementById('sheetDifficulty').value = 5;
             closeEdit();
             form?.classList.add('hidden');
+            updateFormToggleText();
         });
 
         filterApplyBtn?.addEventListener('click', () => {
