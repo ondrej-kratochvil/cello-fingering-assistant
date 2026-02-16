@@ -51,6 +51,8 @@ Dokument shrnuje dohodnuté požadavky na rozšíření aplikace na **Cello App 
 - **Nastavení**: Volba A = 440 / 441 / 442 / 443 Hz.
 - **Zobrazení**: Jako u klasické ladičky – **jehla/ukazatel** + indikace nízko / správně / vysoko.
 
+**Implementace:** YIN pitch detection algoritmus (`tuner.js`), mediánový filtr, smoothing. Při `runningSum === 0` (vzácné u určitých vstupů) se normalizace diff nastaví na 1, aby se předešlo chybnému detekování výšky.
+
 ---
 
 ## 3. Metronom
@@ -66,6 +68,8 @@ Dokument shrnuje dohodnuté požadavky na rozšíření aplikace na **Cello App 
 - **Funkce**: Zadání času (např. 30 minut), start, pauza, reset.
 - **Zvuk zvonění**: **Jiná sada** než u metronomu – delší zvonění (konec cvičení).
 - **Zobrazení**: Odpočet v obsahu stránky **a v title stránky** (záložka prohlížeče).
+
+**Implementace:** Stav v `localStorage` (`celloapp:countdown`) pro zobrazení widgetu v hlavičce na všech stránkách. Sloučené tlačítko Start/Pauza. Při ukládání běžícího stavu se při `endTime === null` použije fallback `Date.now() + remainingSeconds * 1000`, aby se odpočet správně obnovil po reloadu.
 
 ---
 

@@ -204,9 +204,30 @@ body.dark-mode .text-slate-600 {
     color: var(--color-text-secondary) !important;
 }
 
+/* Vysvětlivka v Seznamu not – světlejší písmo v dark mode pro lepší čitelnost */
+body.dark-mode .sheet-list-hint {
+    color: var(--color-text-secondary) !important;
+}
+
+/* Seznam skladeb – hover na záhlaví a řádcích tabulky v dark mode */
+body.dark-mode .sheet-list-table thead th:hover,
+body.dark-mode .sheet-list-table .sheet-row:hover {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+}
+
 body.dark-mode.text-slate-800,
 body.dark-mode .text-slate-800 {
     color: var(--color-text-primary) !important;
+}
+
+/* Tlačítka Použít, Další, Náhodný (bg-slate-200) v dark mode */
+body.dark-mode button.bg-slate-200 {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+}
+body.dark-mode button.bg-slate-200:hover {
+    background-color: var(--color-border-tertiary) !important;
 }
 
 body.dark-mode.border-slate-200,
@@ -296,16 +317,37 @@ body.dark-mode .text-red-600 {
     color: #ef4444 !important;
 }
 
-/* Input pole v dark mode */
+/* Input pole, textarea, number, url v dark mode */
 body.dark-mode input[type="text"],
-body.dark-mode input[type="text"]:focus {
+body.dark-mode input[type="text"]:focus,
+body.dark-mode input[type="number"],
+body.dark-mode input[type="number"]:focus,
+body.dark-mode input[type="url"],
+body.dark-mode input[type="url"]:focus,
+body.dark-mode textarea,
+body.dark-mode textarea:focus {
     background-color: var(--color-bg-tertiary) !important;
     color: var(--color-text-primary) !important;
     border-color: var(--color-border-secondary) !important;
 }
 
-body.dark-mode input[type="text"]::placeholder {
+body.dark-mode input[type="text"]::placeholder,
+body.dark-mode input[type="number"]::placeholder,
+body.dark-mode input[type="url"]::placeholder,
+body.dark-mode textarea::placeholder {
     color: var(--color-text-tertiary) !important;
+}
+
+/* Range input v dark mode (metronom) */
+body.dark-mode input[type="range"] {
+    background-color: var(--color-bg-tertiary) !important;
+}
+
+/* Select v dark mode (ladička, atd.) */
+body.dark-mode select {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border-secondary) !important;
 }
 
 /* Canvas v dark mode */
@@ -700,5 +742,33 @@ body.dark-mode [id^="vexflow-staff-"] svg rect.fingering-highlight {
         min-width: 1000px;
         background-color: var(--color-fingerboard) !important;
     }
+}
+
+/* Toast notification */
+.toast-notification {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 1.5rem;
+    background: var(--color-bg-header);
+    color: var(--color-text-inverse);
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    z-index: 9999;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: toast-fade-in 0.3s ease-out;
+}
+.toast-notification.toast-fade-out {
+    animation: toast-fade-out 0.3s ease-in forwards;
+}
+@keyframes toast-fade-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(1rem); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toast-fade-out {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(-0.5rem); }
 }
 

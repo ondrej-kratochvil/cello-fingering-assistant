@@ -1,16 +1,22 @@
-# Cello Fingering Assistant
+# Cello App Kit
 
-Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí algoritmu založeného na metodice.
+Sada miniaplikací pro violoncellisty: Odpočet, Ladička, Prstoklad, Rytmy, Smyky, Metronom, Seznam skladeb. Hlavní nástroj – **Prstoklad** – hledá optimální prstoklad pomocí algoritmu založeného na metodice.
 
 ## Struktura projektu
 
-- `index.php` – Hlavní aplikace s UI (vstup tónů, výstup prstokladu, vizualizace hmatníku). PHP includuje topbar/footer.
-- `dev/tests/test.php` – Testovací stránka pro ověření správnosti algoritmu (PHP includuje topbar/footer)
+- `index.php` – Homepage s Průvodcem cvičením (krok za krokem). PHP includuje topbar/footer.
+- `prstoklad.php`, `ladicka.php`, `metronom.php`, `odpocet.php`, `rytmy.php`, `smyky.php`, `seznam-not.php` – stránky nástrojů.
+- `dev/tests/test.php` – Testovací stránka pro ověření správnosti algoritmu prstokladu (PHP includuje topbar/footer)
 - `assets/js/fingering.js` – Hlavní logika algoritmu prstokladu
 - `assets/js/ui.js` – UI, vykreslení notové osnovy (VexFlow), textového výstupu a hmatníku (Canvas)
 - `assets/js/i18n.js` – Vlastní i18n modul: `t(key)`, načítání JSON z `assets/i18n/`, jazyk a H/B v `localStorage`
 - `assets/i18n/cs.json`, `assets/i18n/en.json` – Překlady UI, O aplikaci, Hlavní funkce, testů; snadné přidání dalších jazyků
 - `assets/js/navigation.js` – Navigace, dark mode, callback pro překreslení při změně tématu
+- `assets/js/tuner.js` – Ladička (YIN pitch detection); zobrazuje jen jednu strunu (nejbližší detekované frekvenci), ne všechny 4
+- `assets/js/countdown.js` – Odpočet (minutka), widget v hlavičce, persistence v localStorage
+- `assets/js/sheet-list.js` – Seznam skladeb: localStorage, řazení, filtr obtížnosti, editace kliknutím na řádek, Smazat ve formuláři, tlačítko se 3 stavy
+- `assets/js/ui-staff.js` – Notová osnova (VexFlow): `renderStaffOutput`, `renderStaffWithRhythm` pro Rytmy/Smyky/Metronom (barvy prstů podle strun, tóny pod notami, Beam)
+- `assets/js/rhythm-patterns.js` – Rytmické patterny sdílené Rytmy/Smyky/Metronomem
 - `assets/js/tests.js` – Testovací sady a framework
 - `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (notová osnova, i18n)
 - `assets/css/main.css` – Design systém, styly pro notovou osnovu a světlé/tmavé téma
@@ -27,6 +33,16 @@ Aplikace pro nalezení optimálního prstokladu pro violoncello pomocí algoritm
 - **Notová osnova** (VexFlow) zobrazuje posuvky před notou; tóny v osnově, textu a hmatníku podle volby H/B
 - **Vizualizace hmatníku** má černé pozadí (ve světlém i tmavém režimu) s proporčními rozestupy mezi polohami
 
+## Nástroje
+
+- **Odpočet** – minutka s widgetem v hlavičce, persistence v localStorage
+- **Ladička** – YIN pitch detection, prázdné struny C, G, d, a; zobrazuje jen jednu ladičku (nejbližší strunu)
+- **Prstoklad** – hlavní nástroj, algoritmus prstokladu, vizualizace hmatníku, přehrávání
+- **Rytmy** – rytmické patterny (čtvrťové, osminové), tlačítka Další/Náhodný
+- **Smyky** – smykové patterny (legato/samostatně), tlačítka Další/Náhodný, sdílený rytmus s Rytmy
+- **Metronom** – tempo BPM, počet dob, tlačítko Start/Stop s ikonami
+- **Seznam skladeb** – odkaz, název, autor, obtížnost; editace kliknutím na řádek, Smazat ve formuláři; tlačítko Přidat skladbu má 3 stavy (Přidat / Zrušit přidání / Zrušit editaci)
+
 ## Testy
 
 Testy obsahují několik sad tónů s očekávanými prstoklady:
@@ -36,7 +52,7 @@ Testy obsahují několik sad tónů s očekávanými prstoklady:
 3. **Sekvence C D E F** - C struna, I. poloha
 4. **Sekvence a h c1 d1** - A struna s posuny
 5. **Sekvence g a h c** - Sekvence přes více strun
-6. **Prázdné struny C G d a** - Preferuje otevřené struny
+6. **Prázdné struny C G d a** - Preferuje prázdné struny
 7. **Preference nižší polohy pro g** - Nižší poloha na D struně
 8. **Otevřená struna d** - Preferuje otevřenou strunu D
 

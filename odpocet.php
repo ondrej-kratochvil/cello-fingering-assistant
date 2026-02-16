@@ -23,9 +23,9 @@ require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'countdown';
 $toolKey = 'countdown';
 $introKey = 'countdown.intro';
+$toolTitleKey = 'countdown.title';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="countdown.title">Odpočet</h2>
 <?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <div class="max-w-md space-y-6">
@@ -34,9 +34,15 @@ $introKey = 'countdown.intro';
                     <input type="number" id="countdownMinutes" min="1" max="120" value="30" class="w-full p-3 border-2 border-slate-200 rounded-xl font-mono text-xl">
                 </div>
                 <div class="flex gap-4">
-                    <button type="button" id="countdownStart" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="countdown.start">Start</button>
-                    <button type="button" id="countdownPause" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="countdown.pause">Pauza</button>
-                    <button type="button" id="countdownReset" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="countdown.reset">Reset</button>
+                    <button type="button" id="countdownPlayPause" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-colors" data-i18n-aria-label="countdown.start">
+                        <svg class="countdown-icon-play w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        <svg class="countdown-icon-pause w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+                        <span class="countdown-btn-text">Start</span>
+                    </button>
+                    <button type="button" id="countdownReset" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2" data-i18n-aria-label="countdown.reset">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span data-i18n="countdown.reset">Reset</span>
+                    </button>
                 </div>
                 <div id="countdownDisplay" class="text-5xl font-black text-slate-800 text-center font-mono tabular-nums" aria-live="polite">30:00</div>
             </div>
@@ -47,7 +53,7 @@ $introKey = 'countdown.intro';
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js'), 'countdown' => filemtime($jsDir . '/countdown.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
@@ -62,7 +68,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         window.t = t;
         await initNavigation();
         initToolPage(t);
-        await import('./assets/js/countdown.js?v=<?= filemtime(__DIR__ . '/assets/js/countdown.js') ?>');
+        await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
     </script>
 </body>
 </html>

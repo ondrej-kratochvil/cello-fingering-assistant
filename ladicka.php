@@ -23,9 +23,9 @@ require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'tuner';
 $toolKey = 'tuner';
 $introKey = 'tuner.intro';
+$toolTitleKey = 'tuner.title';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="tuner.title">Ladička</h2>
 <?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <div class="space-y-6 max-w-md">
@@ -59,29 +59,11 @@ $introKey = 'tuner.intro';
                 </div>
             </div>
 
-            <div id="tunerDisplays" class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 hidden">
-                <div class="tuner-string-card border-2 border-slate-200 rounded-2xl p-4" data-string="C">
-                    <div class="text-xl font-bold text-slate-800 mb-2">C</div>
+            <div id="tunerDisplays" class="mt-8 max-w-md hidden">
+                <div class="tuner-string-card border-2 border-slate-200 rounded-2xl p-4" data-string="">
+                    <div class="text-xl font-bold text-slate-800 mb-2 tuner-string-label">—</div>
                     <canvas class="tuner-needle w-full h-24 rounded bg-slate-100" width="200" height="96" aria-hidden="true"></canvas>
                     <p class="tuner-status text-sm font-medium mt-2 text-center" data-i18n="tuner.playString">Zahrajte strunu</p>
-                    <p class="tuner-freq text-xs text-slate-500 text-center mt-1">— Hz</p>
-                </div>
-                <div class="tuner-string-card border-2 border-slate-200 rounded-2xl p-4" data-string="G">
-                    <div class="text-xl font-bold text-slate-800 mb-2">G</div>
-                    <canvas class="tuner-needle w-full h-24 rounded bg-slate-100" width="200" height="96" aria-hidden="true"></canvas>
-                    <p class="tuner-status text-sm font-medium mt-2 text-center">—</p>
-                    <p class="tuner-freq text-xs text-slate-500 text-center mt-1">— Hz</p>
-                </div>
-                <div class="tuner-string-card border-2 border-slate-200 rounded-2xl p-4" data-string="D">
-                    <div class="text-xl font-bold text-slate-800 mb-2">d</div>
-                    <canvas class="tuner-needle w-full h-24 rounded bg-slate-100" width="200" height="96" aria-hidden="true"></canvas>
-                    <p class="tuner-status text-sm font-medium mt-2 text-center">—</p>
-                    <p class="tuner-freq text-xs text-slate-500 text-center mt-1">— Hz</p>
-                </div>
-                <div class="tuner-string-card border-2 border-slate-200 rounded-2xl p-4" data-string="A">
-                    <div class="text-xl font-bold text-slate-800 mb-2">a</div>
-                    <canvas class="tuner-needle w-full h-24 rounded bg-slate-100" width="200" height="96" aria-hidden="true"></canvas>
-                    <p class="tuner-status text-sm font-medium mt-2 text-center">—</p>
                     <p class="tuner-freq text-xs text-slate-500 text-center mt-1">— Hz</p>
                 </div>
             </div>
@@ -92,7 +74,7 @@ $introKey = 'tuner.intro';
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js'), 'countdown' => filemtime($jsDir . '/countdown.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
@@ -107,6 +89,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
         await import('./assets/js/tuner.js?v=<?= filemtime(__DIR__ . '/assets/js/tuner.js') ?>');
     </script>
 </body>

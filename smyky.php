@@ -22,9 +22,9 @@ require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'bowing';
 $toolKey = 'bowing';
 $introKey = 'bowing.intro';
+$toolTitleKey = 'bowing.title';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="bowing.title">Smyky</h2>
 <?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
             <div id="bowingNoData" class="hidden p-6 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
@@ -33,9 +33,11 @@ $introKey = 'bowing.intro';
             </div>
 
             <div id="bowingContent" class="hidden space-y-6">
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2" data-i18n="bowing.pattern">Smykový pattern:</label>
-                    <select id="bowingPattern" class="w-full max-w-md p-3 border-2 border-slate-200 rounded-xl font-mono"></select>
+                <div class="flex flex-wrap items-center gap-3">
+                    <label class="block text-sm font-bold text-slate-700" data-i18n="bowing.pattern">Smykový pattern:</label>
+                    <select id="bowingPattern" class="p-3 border-2 border-slate-200 rounded-xl font-mono min-w-[200px]"></select>
+                    <button type="button" id="bowingNextBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-xl" data-i18n="rhythms.next">Další</button>
+                    <button type="button" id="bowingRandomBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-xl" data-i18n="rhythms.random">Náhodný</button>
                 </div>
                 <div id="bowingStaff" class="overflow-x-auto"></div>
             </div>
@@ -47,7 +49,7 @@ $introKey = 'bowing.intro';
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js'), 'countdown' => filemtime($jsDir . '/countdown.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
@@ -62,6 +64,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
         await import('./assets/js/bowing.js?v=<?= filemtime(__DIR__ . '/assets/js/bowing.js') ?>');
     </script>
 </body>

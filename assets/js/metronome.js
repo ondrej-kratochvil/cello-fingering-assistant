@@ -1,8 +1,14 @@
 /**
- * Metronom – BPM, počet dob (2, 3, 4, 6), dva typy úderů (silný / slabší).
+ * Metronom – BPM, počet dob (0=bez zvýraznění, 2, 3, 4, 6), táhlo, puntíky, notová sekvence.
  */
+import { loadFingeringState } from './fingering-staff-utils.js';
+import { renderStaffWithRhythm } from './ui-staff.js';
+import { RHYTHM_PATTERNS, getDurationsForSequence } from './rhythm-patterns.js';
+
 (function () {
     'use strict';
+
+    const RHYTHM_STORAGE_KEY = 'celloapp:lastRhythm';
 
     let audioContext = null;
     let nextTickTime = 0;
@@ -32,10 +38,16 @@
 
     function init() {
         const bpmInput = document.getElementById('metronomeBpm');
+        const bpmRange = document.getElementById('metronomeBpmRange');
         const beatsRadios = document.querySelectorAll('input[name="metronomeBeats"]');
-        const startBtn = document.getElementById('metronomeStart');
-        const stopBtn = document.getElementById('metronomeStop');
+        const playStopBtn = document.getElementById('metronomePlayStop');
         const beatDisplay = document.getElementById('metronomeBeat');
+        const sequenceSection = document.getElementById('metronomeSequenceSection');
+        const staffContainer = document.getElementById('metronomeStaff');
+        const iconPlay = playStopBtn?.querySelector('.metronome-icon-play');
+        const iconStop = playStopBtn?.querySelector('.metronome-icon-stop');
+        const btnText = playStopBtn?.querySelector('.metronome-btn-text');
+        const t = typeof window.t === 'function' ? window.t : (k) => k;
 
         function getBpm() {
             const v = parseInt(bpmInput?.value, 10);
@@ -43,20 +55,61 @@
         }
         function getBeats() {
             const r = document.querySelector('input[name="metronomeBeats"]:checked');
-            return parseInt(r?.value, 10) || 4;
+            return parseInt(r?.value, 10) || 0;
+        }
+        function useAccent() {
+            return getBeats() > 0;
+        }
+        function getDisplayBeats() {
+            const b = getBeats();
+            return b === 0 ? 4 : b;
+        }
+
+        function syncBpmFromInput() {
+            const v = getBpm();
+            if (bpmRange) bpmRange.value = String(v);
+        }
+        function syncBpmFromRange() {
+            const v = parseInt(bpmRange?.value, 10);
+            if (Number.isFinite(v) && bpmInput) bpmInput.value = String(v);
+        }
+
+        function renderDots() {
+            if (!beatDisplay) return;
+            const count = getDisplayBeats();
+            beatDisplay.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'metronome-dot w-8 h-8 rounded-full bg-slate-300 transition-all';
+                dot.dataset.beatIndex = String(i);
+                beatDisplay.appendChild(dot);
+            }
+        }
+
+        function updateDots(activeIndex) {
+            const dots = beatDisplay?.querySelectorAll('.metronome-dot');
+            if (!dots) return;
+            dots.forEach((dot, i) => {
+                const isActive = i === activeIndex;
+                dot.classList.toggle('metronome-dot--active', isActive);
+                dot.classList.toggle('bg-indigo-500', isActive);
+                dot.classList.toggle('bg-slate-300', !isActive);
+                dot.classList.toggle('scale-125', isActive);
+            });
         }
 
         function scheduleNext() {
             const bpm = getBpm();
-            const beats = getBeats();
+            const beats = getDisplayBeats();
+            const accent = useAccent();
             const intervalMs = (60 * 1000) / bpm;
             const now = performance.now();
             if (nextTickTime < now) nextTickTime = now;
             const delay = Math.max(0, nextTickTime - performance.now());
             timerId = setTimeout(() => {
-                if (!startBtn?.dataset?.running) return;
-                playTick(beatIndex === 0);
-                if (beatDisplay) beatDisplay.textContent = String(beatIndex + 1);
+                if (playStopBtn?.dataset?.running !== 'true') return;
+                playTick(accent && beatIndex === 0);
+                updateDots(beatIndex);
                 beatIndex = (beatIndex + 1) % beats;
                 nextTickTime += intervalMs;
                 scheduleNext();
@@ -66,15 +119,21 @@
         let startCancelled = false;
         function start() {
             if (typeof window.markToolUsed === 'function') window.markToolUsed();
-            if (startBtn?.dataset?.running === 'true') return;
+            if (playStopBtn?.dataset?.running === 'true') return;
             startCancelled = false;
             getCtx().resume().then(() => {
                 if (startCancelled) return;
                 beatIndex = 0;
                 nextTickTime = performance.now();
-                startBtn.dataset.running = 'true';
-                if (beatDisplay) beatDisplay.textContent = '1';
-                playTick(true);
+                playStopBtn && (playStopBtn.dataset.running = 'true');
+                if (iconPlay) iconPlay.classList.add('hidden');
+                if (iconStop) iconStop.classList.remove('hidden');
+                if (btnText) btnText.textContent = t('metronome.stop');
+                playStopBtn?.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                playStopBtn?.classList.add('bg-slate-600', 'hover:bg-slate-700');
+                playStopBtn?.setAttribute('aria-label', t('metronome.startStop'));
+                updateDots(0);
+                playTick(useAccent());
                 beatIndex = 1;
                 nextTickTime += (60 * 1000) / getBpm();
                 scheduleNext();
@@ -85,12 +144,53 @@
             startCancelled = true;
             if (timerId != null) clearTimeout(timerId);
             timerId = null;
-            startBtn.dataset.running = '';
-            if (beatDisplay) beatDisplay.textContent = '—';
+            playStopBtn && (playStopBtn.dataset.running = '');
+            if (iconPlay) iconPlay.classList.remove('hidden');
+            if (iconStop) iconStop.classList.add('hidden');
+            if (btnText) btnText.textContent = t('metronome.start');
+            playStopBtn?.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            playStopBtn?.classList.remove('bg-slate-600', 'hover:bg-slate-700');
+            playStopBtn?.setAttribute('aria-label', t('metronome.startStop'));
+            const dots = beatDisplay?.querySelectorAll('.metronome-dot');
+            dots?.forEach((d) => {
+                d.classList.remove('metronome-dot--active', 'bg-indigo-500', 'scale-125');
+                d.classList.add('bg-slate-300');
+            });
         }
 
-        startBtn?.addEventListener('click', start);
-        stopBtn?.addEventListener('click', stop);
+        function togglePlayStop() {
+            if (playStopBtn?.dataset?.running === 'true') stop();
+            else start();
+        }
+
+        bpmInput?.addEventListener('input', syncBpmFromInput);
+        bpmInput?.addEventListener('change', syncBpmFromInput);
+        bpmRange?.addEventListener('input', syncBpmFromRange);
+        playStopBtn?.addEventListener('click', togglePlayStop);
+
+        beatsRadios?.forEach((r) => r.addEventListener('change', () => {
+            renderDots();
+        }));
+
+        syncBpmFromInput();
+        renderDots();
+
+        const state = loadFingeringState();
+        let lastRhythmId = null;
+        try {
+            lastRhythmId = localStorage.getItem(RHYTHM_STORAGE_KEY);
+        } catch (e) { /* ignore */ }
+        const pattern = lastRhythmId && RHYTHM_PATTERNS.some(p => p.id === lastRhythmId)
+            ? RHYTHM_PATTERNS.find(p => p.id === lastRhythmId)
+            : RHYTHM_PATTERNS[0];
+
+        if (state && sequenceSection && staffContainer) {
+            const notes = state.inputNormalized && state.inputNormalized.length === state.input.length
+                ? state.inputNormalized : state.input;
+            const durations = getDurationsForSequence(notes.length, pattern);
+            renderStaffWithRhythm(staffContainer, notes, durations, state.fingering, { staffId: 'vexflow-staff-metronome' });
+            sequenceSection.classList.remove('hidden');
+        }
     }
 
     if (document.readyState === 'loading') {

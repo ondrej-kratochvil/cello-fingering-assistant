@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cello App Kit – Seznam not</title>
-    <meta name="description" content="Seznam odkazů na noty – skladby, autoři, obtížnost.">
+    <title>Cello App Kit – Seznam skladeb</title>
+    <meta name="description" content="Seznam skladeb – odkazy na noty, autoři, obtížnost.">
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="stylesheet" href="assets/css/main.css?v=<?= filemtime(__DIR__ . '/assets/css/main.css') ?>">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,35 +16,51 @@
 $base = '';
 $pageTitle = 'Cello App Kit';
 $taglineKey = 'sheetList.tagline';
-$taglineFallback = 'Seznam not';
+$taglineFallback = 'Seznam skladeb';
 require __DIR__ . '/assets/partials/topbar.php';
 require __DIR__ . '/assets/php/tools_config.php';
 $currentToolKey = 'sheetList';
 $toolKey = 'sheetList';
 $introKey = 'sheetList.intro';
+$toolTitleKey = 'sheetList.title';
 ?>
         <main class="p-8 bg-white">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4" data-i18n="sheetList.title">Seznam not</h2>
 <?php require __DIR__ . '/assets/partials/tool_intro.php'; ?>
 
-            <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl">
+            <div class="mb-4">
+                <button type="button" id="sheetFormToggle" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.addSheet">Přidat skladbu</button>
+            </div>
+            <form id="sheetForm" class="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 max-w-2xl hidden">
                 <div>
-                    <label for="sheetUrl" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.url">Odkaz (URL):</label>
-                    <input type="url" id="sheetUrl" class="w-full p-3 border border-slate-300 rounded-xl" placeholder="https://…">
+                    <label for="sheetSurname" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.surnameAuthor">Příjmení autora</label>
+                    <p class="text-xs text-slate-500 sheet-list-hint mb-1" data-i18n="sheetList.surnameHint">U lidových písní, stupnic apod. uveďte např. Lidová, Neznámý.</p>
+                    <input type="text" id="sheetSurname" class="w-full p-3 border border-slate-300 rounded-xl" required>
+                </div>
+                <div>
+                    <label for="sheetFirstName" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.firstNameAuthor">Jméno autora</label>
+                    <input type="text" id="sheetFirstName" class="w-full p-3 border border-slate-300 rounded-xl">
                 </div>
                 <div>
                     <label for="sheetTitle" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.titleField">Název skladby:</label>
                     <input type="text" id="sheetTitle" class="w-full p-3 border border-slate-300 rounded-xl" required>
                 </div>
                 <div>
-                    <label for="sheetAuthor" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.author">Autor:</label>
-                    <input type="text" id="sheetAuthor" class="w-full p-3 border border-slate-300 rounded-xl">
-                </div>
-                <div>
                     <label for="sheetDifficulty" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.difficulty">Obtížnost (1–10):</label>
                     <input type="number" id="sheetDifficulty" min="1" max="10" value="5" class="w-24 p-3 border border-slate-300 rounded-xl">
                 </div>
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.add">Přidat</button>
+                <div>
+                    <label for="sheetSequence" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.sequence">Sekvence tónů</label>
+                    <textarea id="sheetSequence" class="w-full p-3 border border-slate-300 rounded-xl font-mono text-sm" rows="2" placeholder="c d e f g a h c1"></textarea>
+                </div>
+                <div>
+                    <label for="sheetUrl" class="block text-sm font-bold text-slate-700 mb-1" data-i18n="sheetList.url">Odkaz (URL):</label>
+                    <input type="url" id="sheetUrl" class="w-full p-3 border border-slate-300 rounded-xl" placeholder="https://…">
+                </div>
+                <input type="hidden" id="sheetEditId" value="">
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit" id="sheetSubmitBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl" data-i18n="sheetList.add">Přidat</button>
+                    <button type="button" id="sheetDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl hidden" data-i18n="sheetList.delete">Smazat</button>
+                </div>
             </form>
 
             <div class="mb-4 flex flex-wrap items-center gap-4">
@@ -56,14 +72,14 @@ $introKey = 'sheetList.intro';
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse">
+                <table class="sheet-list-table w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b-2 border-slate-200">
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleField">Název</th>
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="author" data-i18n="sheetList.author">Autor</th>
-                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficulty">Obtížnost</th>
-                            <th class="text-left py-3 px-2" data-i18n="sheetList.url">Odkaz</th>
-                            <th class="w-20"></th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="surname" data-i18n="sheetList.authorHeader">Autor</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="title" data-i18n="sheetList.titleHeader">Název skladby</th>
+                            <th class="text-left py-3 px-2 cursor-pointer hover:bg-slate-100 rounded" data-sort="difficulty" data-i18n="sheetList.difficultyHeader">Obtížnost</th>
+                            <th class="text-left py-3 px-2" data-i18n="sheetList.urlHeader">Odkaz</th>
+                            <th class="w-12"></th>
                         </tr>
                     </thead>
                     <tbody id="sheetTableBody"></tbody>
@@ -76,7 +92,7 @@ $introKey = 'sheetList.intro';
 <?php
 $jsDir = __DIR__ . '/assets/js';
 $i18nDir = __DIR__ . '/assets/i18n';
-$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js') ];
+$JS_VERSIONS = [ 'i18n' => filemtime($jsDir . '/i18n.js'), 'navigation' => filemtime($jsDir . '/navigation.js'), 'toolPage' => filemtime($jsDir . '/tool-page.js'), 'countdown' => filemtime($jsDir . '/countdown.js') ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
     <script>window.__JS_VERSIONS__ = <?= json_encode($JS_VERSIONS) ?>; window.__I18N_VERSION__ = <?= (int) $I18N_VERSION ?>;</script>
@@ -91,6 +107,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
         window.t = t;
         await initNavigation();
         initToolPage(t);
+        await import('./assets/js/countdown.js' + (V.countdown ? '?v=' + V.countdown : ''));
         await import('./assets/js/sheet-list.js?v=<?= filemtime(__DIR__ . '/assets/js/sheet-list.js') ?>');
     </script>
 </body>

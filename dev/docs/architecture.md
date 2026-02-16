@@ -2,25 +2,38 @@
 
 ## Přehled
 
-Projekt je klientská webová aplikace s **PHP** pro layout (hlavička, patička). Stránky `index.php` a `dev/tests/test.php` includují společný topbar a footer. Veškerá logika běží v prohlížeči, kód je rozdělen do několika JS modulů:
+Projekt je klientská webová aplikace **Cello App Kit** s **PHP** pro layout (hlavička, patička). Stránky includují společný topbar a footer. Veškerá logika běží v prohlížeči, kód je rozdělen do několika JS modulů:
 
+**Základní moduly:**
 - `assets/js/fingering.js` – datový model hmatníku a algoritmus výpočtu prstokladů.
-- `assets/js/ui.js` – prezentační a interakční logika pro `index.php`, vykreslení notové osnovy (VexFlow), textového výstupu a Canvas hmatníku.
+- `assets/js/ui.js` – prezentační a interakční logika pro Prstoklad, vykreslení notové osnovy (VexFlow), textového výstupu a Canvas hmatníku.
 - `assets/js/navigation.js` – navigace, dark mode toggle, callback pro překreslení při změně tématu.
-- `assets/js/tests.js` – definice testovacích sad (včetně 14 testů stupnic) a jednoduchý test runner, funkce `prepareInputForSolve` pro enharmonické záměny.
-- `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php` (zobrazuje VexFlow notovou osnovu pro každý test).
+- `assets/js/tests.js` – definice testovacích sad (včetně 14 testů stupnic) a jednoduchý test runner.
+- `assets/js/test-runner.js` – UI test runneru pro `dev/tests/test.php`.
+
+**Moduly nástrojů Cello App Kit:**
+- `assets/js/tuner.js` – ladička (YIN pitch detection, Web Audio API, temperované/čisté kvinty).
+- `assets/js/countdown.js` – odpočet (minutka), stav v `localStorage`, widget v hlavičce, zvuk zvonění.
+- `assets/js/metronome.js` – metronom (BPM, počet dob, puntíky, notová sekvence z Prstokladu).
+- `assets/js/rhythms.js` – rytmy (pattern na sekvenci z Prstokladu).
+- `assets/js/bowing.js` – smyky (legato/separate pattern, VexFlow s obloučky).
+- `assets/js/sheet-list.js` – seznam not (localStorage).
 
 ### Struktura adresářů
 
-- `index.php` – hlavní UI (PHP, includuje topbar/footer).
-- `dev/tests/test.php` – UI pro běh testů (PHP, includuje topbar/footer).
+- `index.php` – homepage (Průvodce cvičením).
+- `prstoklad.php`, `ladicka.php`, `metronom.php`, `odpocet.php`, `rytmy.php`, `smyky.php`, `seznam-not.php` – stránky nástrojů.
+- `accessibility.php` – prohlášení o přístupnosti (načítá `countdown.js` pro widget).
+- `dev/tests/test.php` – UI pro běh testů.
 - `assets/js/`
-  - `fingering.js` – model a algoritmus.
-  - `ui.js` – práce s DOM, VexFlow (notová osnova), kreslení Canvasu, `toDisplayNote`, `initUI`.
+  - `fingering.js` – model a algoritmus prstokladu.
+  - `ui.js` – práce s DOM, VexFlow, Canvas hmatníku, `initUI`.
   - `i18n.js` – i18n modul, načítání `assets/i18n/*.json`, jazyk a H/B.
-  - `navigation.js` – jednotné menu (menuToggle, mainNav), dark mode, vlajky jazyka.
-  - `tests.js` – testy a test runner.
-  - `test-runner.js` – UI test runneru pro `dev/tests/test.php`.
+  - `navigation.js` – jednotné menu, dark mode, vlajky jazyka.
+  - `tuner.js` – YIN detekce výšky tónu, mediánový filtr.
+  - `countdown.js` – odpočet s `localStorage` persistence, topbar widget.
+  - `metronome.js`, `rhythms.js`, `bowing.js`, `sheet-list.js` – nástroje.
+  - `tests.js`, `test-runner.js` – testy.
 - `assets/partials/` – **topbar.php**, **footer.php** (společný layout, PHP include). `topbar.php` očekává `$base`, `$pageTitle`, `$taglineKey`, `$taglineFallback`.
 - `assets/i18n/` – překlady (cs.json, en.json).
 - `assets/css/main.css` – design systém, styly pro notovou osnovu.

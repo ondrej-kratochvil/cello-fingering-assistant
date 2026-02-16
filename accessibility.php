@@ -48,6 +48,7 @@ $i18nDir = __DIR__ . '/assets/i18n';
 $JS_VERSIONS = [
     'i18n' => filemtime($jsDir . '/i18n.js'),
     'navigation' => filemtime($jsDir . '/navigation.js'),
+    'countdown' => filemtime($jsDir . '/countdown.js'),
 ];
 $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.json'));
 ?>
@@ -64,6 +65,7 @@ $I18N_VERSION = max(filemtime($i18nDir . '/cs.json'), filemtime($i18nDir . '/en.
             }
             await initI18n();
             await initNavigation();
+            await import('./assets/js/countdown.js' + (V.countdown != null ? '?v=' + V.countdown : ''));
         }
         main();
     </script>
